@@ -69,7 +69,12 @@ static void OpenLocalApplicationInBrowser(WebApplication application)
 static async Task InitializeDatabaseAsync(WebApplication application, string provider)
 {
     await using var scope = application.Services.CreateAsyncScope(); var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseInitialization");
-    try { var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>(); if (provider == "sqlite") await dbContext.Database.EnsureCreatedAsync(); else await dbContext.Database.MigrateAsync(); logger.LogInformation("Database initialized successfully using {Provider}.", provider); }
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
+        await dbContext.Database.MigrateAsync();
+        logger.LogInformation("Database initialized and migrations applied successfully using {Provider}.", provider);
+    }
     catch (Exception exception) { logger.LogCritical(exception, "Database initialization failed using {Provider}.", provider); throw; }
 }
 
