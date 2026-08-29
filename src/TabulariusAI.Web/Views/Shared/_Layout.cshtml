@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="~/css/version.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/import.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/lists.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/operation-progress.css" asp-append-version="true" />
 </head>
 <body>
     <div class="app-shell">
@@ -21,6 +22,13 @@
         <main class="app-content">@RenderBody()</main>
         <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span><span class="footer-version-badge">v@(AppInfo.Version)</span></footer>
     </div>
+    <div class="operation-progress" data-operation-progress aria-hidden="true" aria-live="polite" aria-label="Operação em curso">
+        <div class="operation-progress-card" role="status">
+            <span class="operation-spinner" aria-hidden="true"></span>
+            <div class="operation-progress-copy"><small>Tabularius AI</small><strong>A processar o pedido</strong><p>Aguarde enquanto preparamos a informação.</p></div>
+        </div>
+    </div>
+    <script src="~/js/operation-progress.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
