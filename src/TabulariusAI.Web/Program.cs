@@ -74,10 +74,45 @@ static async Task InitializeDatabaseAsync(WebApplication application, string pro
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
+        if (provider == "sqlite") await BaselineLegacySqliteDatabaseAsync(dbContext, logger);
         await dbContext.Database.MigrateAsync();
         logger.LogInformation("Database initialized and migrations applied successfully using {Provider}.", provider);
     }
     catch (Exception exception) { logger.LogCritical(exception, "Database initialization failed using {Provider}.", provider); throw; }
+}
+
+/// <summary>Registers migrations already represented by a legacy SQLite database created with EnsureCreated, allowing later migrations to be applied without recreating existing tables.</summary>
+/// <param name="dbContext">The application database context.</param>
+/// <param name="logger">The database initialization logger.</param>
+/// <returns>A task representing the asynchronous baseline operation.</returns>
+static async Task BaselineLegacySqliteDatabaseAsync(TabulariusDbContext dbContext, ILogger logger)
+{
+    const string salesMigration = "20260830220000_AddSaftSalesInvoices";
+    await dbContext.Database.OpenConnectionAsync();
+    try
+    {
+        await dbContext.Database.ExecuteSqlRawAsync("CREATE TABLE IF NOT EXISTS \"__EFMigrationsHistory\" (\"MigrationId\" TEXT NOT NULL CONSTRAINT \"PK___EFMigrationsHistory\" PRIMARY KEY, \"ProductVersion\" TEXT NOT NULL);");
+        var connection = dbContext.Database.GetDbConnection();
+        await using var tableCommand = connection.CreateCommand();
+        tableCommand.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'AccountingEntities';";
+        var hasExistingSchema = Convert.ToInt64(await tableCommand.ExecuteScalarAsync()) > 0;
+        if (!hasExistingSchema) return;
+
+        var appliedMigrations = (await dbContext.Database.GetAppliedMigrationsAsync()).ToHashSet(StringComparer.Ordinal);
+        var knownMigrations = (await dbContext.Database.GetMigrationsAsync()).Where(migration => string.CompareOrdinal(migration, salesMigration) < 0).ToArray();
+        var baselined = 0;
+        foreach (var migration in knownMigrations)
+        {
+            if (appliedMigrations.Contains(migration)) continue;
+            await using var command = connection.CreateCommand();
+            command.CommandText = "INSERT OR IGNORE INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ($migrationId, $productVersion);";
+            var migrationParameter = command.CreateParameter(); migrationParameter.ParameterName = "$migrationId"; migrationParameter.Value = migration; command.Parameters.Add(migrationParameter);
+            var versionParameter = command.CreateParameter(); versionParameter.ParameterName = "$productVersion"; versionParameter.Value = "9.0.0"; command.Parameters.Add(versionParameter);
+            baselined += await command.ExecuteNonQueryAsync();
+        }
+        if (baselined > 0) logger.LogInformation("Registered {MigrationCount} existing SQLite schema migrations in the EF migration history.", baselined);
+    }
+    finally { await dbContext.Database.CloseConnectionAsync(); }
 }
 
 /// <summary>Ensures the application roles and the local bootstrap administrator exist and repairs bootstrap duplicates left by interrupted initialization attempts.</summary>
