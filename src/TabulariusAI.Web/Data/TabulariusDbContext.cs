@@ -1,10 +1,12 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TabulariusAI.Web.Data.Entities;
+using TabulariusAI.Web.Data.Identity;
 
 namespace TabulariusAI.Web.Data;
 
-/// <summary>Represents the local persistence context for accounting entities, dossiers and imports.</summary>
-public sealed class TabulariusDbContext(DbContextOptions<TabulariusDbContext> options) : DbContext(options)
+/// <summary>Represents the local persistence context for identity, accounting entities, dossiers and imports.</summary>
+public sealed class TabulariusDbContext(DbContextOptions<TabulariusDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
     /// <summary>Gets the accounting entities managed by the application.</summary>
     public DbSet<AccountingEntity> AccountingEntities => Set<AccountingEntity>();
@@ -29,6 +31,7 @@ public sealed class TabulariusDbContext(DbContextOptions<TabulariusDbContext> op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<ApplicationUser>(entity => { entity.Property(item => item.DisplayName).HasMaxLength(200).IsRequired(); });
         modelBuilder.Entity<AccountingEntity>(entity => { entity.Property(item => item.Name).HasMaxLength(200).IsRequired(); entity.Property(item => item.TaxRegistrationNumber).HasMaxLength(20).IsRequired(); entity.HasIndex(item => item.TaxRegistrationNumber).IsUnique(); });
         modelBuilder.Entity<AnalysisDossier>(entity => { entity.Property(item => item.Name).HasMaxLength(200).IsRequired(); entity.HasOne(item => item.AccountingEntity).WithMany(item => item.Dossiers).HasForeignKey(item => item.AccountingEntityId).OnDelete(DeleteBehavior.Cascade); entity.HasIndex(item => new { item.AccountingEntityId, item.FiscalYear }).IsUnique(); });
         modelBuilder.Entity<SaftImport>(entity => { entity.Property(item => item.OriginalFileName).HasMaxLength(260).IsRequired(); entity.Property(item => item.ContentHash).HasMaxLength(64).IsFixedLength(); entity.Property(item => item.SaftVersion).HasMaxLength(30).IsRequired(); entity.HasOne(item => item.Dossier).WithMany(item => item.Imports).HasForeignKey(item => item.DossierId).OnDelete(DeleteBehavior.Cascade); entity.HasIndex(item => item.ContentHash).IsUnique().HasFilter("[ContentHash] IS NOT NULL"); });
