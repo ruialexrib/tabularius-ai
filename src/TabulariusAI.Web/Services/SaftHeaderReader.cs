@@ -1,3 +1,4 @@
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using TabulariusAI.Web.Models;
@@ -9,6 +10,11 @@ namespace TabulariusAI.Web.Services;
 /// </summary>
 public sealed class SaftHeaderReader : ISaftHeaderReader
 {
+    static SaftHeaderReader()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
+
     /// <inheritdoc />
     public async Task<SaftHeaderViewModel> ReadAsync(Stream stream, CancellationToken cancellationToken = default)
     {
@@ -43,7 +49,7 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
 
             return new SaftHeaderViewModel
             {
-                SaftVersion = root.Name.NamespaceName,
+                SaftVersion = GetValue(header, "AuditFileVersion"),
                 CompanyName = companyName,
                 TaxRegistrationNumber = taxRegistrationNumber,
                 FiscalYear = GetValue(header, "FiscalYear"),
@@ -55,7 +61,7 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
         }
         catch (XmlException exception)
         {
-            throw new InvalidDataException("O ficheiro selecionado não contém XML válido.", exception);
+            throw new InvalidDataException($"Não foi possível ler o XML SAF-T: {exception.Message}", exception);
         }
     }
 
