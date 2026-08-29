@@ -1,0 +1,18 @@
+@model TabulariusAI.Web.Models.CreateUserViewModel
+@using TabulariusAI.Web.Data.Identity
+@{
+    ViewData["Title"] = "Novo utilizador";
+}
+<header class="page-header"><div><p class="eyebrow">Administração</p><h1>Novo utilizador</h1><p class="lead">Crie uma conta local e defina o respetivo perfil de acesso.</p></div><a class="btn btn-secondary" asp-action="Index">Voltar</a></header>
+<section class="form-card user-form-card">
+    <div class="card-header"><div><p class="section-kicker">Conta</p><h2>Dados do utilizador</h2><p>A palavra-passe inicial deve cumprir a política de segurança da aplicação.</p></div></div>
+    <form asp-action="Create" method="post" class="user-create-form">
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div class="form-field"><label asp-for="UserName">Utilizador</label><input asp-for="UserName" autocomplete="off" /><span asp-validation-for="UserName"></span></div>
+        <div class="form-field"><label asp-for="DisplayName">Nome a apresentar</label><input asp-for="DisplayName" autocomplete="name" /><span asp-validation-for="DisplayName"></span></div>
+        <div class="form-field"><label asp-for="Email">Email</label><input asp-for="Email" type="email" autocomplete="email" /><span asp-validation-for="Email"></span></div>
+        <div class="form-field"><label asp-for="Role">Perfil</label><select asp-for="Role"><option value="@ApplicationRoles.User">Utilizador</option><option value="@ApplicationRoles.Administrator">Administrador</option></select><span asp-validation-for="Role"></span></div>
+        <div class="form-field user-form-password"><label asp-for="Password">Palavra-passe inicial</label><input asp-for="Password" type="password" autocomplete="new-password" /><span asp-validation-for="Password"></span><small class="field-help">Mínimo de 12 caracteres, incluindo maiúscula, minúscula, algarismo e carácter especial.</small></div>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Criar utilizador</button><a class="btn btn-secondary" asp-action="Index">Cancelar</a></div>
+    </form>
+</section>
