@@ -1,0 +1,38 @@
+@model IReadOnlyCollection<TabulariusAI.Web.Data.Entities.SaftImport>
+@{
+    ViewData["Title"] = "Importações";
+}
+
+<section class="hero">
+    <p class="eyebrow">Dossier</p>
+    <h1>Importações</h1>
+    <p class="lead">Histórico local dos ficheiros SAF-T (PT) associados aos dossiers de análise.</p>
+</section>
+
+<section class="panel">
+    @if (Model.Count == 0)
+    {
+        <p>Ainda não existem importações SAF-T (PT).</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Entidade</th><th>Exercício</th><th>Ficheiro</th><th>Versão</th><th>Período</th><th>Importado em</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><strong>@item.Dossier.AccountingEntity.Name</strong></td>
+                        <td>@item.Dossier.FiscalYear</td>
+                        <td>@item.OriginalFileName</td>
+                        <td>@item.SaftVersion</td>
+                        <td>@(item.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(item.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>@item.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
