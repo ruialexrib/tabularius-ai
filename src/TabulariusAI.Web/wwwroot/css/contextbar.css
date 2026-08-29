@@ -1,5 +1,8 @@
-.contextbar{position:relative;z-index:1200;justify-content:flex-end;gap:4px;padding:0 18px;overflow:visible}
+.contextbar{position:relative;z-index:1200;justify-content:flex-start;gap:4px;padding:0 18px;overflow:visible}
+.context-spacer{flex:1 1 auto}
 .context-item{position:relative;display:inline-flex;height:30px;align-items:center;gap:7px;padding:0 9px;border-radius:7px;white-space:nowrap;transition:background .14s ease,color .14s ease}
+.context-copyright{padding-left:2px}
+.context-copyright-icon{display:inline-grid;width:17px;height:17px;place-items:center;color:#8793a3;font-size:12px}
 .context-with-tooltip{cursor:default}
 .context-with-tooltip:hover,.context-with-tooltip:focus-visible{background:#f2f7f5;color:var(--navy);outline:0}
 .context-icon{display:grid;min-width:18px;height:18px;place-items:center;border:1px solid #cfe4dc;border-radius:5px;background:#eff9f5;color:var(--green-text);font-size:8px;font-weight:900;line-height:1}
@@ -15,5 +18,5 @@
 .context-tooltip small{color:#8793a3;font-size:9px;line-height:1.35}
 .context-tooltip b{max-width:165px;color:#344156;font-size:10px;font-weight:750;line-height:1.35;text-align:right;overflow-wrap:anywhere}
 .context-tooltip .tooltip-online{color:var(--green-text)}
-@media(max-width:760px){.contextbar{justify-content:flex-start;overflow-x:auto;overflow-y:visible}.context-tooltip,.context-tooltip-left,.context-tooltip-right{position:fixed;right:12px;bottom:48px;left:12px;width:auto}.context-tooltip::after{display:none}}
+@media(max-width:760px){.contextbar{justify-content:flex-start;overflow-x:auto;overflow-y:visible}.context-spacer{min-width:18px}.context-tooltip,.context-tooltip-left,.context-tooltip-right{position:fixed;right:12px;bottom:48px;left:12px;width:auto}.context-tooltip::after{display:none}}
 @media(prefers-reduced-motion:reduce){.context-tooltip{transition:none}}
