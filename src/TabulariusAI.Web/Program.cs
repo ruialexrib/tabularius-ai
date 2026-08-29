@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TabulariusAI.Web.Data;
+using TabulariusAI.Web.Models;
 using TabulariusAI.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,14 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<TabulariusDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Tabularius")));
 builder.Services.AddScoped<ISaftHeaderReader, SaftHeaderReader>();
+var applicationAssembly = typeof(Program).Assembly;
+var applicationVersion = applicationAssembly
+    .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+    .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+    .SingleOrDefault()?.InformationalVersion.Split('+')[0]
+    ?? applicationAssembly.GetName().Version?.ToString(3)
+    ?? "0.1.0";
+builder.Services.AddSingleton(new ApplicationInfo(applicationVersion, "Análise e controlo contabilístico"));
 
 var app = builder.Build();
 
@@ -52,7 +61,7 @@ app.MapControllerRoute(
 
 try
 {
-    Log.Information("Starting Tabularius AI version {Version}", typeof(Program).Assembly.GetName().Version?.ToString());
+    Log.Information("Starting Tabularius AI version {Version}", applicationVersion);
     app.Run();
 }
 catch (Exception exception)
