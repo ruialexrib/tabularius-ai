@@ -31,14 +31,7 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
 
                 switch (reader.LocalName)
                 {
-                    case "AuditFileVersion": model.SaftVersion = await reader.ReadElementContentAsStringAsync(); break;
-                    case "TaxRegistrationNumber" when string.IsNullOrEmpty(model.TaxRegistrationNumber): model.TaxRegistrationNumber = await reader.ReadElementContentAsStringAsync(); break;
-                    case "CompanyName" when string.IsNullOrEmpty(model.CompanyName): model.CompanyName = await reader.ReadElementContentAsStringAsync(); break;
-                    case "FiscalYear": model.FiscalYear = await reader.ReadElementContentAsStringAsync(); break;
-                    case "StartDate": model.StartDate = await reader.ReadElementContentAsStringAsync(); break;
-                    case "EndDate": model.EndDate = await reader.ReadElementContentAsStringAsync(); break;
-                    case "ProductID": model.ProductId = await reader.ReadElementContentAsStringAsync(); break;
-                    case "ProductVersion": model.ProductVersion = await reader.ReadElementContentAsStringAsync(); break;
+                    case "Header": await ParseElementAsync(reader, cancellationToken, element => ParseHeader(element, model)); break;
                     case "Account": await ParseElementAsync(reader, cancellationToken, element => model.Accounts.Add(ParseAccount(element))); model.AccountCount = model.Accounts.Count; break;
                     case "Customer": await ParseElementAsync(reader, cancellationToken, element => model.Customers.Add(ParseParty(element, "CustomerID", "CustomerTaxID"))); model.CustomerCount = model.Customers.Count; break;
                     case "Supplier": await ParseElementAsync(reader, cancellationToken, element => model.Suppliers.Add(ParseParty(element, "SupplierID", "SupplierTaxID"))); model.SupplierCount = model.Suppliers.Count; break;
@@ -74,6 +67,22 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
     {
         if (!string.Equals(reader.LocalName, "AuditFile", StringComparison.Ordinal) || !reader.NamespaceURI.StartsWith("urn:OECD:StandardAuditFile-Tax:PT_", StringComparison.Ordinal))
             throw new InvalidDataException("O ficheiro XML não contém uma estrutura SAF-T (PT) reconhecida.");
+    }
+
+    /// <summary>Maps the SAF-T header subtree into the import model without advancing over adjacent fields.</summary>
+    /// <param name="element">The source header element.</param>
+    /// <param name="model">The import model to populate.</param>
+    private static void ParseHeader(XElement element, SaftHeaderViewModel model)
+    {
+        var ns = element.Name.Namespace;
+        model.SaftVersion = element.Element(ns + "AuditFileVersion")?.Value;
+        model.TaxRegistrationNumber = element.Element(ns + "TaxRegistrationNumber")?.Value;
+        model.CompanyName = element.Element(ns + "CompanyName")?.Value;
+        model.FiscalYear = element.Element(ns + "FiscalYear")?.Value;
+        model.StartDate = element.Element(ns + "StartDate")?.Value;
+        model.EndDate = element.Element(ns + "EndDate")?.Value;
+        model.ProductId = element.Element(ns + "ProductID")?.Value;
+        model.ProductVersion = element.Element(ns + "ProductVersion")?.Value;
     }
 
     /// <summary>Maps one general ledger account element into the import model.</summary>
