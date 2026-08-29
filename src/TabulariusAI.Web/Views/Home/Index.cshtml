@@ -1,13 +1,40 @@
+@model TabulariusAI.Web.Models.SaftHeaderViewModel?
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Início";
 }
 
 <section class="hero">
-    <p class="eyebrow">SAF-T Analytics</p>
+    <p class="eyebrow">Análise SAF-T</p>
     <h1>Tabularius AI</h1>
-    <p class="lead">SAF-T analytics with AI-powered insights.</p>
-    <div class="status-card">
-        <strong>Application ready.</strong>
-        <span>The ASP.NET Core foundation is running on .NET 9.</span>
-    </div>
+    <p class="lead">Importe um ficheiro SAF-T para validar o documento e consultar os principais dados do cabeçalho.</p>
+
+    <form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="upload-card">
+        <div class="upload-field">
+            <label for="saftFile">Ficheiro SAF-T</label>
+            <input id="saftFile" name="saftFile" type="file" accept=".xml,text/xml,application/xml" />
+            <span>Formato XML, até 100 MB.</span>
+        </div>
+        <button type="submit">Analisar ficheiro</button>
+        <div asp-validation-summary="All" class="validation-summary"></div>
+    </form>
+
+    @if (Model is not null)
+    {
+        <section class="result-card" aria-labelledby="saft-summary-title">
+            <div class="result-heading">
+                <p class="eyebrow">Ficheiro validado</p>
+                <h2 id="saft-summary-title">Cabeçalho SAF-T</h2>
+            </div>
+            <dl class="summary-grid">
+                <div><dt>Empresa</dt><dd>@Model.CompanyName</dd></div>
+                <div><dt>NIF</dt><dd>@Model.TaxRegistrationNumber</dd></div>
+                <div><dt>Ano fiscal</dt><dd>@Model.FiscalYear</dd></div>
+                <div><dt>Data inicial</dt><dd>@Model.StartDate</dd></div>
+                <div><dt>Data final</dt><dd>@Model.EndDate</dd></div>
+                <div><dt>Software</dt><dd>@Model.ProductId</dd></div>
+                <div><dt>Versão do software</dt><dd>@Model.ProductVersion</dd></div>
+                <div class="summary-wide"><dt>Namespace SAF-T</dt><dd>@Model.SaftVersion</dd></div>
+            </dl>
+        </section>
+    }
 </section>
