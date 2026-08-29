@@ -1,37 +1,5 @@
 @model TabulariusAI.Web.Data.Entities.AccountingEntity
-@{
-    ViewData["Title"] = Model.Name;
-}
-
-<section class="hero">
-    <p class="eyebrow">Entidade</p>
-    <h1>@Model.Name</h1>
-    <p class="lead">NIF @Model.TaxRegistrationNumber · Selecione o exercício contabilístico que pretende analisar.</p>
-</section>
-
-<section class="panel">
-    <h2>Exercícios</h2>
-    @if (Model.Dossiers.Count == 0)
-    {
-        <p>Esta entidade ainda não tem dossiers de análise.</p>
-    }
-    else
-    {
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Exercício</th><th>Dossier</th><th>SAF-T (PT)</th><th></th></tr></thead>
-                <tbody>
-                @foreach (var dossier in Model.Dossiers.OrderByDescending(item => item.FiscalYear))
-                {
-                    <tr>
-                        <td><strong>@dossier.FiscalYear</strong></td>
-                        <td>@dossier.Name</td>
-                        <td>@dossier.Imports.Count importação(ões)</td>
-                        <td><a asp-controller="Dossier" asp-action="Details" asp-route-id="@dossier.Id">Abrir dossier</a></td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    }
-</section>
+@{ ViewData["Title"] = Model.Name; }
+<section class="page-header"><div><p class="eyebrow">Entidade</p><h1>@Model.Name</h1><p class="lead">NIF @Model.TaxRegistrationNumber · Selecione o exercício contabilístico que pretende analisar.</p></div><a class="btn btn-secondary" asp-action="Entities">Voltar às entidades</a></section>
+@if (TempData["SuccessMessage"] is string successMessage) { <div class="status-message status-success">@successMessage</div> }
+<section class="panel"><div class="card-header"><div><p class="section-kicker">Dossiers contabilísticos</p><h2>Exercícios</h2></div></div>@if (Model.Dossiers.Count == 0) { <p class="empty-row">Esta entidade ainda não tem dossiers de análise.</p> } else { <div class="table-wrap"><table><thead><tr><th>Exercício</th><th>Dossier</th><th>SAF-T (PT)</th><th>Ações</th></tr></thead><tbody>@foreach (var dossier in Model.Dossiers.OrderByDescending(item => item.FiscalYear)) { <tr><td><strong>@dossier.FiscalYear</strong></td><td>@dossier.Name</td><td>@dossier.Imports.Count importação(ões)</td><td><div class="row-actions"><a asp-action="Details" asp-route-id="@dossier.Id">Abrir dossier</a><form asp-action="DeleteDossier" asp-route-id="@dossier.Id" method="post" onsubmit="return confirm('Eliminar o dossier do exercício @dossier.FiscalYear? Todas as importações e dados deste exercício serão eliminados permanentemente.');"><button type="submit" class="btn-link-danger">Eliminar</button></form></div></td></tr> }</tbody></table></div> }</section>
