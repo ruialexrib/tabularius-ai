@@ -1,0 +1,69 @@
+/* Compact, modern page headings. Loaded after the base styles so page titles stay visually light and leave more room for content. */
+.page-header,
+.hero {
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.page-header h1,
+.hero h1 {
+    font-size: clamp(1.65rem, 2.2vw, 2.15rem);
+    font-weight: 750;
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+}
+
+.page-header .eyebrow,
+.hero .eyebrow {
+    margin-bottom: 6px;
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+}
+
+.page-header .lead,
+.hero .lead {
+    max-width: 760px;
+    margin-top: 9px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* The home page uses its own hero sizing in site.css; keep it distinctive, but no longer oversized. */
+.home-intro {
+    padding-top: 14px;
+}
+
+.home-intro > div:first-child {
+    padding-top: 16px;
+}
+
+.home-intro h1 {
+    font-size: clamp(2rem, 3.2vw, 2.8rem);
+    font-weight: 780;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+}
+
+.home-intro .lead {
+    margin-top: 11px;
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+@media (max-width: 800px) {
+    .page-header,
+    .hero {
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .page-header h1,
+    .hero h1 {
+        font-size: clamp(1.5rem, 7vw, 1.85rem);
+    }
+
+    .home-intro h1 {
+        font-size: clamp(1.85rem, 8vw, 2.35rem);
+    }
+}
