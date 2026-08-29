@@ -1,19 +1,40 @@
 @model TabulariusAI.Web.Models.ErrorViewModel
 @{
-    ViewData["Title"] = "Erro";
+    ViewData["Title"] = "Erro da aplicação";
 }
 
-<section class="hero">
-    <p class="eyebrow">Erro da aplicação</p>
-    <h1>Ocorreu um erro.</h1>
-    <p class="lead">Não foi possível concluir a operação. Pode tentar novamente ou usar o identificador abaixo para localizar o erro nos logs.</p>
+<section class="error-page" aria-labelledby="error-title">
+    <div class="error-card">
+        <div class="error-card-main">
+            <div class="error-icon" aria-hidden="true">!</div>
+            <div class="error-copy">
+                <p class="eyebrow">Não foi possível concluir a operação</p>
+                <h1 id="error-title">Ocorreu um erro.</h1>
+                <p class="lead">A aplicação encontrou um problema inesperado ao processar o pedido. Os seus dados não devem ser reenviados até confirmar se a operação foi concluída.</p>
 
-    @if (Model.ShowRequestId)
-    {
-        <div class="status-card">
-            <span>Identificador do erro</span>
-            <strong><code>@Model.RequestId</code></strong>
-            <span>Ao pedir suporte, copie este identificador juntamente com as linhas relevantes do ficheiro de log.</span>
+                <div class="error-guidance">
+                    <strong>O que pode fazer agora</strong>
+                    <p>Volte à página anterior e tente novamente. Se o problema persistir, indique o código de erro abaixo ao suporte para que o incidente possa ser localizado nos logs da aplicação.</p>
+                </div>
+
+                <div class="error-actions">
+                    <button type="button" class="btn btn-primary" onclick="history.back()">Voltar e tentar novamente</button>
+                    <a class="btn btn-secondary" asp-controller="Home" asp-action="Index">Ir para o início</a>
+                </div>
+            </div>
         </div>
-    }
+
+        @if (Model.ShowRequestId)
+        {
+            <aside class="error-reference" aria-label="Código do erro">
+                <span class="error-reference-label">Código do erro</span>
+                <code>@Model.RequestId</code>
+                <p>Este código identifica exclusivamente este pedido e permite localizar o erro nos logs.</p>
+                <div class="error-reference-note">
+                    <strong>Ao contactar o suporte</strong>
+                    <span>Copie este código exatamente como é apresentado.</span>
+                </div>
+            </aside>
+        }
+    </div>
 </section>
