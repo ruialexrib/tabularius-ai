@@ -1,0 +1,17 @@
+@model TabulariusAI.Web.Data.Entities.SaftImport
+@{
+    ViewData["Title"] = $"Fornecedores · {Model.Dossier.AccountingEntity.Name}";
+}
+<section class="page-header">
+    <div><p class="eyebrow">SAF-T (PT) · MasterFiles</p><h1>Fornecedores</h1><p class="lead">Fornecedores da importação mais recente de @Model.Dossier.AccountingEntity.Name · exercício @Model.Dossier.FiscalYear.</p></div>
+    <a class="btn btn-secondary" asp-action="Details" asp-route-id="@Model.DossierId">Voltar ao dossier</a>
+</section>
+<section class="panel">
+    <div class="card-header"><div><p class="section-kicker">@Model.Suppliers.Count registos</p><h2>Ficha de fornecedores</h2><p>Fonte: @Model.OriginalFileName</p></div></div>
+    <div class="table-wrap">
+        <table><thead><tr><th>ID fornecedor</th><th>Nome</th><th>NIF</th><th>Conta</th></tr></thead><tbody>
+        @if (Model.Suppliers.Count == 0) { <tr><td colspan="4" class="empty-row">Esta importação não contém fornecedores persistidos. Volte a importar o SAF-T (PT).</td></tr> }
+        else { foreach (var item in Model.Suppliers.OrderBy(item => item.CompanyName)) { <tr><td><strong>@item.SupplierId</strong></td><td>@item.CompanyName</td><td>@item.TaxId</td><td>@item.AccountId</td></tr> } }
+        </tbody></table>
+    </div>
+</section>
