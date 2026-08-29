@@ -105,10 +105,11 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
         }
         foreach (var customer in element.Elements(ns + "Customer")) model.Customers.Add(ParseParty(customer, "CustomerID", "CustomerTaxID"));
         foreach (var supplier in element.Elements(ns + "Supplier")) model.Suppliers.Add(ParseParty(supplier, "SupplierID", "SupplierTaxID"));
+        foreach (var product in element.Elements(ns + "Product")) model.Products.Add(ParseProduct(product));
         model.AccountCount = model.Accounts.Count;
         model.CustomerCount = model.Customers.Count;
         model.SupplierCount = model.Suppliers.Count;
-        model.ProductCount = element.Elements(ns + "Product").Count();
+        model.ProductCount = model.Products.Count;
     }
 
     /// <summary>Reads an optional source element value while preserving the non-null model contract.</summary>
@@ -135,6 +136,21 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
     {
         var ns = element.Name.Namespace;
         return new SaftPartyViewModel { PartyId = GetRequiredValue(element, ns + idElementName), AccountId = GetRequiredValue(element, ns + "AccountID"), TaxId = GetRequiredValue(element, ns + taxElementName), CompanyName = GetRequiredValue(element, ns + "CompanyName") };
+    }
+
+    /// <summary>Maps one product or service master-file element into the import model.</summary>
+    /// <param name="element">The source product element.</param>
+    /// <returns>The parsed product or service.</returns>
+    private static SaftProductViewModel ParseProduct(XElement element)
+    {
+        var ns = element.Name.Namespace;
+        return new SaftProductViewModel
+        {
+            ProductCode = GetRequiredValue(element, ns + "ProductCode"),
+            ProductType = GetRequiredValue(element, ns + "ProductType"),
+            ProductGroup = GetOptionalValue(element, ns + "ProductGroup"),
+            Description = GetRequiredValue(element, ns + "ProductDescription")
+        };
     }
 
     /// <summary>Reads a required source element value.</summary>

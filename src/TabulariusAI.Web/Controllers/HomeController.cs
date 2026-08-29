@@ -65,6 +65,7 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, Tabulariu
         foreach (var source in analysis.Accounts) import.Accounts.Add(new SaftAccount { AccountId = source.AccountId, Description = source.Description, OpeningDebitBalance = source.OpeningDebitBalance, OpeningCreditBalance = source.OpeningCreditBalance, ClosingDebitBalance = source.ClosingDebitBalance, ClosingCreditBalance = source.ClosingCreditBalance, TaxonomyReference = source.TaxonomyReference });
         foreach (var source in analysis.Customers) import.Customers.Add(new SaftCustomer { CustomerId = source.PartyId, AccountId = source.AccountId, TaxId = source.TaxId, CompanyName = source.CompanyName });
         foreach (var source in analysis.Suppliers) import.Suppliers.Add(new SaftSupplier { SupplierId = source.PartyId, AccountId = source.AccountId, TaxId = source.TaxId, CompanyName = source.CompanyName });
+        foreach (var source in analysis.Products) import.Products.Add(new SaftProduct { ProductCode = source.ProductCode, ProductType = source.ProductType, ProductGroup = source.ProductGroup, Description = source.Description });
         dossier.Imports.Add(import);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

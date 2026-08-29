@@ -46,6 +46,11 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <returns>The supplier list.</returns>
     public async Task<IActionResult> Suppliers(int id, int? importId, CancellationToken cancellationToken) => await ImportViewAsync(id, importId, cancellationToken, query => query.Include(item => item.Suppliers));
 
+    /// <summary>Displays products and services from a selected SAF-T (PT) import.</summary>
+    /// <param name="id">The dossier identifier.</param><param name="importId">The optional SAF-T (PT) import identifier.</param><param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The product and service list.</returns>
+    public async Task<IActionResult> Products(int id, int? importId, CancellationToken cancellationToken) => await ImportViewAsync(id, importId, cancellationToken, query => query.Include(item => item.Products));
+
     /// <summary>Loads a selected import, defaulting to the latest accounting period, and exposes all dossier sources.</summary>
     /// <param name="id">The dossier identifier.</param><param name="importId">The optional selected import identifier.</param><param name="cancellationToken">A cancellation token.</param><param name="include">The include operation for the requested data area.</param>
     /// <returns>The current action view or a not-found result.</returns>

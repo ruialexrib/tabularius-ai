@@ -20,6 +20,8 @@ public sealed class TabulariusDbContext(DbContextOptions<TabulariusDbContext> op
     public DbSet<SaftCustomer> SaftCustomers => Set<SaftCustomer>();
     /// <summary>Gets the suppliers preserved from SAF-T (PT) imports.</summary>
     public DbSet<SaftSupplier> SaftSuppliers => Set<SaftSupplier>();
+    /// <summary>Gets the products and services preserved from SAF-T (PT) imports.</summary>
+    public DbSet<SaftProduct> SaftProducts => Set<SaftProduct>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,5 +33,6 @@ public sealed class TabulariusDbContext(DbContextOptions<TabulariusDbContext> op
         modelBuilder.Entity<SaftAccount>(entity => { entity.Property(item => item.AccountId).HasMaxLength(100).IsRequired(); entity.Property(item => item.Description).HasMaxLength(500).IsRequired(); entity.Property(item => item.TaxonomyReference).HasMaxLength(100); entity.Property(item => item.OpeningDebitBalance).HasPrecision(19, 4); entity.Property(item => item.OpeningCreditBalance).HasPrecision(19, 4); entity.Property(item => item.ClosingDebitBalance).HasPrecision(19, 4); entity.Property(item => item.ClosingCreditBalance).HasPrecision(19, 4); entity.HasOne(item => item.SaftImport).WithMany(item => item.Accounts).HasForeignKey(item => item.SaftImportId).OnDelete(DeleteBehavior.Cascade); entity.HasIndex(item => new { item.SaftImportId, item.AccountId }).IsUnique(); });
         modelBuilder.Entity<SaftCustomer>(entity => { entity.Property(item => item.CustomerId).HasMaxLength(100).IsRequired(); entity.Property(item => item.AccountId).HasMaxLength(100).IsRequired(); entity.Property(item => item.TaxId).HasMaxLength(30).IsRequired(); entity.Property(item => item.CompanyName).HasMaxLength(300).IsRequired(); entity.HasOne(item => item.SaftImport).WithMany(item => item.Customers).HasForeignKey(item => item.SaftImportId).OnDelete(DeleteBehavior.Cascade); entity.HasIndex(item => new { item.SaftImportId, item.CustomerId }).IsUnique(); });
         modelBuilder.Entity<SaftSupplier>(entity => { entity.Property(item => item.SupplierId).HasMaxLength(100).IsRequired(); entity.Property(item => item.AccountId).HasMaxLength(100).IsRequired(); entity.Property(item => item.TaxId).HasMaxLength(30).IsRequired(); entity.Property(item => item.CompanyName).HasMaxLength(300).IsRequired(); entity.HasOne(item => item.SaftImport).WithMany(item => item.Suppliers).HasForeignKey(item => item.SaftImportId).OnDelete(DeleteBehavior.Cascade); entity.HasIndex(item => new { item.SaftImportId, item.SupplierId }).IsUnique(); });
+        modelBuilder.Entity<SaftProduct>(entity => { entity.Property(item => item.ProductCode).HasMaxLength(100).IsRequired(); entity.Property(item => item.ProductType).HasMaxLength(20).IsRequired(); entity.Property(item => item.ProductGroup).HasMaxLength(100).IsRequired(); entity.Property(item => item.Description).HasMaxLength(500).IsRequired(); entity.HasOne(item => item.SaftImport).WithMany(item => item.Products).HasForeignKey(item => item.SaftImportId).OnDelete(DeleteBehavior.Cascade); entity.HasIndex(item => new { item.SaftImportId, item.ProductCode }).IsUnique(); });
     }
 }
