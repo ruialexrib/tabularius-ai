@@ -1,5 +1,7 @@
 using System;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using TabulariusAI.Web.Data;
 
 #nullable disable
 
@@ -8,6 +10,8 @@ namespace TabulariusAI.Web.Migrations;
 /// <summary>
 /// Creates the initial local accounting workspace schema.
 /// </summary>
+[DbContext(typeof(TabulariusDbContext))]
+[Migration("20260829150000_InitialAccountingWorkspace")]
 public partial class InitialAccountingWorkspace : Migration
 {
     /// <inheritdoc />
