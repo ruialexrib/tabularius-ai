@@ -1,5 +1,25 @@
-@model TabulariusAI.Web.Data.Entities.AccountingEntity
-@{ ViewData["Title"] = Model.Name; }
-<section class="page-header"><div><p class="eyebrow">Entidade</p><h1>@Model.Name</h1><p class="lead">NIF @Model.TaxRegistrationNumber · Selecione o exercício contabilístico que pretende analisar.</p></div><a class="btn btn-secondary" asp-action="Entities">Voltar às entidades</a></section>
+@model TabulariusAI.Web.Models.EntityDossiersViewModel
+@{
+    ViewData["Title"] = Model.Entity.Name;
+    var list = Model.List;
+    var hasFilters = !string.IsNullOrWhiteSpace(list.Search);
+}
+<section class="page-header"><div><p class="eyebrow">Entidade</p><h1>@Model.Entity.Name</h1><p class="lead">NIF @Model.Entity.TaxRegistrationNumber · Selecione o exercício contabilístico que pretende analisar.</p></div><a class="btn btn-secondary" asp-action="Entities">Voltar às entidades</a></section>
 @if (TempData["SuccessMessage"] is string successMessage) { <div class="status-message status-success">@successMessage</div> }
-<section class="panel"><div class="card-header"><div><p class="section-kicker">Dossiers contabilísticos</p><h2>Exercícios</h2></div></div>@if (Model.Dossiers.Count == 0) { <p class="empty-row">Esta entidade ainda não tem dossiers de análise.</p> } else { <div class="table-wrap"><table><thead><tr><th>Exercício</th><th>Dossier</th><th>SAF-T (PT)</th><th>Ações</th></tr></thead><tbody>@foreach (var dossier in Model.Dossiers.OrderByDescending(item => item.FiscalYear)) { <tr><td><strong>@dossier.FiscalYear</strong></td><td>@dossier.Name</td><td>@dossier.Imports.Count importação(ões)</td><td><div class="row-actions"><a asp-action="Details" asp-route-id="@dossier.Id">Abrir dossier</a><form asp-action="DeleteDossier" asp-route-id="@dossier.Id" method="post" onsubmit="return confirm('Eliminar o dossier do exercício @dossier.FiscalYear? Todas as importações e dados deste exercício serão eliminados permanentemente.');"><button type="submit" class="btn-link-danger">Eliminar</button></form></div></td></tr> }</tbody></table></div> }</section>
+<section class="list-workspace">
+    <div class="list-toolbar">
+        <form method="get" class="list-filter-form">
+            <input type="hidden" name="id" value="@Model.Entity.Id" />
+            <div class="list-search"><label for="search">Pesquisar</label><input id="search" name="search" value="@list.Search" placeholder="Exercício ou dossier" /></div>
+            <div class="list-page-size"><label for="pageSize">Registos</label><select id="pageSize" name="pageSize"><option selected="@(list.PageSize == 10)" value="10">10</option><option selected="@(list.PageSize == 25)" value="25">25</option><option selected="@(list.PageSize == 50)" value="50">50</option><option selected="@(list.PageSize == 100)" value="100">100</option></select></div>
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+            @if (hasFilters) { <a class="btn btn-secondary" asp-action="Entity" asp-route-id="@Model.Entity.Id" asp-route-pageSize="@list.PageSize">Limpar</a> }
+        </form>
+        <div class="list-count"><strong>@list.TotalItems</strong><span>dossiers encontrados</span></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Exercício</th><th>Dossier</th><th>SAF-T (PT)</th><th>Ações</th></tr></thead><tbody>
+        @if (list.Items.Count == 0) { <tr><td colspan="4" class="empty-row">@(hasFilters ? "Não foram encontrados dossiers para o filtro selecionado." : "Esta entidade ainda não tem dossiers de análise.")</td></tr> }
+        else { foreach (var dossier in list.Items) { <tr><td><strong>@dossier.FiscalYear</strong></td><td>@dossier.Name</td><td>@dossier.Imports.Count importação(ões)</td><td><div class="row-actions"><a asp-action="Details" asp-route-id="@dossier.Id">Abrir dossier</a><form asp-action="DeleteDossier" asp-route-id="@dossier.Id" method="post" onsubmit="return confirm('Eliminar o dossier do exercício @dossier.FiscalYear? Todas as importações e dados deste exercício serão eliminados permanentemente.');"><button type="submit" class="btn-link-danger">Eliminar</button></form></div></td></tr> } }
+    </tbody></table></div>
+    <div class="list-footer"><span>A mostrar @list.FirstItem–@list.LastItem de @list.TotalItems</span><nav class="pagination" aria-label="Paginação"><a class="page-link @(list.HasPreviousPage ? "" : "disabled")" asp-action="Entity" asp-route-id="@Model.Entity.Id" asp-route-search="@list.Search" asp-route-pageSize="@list.PageSize" asp-route-page="@(list.Page - 1)">Anterior</a><span class="page-current">Página @list.Page de @list.TotalPages</span><a class="page-link @(list.HasNextPage ? "" : "disabled")" asp-action="Entity" asp-route-id="@Model.Entity.Id" asp-route-search="@list.Search" asp-route-pageSize="@list.PageSize" asp-route-page="@(list.Page + 1)">Seguinte</a></nav></div>
+</section>
