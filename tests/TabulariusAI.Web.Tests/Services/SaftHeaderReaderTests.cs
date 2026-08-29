@@ -9,7 +9,7 @@ namespace TabulariusAI.Web.Tests.Services;
 /// </summary>
 public sealed class SaftHeaderReaderTests
 {
-    /// <summary>Verifies representative SAF-T (PT) header, account, customer and supplier parsing.</summary>
+    /// <summary>Verifies representative SAF-T (PT) header, account, customer, supplier and product parsing.</summary>
     [Fact]
     public async Task ReadAsync_ValidSaft_ReturnsMasterDataAndStructuralCounts()
     {
@@ -21,7 +21,7 @@ public sealed class SaftHeaderReaderTests
                 <GeneralLedgerAccounts><Account><AccountID>11</AccountID><AccountDescription>Caixa</AccountDescription><OpeningDebitBalance>10.00</OpeningDebitBalance><OpeningCreditBalance>0</OpeningCreditBalance><ClosingDebitBalance>20.00</ClosingDebitBalance><ClosingCreditBalance>0</ClosingCreditBalance></Account></GeneralLedgerAccounts>
                 <Customer><CustomerID>C1</CustomerID><AccountID>2111</AccountID><CustomerTaxID>500000001</CustomerTaxID><CompanyName>Cliente Teste</CompanyName></Customer>
                 <Supplier><SupplierID>S1</SupplierID><AccountID>2211</AccountID><SupplierTaxID>500000002</SupplierTaxID><CompanyName>Fornecedor Teste</CompanyName></Supplier>
-                <Product><ProductCode>P1</ProductCode></Product>
+                <Product><ProductType>P</ProductType><ProductCode>P1</ProductCode><ProductGroup>Mercadorias</ProductGroup><ProductDescription>Produto Teste</ProductDescription><ProductNumberCode>5600000000011</ProductNumberCode></Product>
               </MasterFiles>
               <GeneralLedgerEntries><Journal><Transaction><TransactionID>T1</TransactionID></Transaction></Journal></GeneralLedgerEntries>
               <SourceDocuments><SalesInvoices><Invoice><InvoiceNo>FT 1/1</InvoiceNo></Invoice></SalesInvoices><MovementOfGoods><StockMovement><DocumentNumber>GT 1/1</DocumentNumber></StockMovement></MovementOfGoods><WorkingDocuments><WorkDocument><DocumentNumber>OR 1/1</DocumentNumber></WorkDocument></WorkingDocuments><Payments><Payment><PaymentRefNo>RC 1/1</PaymentRefNo></Payment></Payments></SourceDocuments>
@@ -38,6 +38,12 @@ public sealed class SaftHeaderReaderTests
         Assert.Single(result.Suppliers);
         Assert.Equal("S1", result.Suppliers[0].PartyId);
         Assert.Equal("Fornecedor Teste", result.Suppliers[0].CompanyName);
+        Assert.Single(result.Products);
+        Assert.Equal("P", result.Products[0].ProductType);
+        Assert.Equal("P1", result.Products[0].ProductCode);
+        Assert.Equal("Mercadorias", result.Products[0].ProductGroup);
+        Assert.Equal("Produto Teste", result.Products[0].ProductDescription);
+        Assert.Equal("5600000000011", result.Products[0].ProductNumberCode);
         Assert.Equal(1, result.ProductCount);
         Assert.Equal(1, result.TransactionCount);
         Assert.Equal(1, result.SalesInvoiceCount);
