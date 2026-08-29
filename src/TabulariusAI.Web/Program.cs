@@ -27,7 +27,6 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<TabulariusDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Tabularius")));
 builder.Services.AddScoped<ISaftHeaderReader, SaftHeaderReader>();
-builder.Services.AddScoped<ISaftSchemaValidator, SaftSchemaValidator>();
 var applicationAssembly = typeof(Program).Assembly;
 var applicationVersion = applicationAssembly
     .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
