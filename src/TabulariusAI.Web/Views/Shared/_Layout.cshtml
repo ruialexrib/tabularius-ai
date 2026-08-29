@@ -1,3 +1,5 @@
+@using TabulariusAI.Web.Models
+@inject ApplicationInfo AppInfo
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -9,8 +11,8 @@
 <body>
     <div class="app-shell">
         <header class="app-header">
-            <a class="brand" asp-controller="Home" asp-action="Index"><span class="brand-mark">T</span><span>Tabularius AI</span></a>
-            <span class="brand-description">Análise e controlo contabilístico</span>
+            <a class="brand" asp-controller="Home" asp-action="Index"><span class="brand-mark">T</span><span>Tabularius AI</span><small class="version-badge">v@(AppInfo.Version)</small></a>
+            <span class="brand-description">@AppInfo.Description</span>
         </header>
         <aside class="sidebar" aria-label="Navegação principal">
             <nav>
@@ -26,7 +28,7 @@
             </nav>
         </aside>
         <main class="app-content">@RenderBody()</main>
-        <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span></footer>
+        <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span><span class="footer-version-badge">v@(AppInfo.Version)</span></footer>
     </div>
 </body>
 </html>
