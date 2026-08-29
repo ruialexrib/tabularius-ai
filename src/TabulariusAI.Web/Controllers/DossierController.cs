@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Data.Entities;
 using TabulariusAI.Web.Models;
+using TabulariusAI.Web.Services;
 
 namespace TabulariusAI.Web.Controllers;
 
@@ -36,6 +37,19 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     public async Task<IActionResult> AccountingEntries(int id, int? importId, string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default) { var source = await LoadSourceAsync(id, importId, cancellationToken); if (source is null) return NotFound(); var query = dbContext.SaftTransactions.AsNoTracking().Where(item => item.SaftImportId == source.SelectedImport.Id); if (!string.IsNullOrWhiteSpace(search)) { var term = search.Trim(); query = query.Where(item => item.TransactionId.Contains(term) || item.Description.Contains(term) || item.JournalId.Contains(term) || item.JournalDescription.Contains(term) || (item.DocArchivalNumber != null && item.DocArchivalNumber.Contains(term)) || item.Lines.Any(line => line.AccountId.Contains(term) || (line.SourceDocumentId != null && line.SourceDocumentId.Contains(term)))); } return View(new SaftListViewModel<SaftTransaction> { Source = source, List = await PageAsync(query.OrderByDescending(item => item.TransactionDate).ThenBy(item => item.JournalId).ThenBy(item => item.TransactionId), search, page, pageSize, cancellationToken) }); }
     /// <summary>Displays one accounting entry and its debit and credit lines, restricted to the selected dossier source.</summary>
     public async Task<IActionResult> AccountingEntry(int id, int importId, int transactionId, CancellationToken cancellationToken = default) { var source = await LoadSourceAsync(id, importId, cancellationToken); if (source is null) return NotFound(); var transaction = await dbContext.SaftTransactions.AsNoTracking().Include(item => item.Lines).SingleOrDefaultAsync(item => item.Id == transactionId && item.SaftImportId == source.SelectedImport.Id, cancellationToken); if (transaction is null) return NotFound(); return View(new SaftEntryDetailViewModel { Source = source, Transaction = transaction }); }
+    /// <summary>Displays a deterministic trial balance for the selected SAF-T (PT) source.</summary>
+    public async Task<IActionResult> TrialBalance(int id, int? importId, string? search, bool includeZeroAccounts = false, CancellationToken cancellationToken = default)
+    {
+        var source = await LoadSourceAsync(id, importId, cancellationToken);
+        if (source is null) return NotFound();
+        var accounts = await dbContext.SaftAccounts.AsNoTracking().Where(item => item.SaftImportId == source.SelectedImport.Id).ToListAsync(cancellationToken);
+        var lines = await dbContext.SaftTransactionLines.AsNoTracking().Where(item => item.SaftTransaction.SaftImportId == source.SelectedImport.Id).ToListAsync(cancellationToken);
+        var rows = TrialBalanceCalculator.Calculate(accounts, lines).AsEnumerable();
+        if (!includeZeroAccounts) rows = rows.Where(item => item.OpeningDebit != 0m || item.OpeningCredit != 0m || item.DebitMovements != 0m || item.CreditMovements != 0m || item.ReportedClosingDebit != 0m || item.ReportedClosingCredit != 0m);
+        var normalizedSearch = search?.Trim();
+        if (!string.IsNullOrWhiteSpace(normalizedSearch)) rows = rows.Where(item => item.AccountId.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) || item.Description.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase));
+        return View(new TrialBalanceViewModel { Source = source, Rows = rows.ToList(), Search = normalizedSearch, IncludeZeroAccounts = includeZeroAccounts });
+    }
     /// <summary>Loads a selected import, defaulting to the latest accounting period, and exposes all dossier sources.</summary>
     private async Task<IActionResult> ImportViewAsync(int id, int? importId, CancellationToken cancellationToken, Func<IQueryable<SaftImport>, IQueryable<SaftImport>> include) { var source = await LoadSourceAsync(id, importId, cancellationToken, include); return source is null ? NotFound() : View(source); }
     /// <summary>Loads source-selection context for a dossier without loading list rows.</summary>
