@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,8 @@ builder.Host.UseSerilog();
 builder.Services.AddControllersWithViews();
 
 var databaseProvider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant() ?? "sqlite";
+var isLocalMode = databaseProvider == "sqlite";
+if (isLocalMode && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS"))) builder.WebHost.UseUrls("http://127.0.0.1:0");
 builder.Services.AddDbContext<TabulariusDbContext>(options =>
 {
     if (databaseProvider == "sqlite")
@@ -39,7 +42,25 @@ builder.Services.AddAuthorizationBuilder().SetFallbackPolicy(new AuthorizationPo
 var applicationAssembly = typeof(Program).Assembly; var applicationVersion = applicationAssembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false).OfType<System.Reflection.AssemblyInformationalVersionAttribute>().SingleOrDefault()?.InformationalVersion.Split('+')[0] ?? applicationAssembly.GetName().Version?.ToString(3) ?? "0.1.0"; builder.Services.AddSingleton(new ApplicationInfo(applicationVersion, "Análise e controlo contabilístico"));
 var app = builder.Build(); await InitializeDatabaseAsync(app, databaseProvider); await SeedIdentityAsync(app);
 app.UseSerilogRequestLogging(options => { options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms"; }); if (!app.Environment.IsDevelopment()) { app.UseExceptionHandler("/Home/Error"); app.UseHsts(); } app.UseHttpsRedirection(); app.UseStaticFiles(); app.UseRouting(); app.UseAuthentication(); app.UseMiddleware<MandatoryPasswordChangeMiddleware>(); app.UseAuthorization(); app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-try { Log.Information("Starting Tabularius AI version {Version} in {DatabaseProvider} database mode", applicationVersion, databaseProvider); app.Run(); } catch (Exception exception) { Log.Fatal(exception, "Tabularius AI terminated unexpectedly"); throw; } finally { Log.CloseAndFlush(); }
+try
+{
+    Log.Information("Starting Tabularius AI version {Version} in {DatabaseProvider} database mode", applicationVersion, databaseProvider);
+    await app.StartAsync();
+    if (isLocalMode) OpenLocalApplicationInBrowser(app);
+    await app.WaitForShutdownAsync();
+}
+catch (Exception exception) { Log.Fatal(exception, "Tabularius AI terminated unexpectedly"); throw; }
+finally { Log.CloseAndFlush(); }
+
+/// <summary>Opens the local application URL in the operating system default browser after the web server has started.</summary>
+/// <param name="application">The running web application.</param>
+static void OpenLocalApplicationInBrowser(WebApplication application)
+{
+    var localUrl = application.Urls.FirstOrDefault(url => url.StartsWith("http://127.0.0.1:", StringComparison.OrdinalIgnoreCase)) ?? application.Urls.FirstOrDefault();
+    if (string.IsNullOrWhiteSpace(localUrl)) return;
+    try { Process.Start(new ProcessStartInfo { FileName = localUrl, UseShellExecute = true }); Log.Information("Opened Tabularius AI in the default browser at {LocalUrl}", localUrl); }
+    catch (Exception exception) { Log.Warning(exception, "Tabularius AI could not open the default browser automatically. Open {LocalUrl} manually.", localUrl); }
+}
 
 /// <summary>Initializes the configured database provider for the current deployment mode.</summary>
 /// <param name="application">The running web application.</param>
