@@ -1,0 +1,42 @@
+@model TabulariusAI.Web.Data.Entities.AnalysisDossier
+@{
+    ViewData["Title"] = $"{Model.AccountingEntity.Name} · {Model.FiscalYear}";
+}
+
+<section class="hero">
+    <p class="eyebrow">Dossier contabilístico</p>
+    <h1>@Model.AccountingEntity.Name · @Model.FiscalYear</h1>
+    <p class="lead">Este é o espaço de trabalho do exercício. As fontes importadas, análises, reconciliações, testes e relatórios serão organizados neste contexto.</p>
+</section>
+
+<section class="panel">
+    <h2>Fontes importadas</h2>
+    @if (Model.Imports.Count == 0)
+    {
+        <p>Não existem ficheiros SAF-T (PT) associados a este dossier.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Ficheiro SAF-T (PT)</th><th>Versão</th><th>Período</th><th>Importado em</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Imports.OrderByDescending(item => item.ImportedAtUtc))
+                {
+                    <tr>
+                        <td><strong>@item.OriginalFileName</strong></td>
+                        <td>@item.SaftVersion</td>
+                        <td>@(item.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(item.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>@item.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<section class="panel">
+    <h2>Área de trabalho</h2>
+    <p>O próximo desenvolvimento ligará este dossier às áreas SAF-T (PT), análise contabilística, reconciliação, testes e auditoria, analytics e relatórios.</p>
+</section>
