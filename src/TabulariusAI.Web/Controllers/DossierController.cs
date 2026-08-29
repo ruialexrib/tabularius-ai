@@ -5,7 +5,7 @@ using TabulariusAI.Web.Data;
 namespace TabulariusAI.Web.Controllers;
 
 /// <summary>
-/// Provides read-only navigation over accounting entities, analysis dossiers and SAF-T (PT) imports.
+/// Provides read-only navigation over accounting entities and their analysis dossiers.
 /// </summary>
 public sealed class DossierController(TabulariusDbContext dbContext) : Controller
 {
@@ -24,33 +24,34 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     }
 
     /// <summary>
-    /// Displays the analysis dossiers currently available in the local workspace.
+    /// Displays one accounting entity and the dossiers available for it.
     /// </summary>
+    /// <param name="id">The accounting entity identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the database operation.</param>
-    /// <returns>The dossiers view.</returns>
-    public async Task<IActionResult> Dossiers(CancellationToken cancellationToken)
+    /// <returns>The entity workspace view, or a not-found result.</returns>
+    public async Task<IActionResult> Entity(int id, CancellationToken cancellationToken)
     {
-        var dossiers = await dbContext.AnalysisDossiers.AsNoTracking()
-            .Include(item => item.AccountingEntity)
-            .Include(item => item.Imports)
-            .OrderByDescending(item => item.FiscalYear)
-            .ThenBy(item => item.AccountingEntity.Name)
-            .ToListAsync(cancellationToken);
-        return View(dossiers);
+        var entity = await dbContext.AccountingEntities.AsNoTracking()
+            .Include(item => item.Dossiers)
+            .ThenInclude(item => item.Imports)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        return entity is null ? NotFound() : View(entity);
     }
 
     /// <summary>
-    /// Displays the SAF-T (PT) imports currently available in the local workspace.
+    /// Displays one analysis dossier including its SAF-T (PT) import history.
     /// </summary>
+    /// <param name="id">The analysis dossier identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the database operation.</param>
-    /// <returns>The imports view.</returns>
-    public async Task<IActionResult> Imports(CancellationToken cancellationToken)
+    /// <returns>The dossier workspace view, or a not-found result.</returns>
+    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        var imports = await dbContext.SaftImports.AsNoTracking()
-            .Include(item => item.Dossier)
-            .ThenInclude(item => item.AccountingEntity)
-            .OrderByDescending(item => item.ImportedAtUtc)
-            .ToListAsync(cancellationToken);
-        return View(imports);
+        var dossier = await dbContext.AnalysisDossiers.AsNoTracking()
+            .Include(item => item.AccountingEntity)
+            .Include(item => item.Imports)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        return dossier is null ? NotFound() : View(dossier);
     }
 }
