@@ -1,8 +1,12 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using TabulariusAI.Web.Data;
 
 #nullable disable
 namespace TabulariusAI.Web.Migrations;
 
+[DbContext(typeof(TabulariusDbContext))]
+[Migration("20260830220000_AddSaftSalesInvoices")]
 public partial class AddSaftSalesInvoices : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
