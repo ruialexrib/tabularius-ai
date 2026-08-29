@@ -1,41 +1,56 @@
 ---
 name: tabularius-quality
-description: Validate Tabularius AI changes with .NET builds, tests, SAF-T checks, persistence verification and browser review.
+description: Validate Tabularius AI changes with local checks and the mandatory GitHub Actions CI quality gate.
 ---
 
 # Tabularius AI quality checks
 
-Use this skill when verifying implementation work or reviewing a pull request.
+Use this skill for tests, build verification, CI status investigation, SAF-T checks, persistence verification and browser review. This is the single source of truth for repository quality gates; other skills should reference it rather than duplicate CI rules.
 
-## Standard verification
+## Mandatory quality gate
 
-Use the project .NET 9 SDK and run:
+Every commit pushed to `main` and every pull request targeting `main` must run `.github/workflows/ci.yml` in GitHub Actions.
+
+The CI workflow must, at minimum:
+
+1. restore the solution;
+2. build the complete solution in Release configuration with warnings treated as errors;
+3. run the complete automated test suite;
+4. collect and retain test results and code coverage artifacts.
+
+A repository change is not considered verified merely because the files were committed successfully. After a commit, inspect the corresponding GitHub Actions CI run. Report the CI result accurately.
+
+If CI fails, do not continue feature development as though the change were healthy. Inspect the failed job and logs, identify the root cause, correct the code, tests or workflow as appropriate, commit the correction, and inspect the new CI run. Repeat until CI passes or an external/environmental blocker is established. Never weaken, remove or bypass a legitimate failing test simply to make CI green.
+
+When multiple commits are made as part of one change set and GitHub concurrency cancels superseded runs, verify the latest run for the final commit.
+
+## Local verification
+
+When a suitable .NET 9 environment is available, run:
 
 ```powershell
 dotnet restore TabulariusAI.sln
 dotnet build TabulariusAI.sln --configuration Release --no-restore
-```
-
-Run the full test suite once test projects exist:
-
-```powershell
 dotnet test TabulariusAI.sln --configuration Release --no-build
 ```
 
 Treat warnings as failures because the repository enables `TreatWarningsAsErrors`.
 
-## Code quality
+Local checks complement GitHub CI; they do not replace inspection of the CI run after a pushed commit.
 
-- Verify every new or modified C# class and method has English XML documentation according to `tabularius-coding`.
-- Prefer focused tests for changed behavior, then run the full suite before a release or broad refactor.
-- Persistence and SAF-T parser changes require integration or representative parser tests.
-- Monetary calculations require deterministic expected-value tests using `decimal`.
+## Test strategy
+
+Add focused automated tests with each behavior that can be tested deterministically. Prioritise SAF-T parsing and validation, accounting calculations, persistence rules, duplicate handling, reconciliation rules and AI response validation boundaries.
+
+Use synthetic or anonymised fixtures only. Never commit real taxpayer SAF-T data or confidential accounting records.
+
+A bug correction should normally include a regression test that fails before the correction and passes afterwards.
 
 ## SAF-T verification
 
-- Test valid files, malformed XML, unsupported namespaces/versions, missing required fields and large-file behavior when applicable.
-- Do not use real confidential SAF-T data as committed fixtures. Use synthetic or anonymised fixtures.
-- Verify that failed imports do not leave partially persisted datasets.
+Test supported namespaces and versions, malformed XML, unsupported structures, missing mandatory fields, encoding, decimal precision, date parsing, duplicate data, empty collections and large-file behavior as those capabilities are introduced.
+
+Persistence changes require tests for representative relationships and transactional behavior. Failed imports must not leave partially persisted datasets.
 
 ## Browser review
 
@@ -43,4 +58,4 @@ For visual changes, inspect the rendered page and the state affected by the chan
 
 ## Reporting
 
-Report exactly which commands and observable checks were completed. Distinguish passed, skipped and environment-blocked checks. Do not claim success for builds, tests, database migrations, installers or UI states that were not directly verified.
+State exactly what was verified. Distinguish local checks, GitHub CI, browser checks and environment-blocked checks. Do not claim a build, test, migration or UI state passed unless the corresponding check was actually observed.
