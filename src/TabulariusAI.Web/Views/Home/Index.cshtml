@@ -1,29 +1,88 @@
 @{
     ViewData["Title"] = "Início";
 }
-<section class="home-intro">
-    <div>
-        <p class="eyebrow">Análise e controlo contabilístico</p>
-        <h1>Tabularius AI</h1>
-        <p class="lead">Um espaço de trabalho local para explorar SAF-T (PT), estruturar dossiers contabilísticos e evoluir da consulta de dados para análise, reconciliação, testes e inteligência assistida.</p>
+
+<section class="home-hero">
+    <div class="home-hero-copy">
+        <p class="eyebrow">Workspace contabilístico</p>
+        <h1>Dos dados contabilísticos<br /><span>à análise.</span></h1>
+        <p class="lead">Explore SAF-T (PT), organize dossiers e transforme informação contabilística em análises claras, rastreáveis e prontas para apoiar o trabalho diário.</p>
         <div class="home-actions">
             <a class="btn btn-primary" asp-controller="Dossier" asp-action="Entities">Abrir entidades</a>
             <a class="btn btn-secondary" asp-controller="Home" asp-action="Import">Importar SAF-T (PT)</a>
         </div>
+        <div class="home-principles" aria-label="Princípios da aplicação">
+            <span>Local-first</span>
+            <span>Cálculo determinístico</span>
+            <span>IA assistida</span>
+        </div>
     </div>
-    <div class="home-status-card">
-        <span class="saft-source-label">Processamento</span>
-        <strong>Local-first</strong>
-        <p>Os dados contabilísticos são preparados no espaço de trabalho local da aplicação.</p>
+
+    <aside class="home-hero-visual" aria-label="Fluxo de análise contabilística">
+        <div class="home-visual-topline">
+            <span class="home-live-dot"></span>
+            <span>Workspace</span>
+            <small>SAF-T (PT)</small>
+        </div>
+        <div class="home-visual-company">
+            <span class="home-company-mark">T</span>
+            <div><strong>Entidade contabilística</strong><small>Exercício e fontes de dados</small></div>
+        </div>
+        <div class="home-visual-grid">
+            <div><small>Balancete</small><strong>Contas</strong><span>Débito · Crédito · Saldo</span></div>
+            <div><small>Razão</small><strong>Movimentos</strong><span>Lançamentos e detalhe</span></div>
+            <div><small>Resultados</small><strong>Análise</strong><span>Rendimentos e gastos</span></div>
+            <div class="home-visual-accent"><small>Assistente</small><strong>AI</strong><span>Interpretação contextual</span></div>
+        </div>
+        <div class="home-visual-footer"><span>Fonte selecionada</span><strong>Período contabilístico ativo</strong></div>
+    </aside>
+</section>
+
+<section class="home-section-heading">
+    <div><p class="section-kicker">Explorar</p><h2>Um espaço de trabalho, várias perspetivas</h2></div>
+    <p>Comece pela entidade e mantenha sempre o contexto do exercício e da fonte contabilística que está a analisar.</p>
+</section>
+
+<section class="home-capabilities home-capabilities-modern" aria-label="Áreas da aplicação">
+    <article>
+        <span class="home-feature-number">01</span>
+        <div class="home-feature-icon">EN</div>
+        <h2>Entidades e dossiers</h2>
+        <p>Organize empresas, exercícios e importações numa estrutura simples e rastreável.</p>
+        <a asp-controller="Dossier" asp-action="Entities">Explorar entidades <b>→</b></a>
+    </article>
+    <article>
+        <span class="home-feature-number">02</span>
+        <div class="home-feature-icon">ST</div>
+        <h2>SAF-T (PT)</h2>
+        <p>Consulte contas, clientes, fornecedores, produtos, documentos e movimentos contabilísticos.</p>
+        <a asp-controller="Home" asp-action="Import">Importar ficheiro <b>→</b></a>
+    </article>
+    <article>
+        <span class="home-feature-number">03</span>
+        <div class="home-feature-icon">AN</div>
+        <h2>Análise contabilística</h2>
+        <p>Trabalhe com balancetes, razão, resultados e outras análises sobre dados persistidos.</p>
+        <a asp-controller="Dossier" asp-action="Entities">Abrir workspace <b>→</b></a>
+    </article>
+    <article>
+        <span class="home-feature-number">04</span>
+        <div class="home-feature-icon">AI</div>
+        <h2>Inteligência assistida</h2>
+        <p>Acrescente interpretação por IA mantendo os cálculos contabilísticos fora do modelo generativo.</p>
+        <span class="home-feature-status">Evolução do produto</span>
+    </article>
+</section>
+
+<section class="panel home-flow-panel home-flow-modern">
+    <div class="card-header">
+        <div><p class="section-kicker">Fluxo de trabalho</p><h2>Contexto contabilístico do início ao fim</h2></div>
+        <p class="home-flow-description">A aplicação acompanha a seleção feita em cada etapa para evitar análises sem contexto.</p>
     </div>
-</section>
-<section class="home-capabilities" aria-label="Áreas da aplicação">
-    <article><span>01</span><h2>Dossiers</h2><p>Organize entidades, exercícios e fontes contabilísticas numa estrutura de trabalho coerente.</p></article>
-    <article><span>02</span><h2>SAF-T (PT)</h2><p>Explore contas, clientes, fornecedores e, progressivamente, movimentos, documentos e impostos.</p></article>
-    <article><span>03</span><h2>Análise</h2><p>Transforme os dados contabilísticos em balancetes, razão, reconciliações, testes e indicadores.</p></article>
-    <article><span>04</span><h2>Inteligência</h2><p>Acrescente interpretação assistida por IA sem substituir os cálculos contabilísticos determinísticos.</p></article>
-</section>
-<section class="panel home-flow-panel">
-    <div class="card-header"><div><p class="section-kicker">Fluxo de trabalho</p><h2>Da entidade à análise</h2><p>A navegação acompanha o contexto contabilístico em vez de apresentar áreas sem um dossier selecionado.</p></div></div>
-    <div class="home-flow"><div><strong>Entidade</strong><span>Empresa ou organização</span></div><b>→</b><div><strong>Exercício</strong><span>Dossier contabilístico</span></div><b>→</b><div><strong>Fontes</strong><span>SAF-T (PT) por período</span></div><b>→</b><div><strong>Análise</strong><span>Exploração e controlo</span></div></div>
+    <div class="home-flow">
+        <div><span>01</span><strong>Entidade</strong><small>Empresa ou organização</small></div><b>→</b>
+        <div><span>02</span><strong>Exercício</strong><small>Dossier contabilístico</small></div><b>→</b>
+        <div><span>03</span><strong>Fonte</strong><small>SAF-T (PT) selecionado</small></div><b>→</b>
+        <div><span>04</span><strong>Análise</strong><small>Exploração e controlo</small></div>
+    </div>
 </section>
