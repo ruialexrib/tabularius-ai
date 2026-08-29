@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Product>Tabularius AI</Product>
+    <Company>Tabularius AI</Company>
+    <Description>SAF-T analytics with AI-powered insights.</Description>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,29 @@
+## .NET / Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/
+
+## Build / publish
+artifacts/
+publish/
+
+## Local configuration and secrets
+.env
+.env.*
+!*.example
+appsettings.Local.json
+
+## OS
+.DS_Store
+Thumbs.db
