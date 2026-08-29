@@ -11,6 +11,8 @@ public sealed class SaftImport
     public int DossierId { get; set; }
     /// <summary>Gets or sets the original SAF-T (PT) file name.</summary>
     public string OriginalFileName { get; set; } = string.Empty;
+    /// <summary>Gets or sets the SHA-256 hash of the exact imported SAF-T (PT) file content.</summary>
+    public string? ContentHash { get; set; }
     /// <summary>Gets or sets the SAF-T (PT) version declared by the imported document.</summary>
     public string SaftVersion { get; set; } = string.Empty;
     /// <summary>Gets or sets the start date represented by the imported document.</summary>
