@@ -1,5 +1,6 @@
 using System.Text;
 using TabulariusAI.Web.Services;
+using Xunit;
 
 namespace TabulariusAI.Web.Tests.Services;
 
