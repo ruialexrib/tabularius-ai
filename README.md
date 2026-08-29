@@ -1,22 +1,74 @@
 # Tabularius AI
 
-**SAF-T analytics with AI-powered insights**
+**SAF-T (PT) analytics with AI-powered insights**
 
-Tabularius AI is a local-first application for importing, analysing and exploring Portuguese SAF-T accounting data, with AI-assisted insights planned as part of the product roadmap.
+Tabularius AI is a local-first accounting analysis workspace for importing, exploring and analysing Portuguese SAF-T (PT) data. It supports a lightweight local Windows deployment and a multi-user server deployment, while keeping deterministic accounting processing separate from optional AI-assisted interpretation.
 
 ## Technology
 
 - ASP.NET Core MVC
 - .NET 9
-- SQL Server LocalDB (planned)
-- Entity Framework Core (planned)
-- Mistral AI integration (planned)
+- Entity Framework Core
+- SQLite for local Windows deployments
+- SQL Server for server deployments
+- Docker for the server stack
+- AI provider abstraction planned for assisted analysis
 
-## Current status
+## Deployment modes
 
-The project is in its initial bootstrap phase. This first version establishes the ASP.NET Core MVC application and shared project structure.
+Tabularius AI supports two deployment profiles.
 
-## Run locally
+### Local Windows
+
+The local profile is designed for an individual user and does not require Docker, SQL Server or a separately installed .NET runtime when using the self-contained publication.
+
+Architecture:
+
+```text
+Windows
+  TabulariusAI.Web.exe
+        |
+        +-- ASP.NET Core on localhost
+        |
+        +-- SQLite
+             data/tabularius.db
+```
+
+To create the self-contained Windows x64 publication from a development machine with the .NET 9 SDK installed:
+
+```bat
+publish-local.bat
+```
+
+The output is created in:
+
+```text
+artifacts/publish/win-x64/
+```
+
+Run `TabulariusAI.Web.exe` from that directory. The SQLite database is created under the local `data` directory on first run.
+
+### Docker server
+
+The server profile is intended for shared browser access and uses SQL Server 2022 Express.
+
+Create a `.env` file containing a strong SQL Server administrator password:
+
+```text
+TABULARIUS_DB_PASSWORD=replace-with-a-strong-password
+```
+
+Then start the stack:
+
+```bash
+docker compose up -d --build
+```
+
+The application is exposed on port `8080` by the current development deployment definition. SQL Server data is stored in a named Docker volume.
+
+Do not commit the `.env` file or production credentials.
+
+## Development
 
 Requirements: .NET 9 SDK.
 
@@ -25,14 +77,20 @@ dotnet restore
 dotnet run --project src/TabulariusAI.Web
 ```
 
-Open the local address shown by ASP.NET Core in the terminal.
+Development uses the local SQLite profile by default. The database is stored in `data/tabularius.db`.
 
-## Roadmap
+## Persistence strategy
 
-1. Application foundation and interface
-2. Entity Framework Core and SQL Server LocalDB
-3. SAF-T PT import and validation
-4. Accounting analytics and dashboards
-5. AI service abstraction and Mistral integration
-6. AI assistant for SAF-T data
-7. Windows packaging and installer
+Local and server deployments use different relational database providers. SQLite is optimized for a simple local installation, while SQL Server is used for the shared server deployment.
+
+The current local bootstrap uses schema creation for SQLite. A provider-specific migration strategy is required before local releases can safely upgrade an existing SQLite database between application versions. Until that migration path is implemented and tested, local self-contained publications should be treated as development/pre-release builds rather than production upgrade-safe installers.
+
+## Current direction
+
+The product hierarchy is:
+
+```text
+Entity -> Accounting dossier / fiscal year -> SAF-T (PT) imports -> Analysis
+```
+
+The roadmap includes accounting analytics, reconciliation, tests and optional AI-assisted interpretation.
