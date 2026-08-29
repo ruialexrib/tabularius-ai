@@ -1,6 +1,19 @@
+@model TabulariusAI.Web.Models.ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "Erro";
 }
 
-<h1>Something went wrong.</h1>
-<p>Please return to the home page and try again.</p>
+<section class="hero">
+    <p class="eyebrow">Erro da aplicação</p>
+    <h1>Ocorreu um erro.</h1>
+    <p class="lead">Não foi possível concluir a operação. Pode tentar novamente ou usar o identificador abaixo para localizar o erro nos logs.</p>
+
+    @if (Model.ShowRequestId)
+    {
+        <div class="status-card">
+            <span>Identificador do erro</span>
+            <strong><code>@Model.RequestId</code></strong>
+            <span>Ao pedir suporte, copie este identificador juntamente com as linhas relevantes do ficheiro de log.</span>
+        </div>
+    }
+</section>
