@@ -56,6 +56,12 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, Tabulariu
         foreach (var source in analysis.Customers) import.Customers.Add(new SaftCustomer { CustomerId = source.PartyId, AccountId = source.AccountId, TaxId = source.TaxId, CompanyName = source.CompanyName });
         foreach (var source in analysis.Suppliers) import.Suppliers.Add(new SaftSupplier { SupplierId = source.PartyId, AccountId = source.AccountId, TaxId = source.TaxId, CompanyName = source.CompanyName });
         foreach (var source in analysis.Products) import.Products.Add(new SaftProduct { ProductType = source.ProductType, ProductCode = source.ProductCode, ProductGroup = source.ProductGroup, ProductDescription = source.ProductDescription, ProductNumberCode = source.ProductNumberCode });
+        foreach (var source in analysis.Transactions)
+        {
+            var persistedTransaction = new SaftTransaction { JournalId = source.JournalId, JournalDescription = source.JournalDescription, TransactionId = source.TransactionId, Period = source.Period, TransactionDate = source.TransactionDate, SourceId = source.SourceId, Description = source.Description, DocArchivalNumber = source.DocArchivalNumber, TransactionType = source.TransactionType, GlPostingDate = source.GlPostingDate, CustomerId = source.CustomerId, SupplierId = source.SupplierId };
+            foreach (var line in source.Lines) persistedTransaction.Lines.Add(new SaftTransactionLine { RecordId = line.RecordId, AccountId = line.AccountId, SourceDocumentId = line.SourceDocumentId, SystemEntryDate = line.SystemEntryDate, Description = line.Description, Side = line.Side, Amount = line.Amount });
+            import.Transactions.Add(persistedTransaction);
+        }
         dossier.Imports.Add(import); await dbContext.SaveChangesAsync(cancellationToken); await transaction.CommitAsync(cancellationToken);
     }
     /// <summary>Parses a SAF-T ISO date value into a date-only representation.</summary>
