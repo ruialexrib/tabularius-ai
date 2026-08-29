@@ -24,9 +24,12 @@ public sealed class UsersController(UserManager<ApplicationUser> userManager) : 
         page = Math.Max(1, page); pageSize = new[] { 10, 25, 50, 100 }.Contains(pageSize) ? pageSize : 10; search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(); role = ApplicationRoles.All.Contains(role ?? string.Empty) ? role : null; status = status is "active" or "locked" ? status : null;
         IQueryable<ApplicationUser> query = userManager.Users.AsNoTracking();
         if (search is not null) query = query.Where(user => (user.UserName != null && user.UserName.Contains(search)) || user.DisplayName.Contains(search) || (user.Email != null && user.Email.Contains(search)));
-        if (status == "active") query = query.Where(user => !user.LockoutEnd.HasValue || user.LockoutEnd <= DateTimeOffset.UtcNow); if (status == "locked") query = query.Where(user => user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow);
-        var filteredUsers = await query.OrderBy(user => user.DisplayName).ThenBy(user => user.UserName).ToListAsync(); var rows = new List<UserListItemViewModel>(filteredUsers.Count);
-        foreach (var user in filteredUsers) { var roles = await userManager.GetRolesAsync(user); if (role is not null && !roles.Contains(role)) continue; rows.Add(new UserListItemViewModel { Id = user.Id, UserName = user.UserName ?? string.Empty, DisplayName = user.DisplayName, Email = user.Email ?? string.Empty, Role = roles.Contains(ApplicationRoles.Administrator) ? "Administrador" : "Utilizador", IsLocked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTimeOffset.UtcNow, CreatedAtUtc = user.CreatedAtUtc }); }
+        var filteredUsers = await query.OrderBy(user => user.DisplayName).ThenBy(user => user.UserName).ToListAsync();
+        var now = DateTimeOffset.UtcNow;
+        if (status == "active") filteredUsers = filteredUsers.Where(user => !user.LockoutEnd.HasValue || user.LockoutEnd <= now).ToList();
+        if (status == "locked") filteredUsers = filteredUsers.Where(user => user.LockoutEnd.HasValue && user.LockoutEnd > now).ToList();
+        var rows = new List<UserListItemViewModel>(filteredUsers.Count);
+        foreach (var user in filteredUsers) { var roles = await userManager.GetRolesAsync(user); if (role is not null && !roles.Contains(role)) continue; rows.Add(new UserListItemViewModel { Id = user.Id, UserName = user.UserName ?? string.Empty, DisplayName = user.DisplayName, Email = user.Email ?? string.Empty, Role = roles.Contains(ApplicationRoles.Administrator) ? "Administrador" : "Utilizador", IsLocked = user.LockoutEnd.HasValue && user.LockoutEnd.Value > now, CreatedAtUtc = user.CreatedAtUtc }); }
         var totalItems = rows.Count; var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize)); page = Math.Min(page, totalPages);
         return View(new UserListViewModel { Role = role, Status = status, List = new PagedListViewModel<UserListItemViewModel> { Items = rows.Skip((page - 1) * pageSize).Take(pageSize).ToList(), TotalItems = totalItems, Page = page, PageSize = pageSize, Search = search } });
     }
