@@ -1,29 +1,28 @@
-@model IReadOnlyCollection<TabulariusAI.Web.Models.UserListItemViewModel>
+@model TabulariusAI.Web.Models.UserListViewModel
+@using TabulariusAI.Web.Data.Identity
 @{
     ViewData["Title"] = "Utilizadores";
+    var list = Model.List;
+    var hasFilters = !string.IsNullOrEmpty(list.Search) || !string.IsNullOrEmpty(Model.Role) || !string.IsNullOrEmpty(Model.Status);
 }
-<header class="page-header">
-    <div><p class="eyebrow">Administração</p><h1>Utilizadores</h1><p class="lead">Gerir as contas com acesso ao Tabularius AI e os respetivos perfis.</p></div>
-    <a class="btn btn-primary" asp-action="Create">Novo utilizador</a>
-</header>
+<section class="page-header"><div><p class="eyebrow">Administração · Acessos</p><h1>Utilizadores</h1><p class="lead">Gerir as contas com acesso ao Tabularius AI e os respetivos perfis.</p></div><a class="btn btn-primary" asp-action="Create">Novo utilizador</a></section>
 @if (TempData["SuccessMessage"] is string successMessage) { <div class="status-message status-success">@successMessage</div> }
 @if (TempData["ErrorMessage"] is string errorMessage) { <div class="status-message status-error">@errorMessage</div> }
-<section class="panel">
-    <div class="card-header"><div><p class="section-kicker">Acesso</p><h2>Contas da aplicação</h2><p>@Model.Count conta(s) registada(s).</p></div></div>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Utilizador</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Estado</th><th>Criado em</th><th>Ações</th></tr></thead>
-            <tbody>
-            @foreach (var user in Model)
-            {
-                <tr>
-                    <td><strong>@user.UserName</strong></td><td>@user.DisplayName</td><td>@user.Email</td><td>@user.Role</td>
-                    <td><span class="user-state @(user.IsLocked ? "user-state-locked" : "user-state-active")">@(user.IsLocked ? "Bloqueado" : "Ativo")</span></td>
-                    <td>@user.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                    <td><form asp-action="ToggleLock" asp-route-id="@user.Id" method="post"><button type="submit" class="btn btn-secondary">@(user.IsLocked ? "Desbloquear" : "Bloquear")</button></form></td>
-                </tr>
-            }
-            </tbody>
-        </table>
+<section class="list-workspace">
+    <div class="list-toolbar">
+        <form method="get" class="list-filter-form">
+            <div class="list-search"><label for="search">Pesquisar</label><input id="search" name="search" value="@list.Search" placeholder="Utilizador, nome ou email" /></div>
+            <div class="list-page-size"><label for="role">Perfil</label><select id="role" name="role"><option value="">Todos</option><option value="@ApplicationRoles.User" selected="@(Model.Role == ApplicationRoles.User)">Utilizador</option><option value="@ApplicationRoles.Administrator" selected="@(Model.Role == ApplicationRoles.Administrator)">Administrador</option></select></div>
+            <div class="list-page-size"><label for="status">Estado</label><select id="status" name="status"><option value="">Todos</option><option value="active" selected="@(Model.Status == "active")">Ativo</option><option value="locked" selected="@(Model.Status == "locked")">Bloqueado</option></select></div>
+            <div class="list-page-size"><label for="pageSize">Registos</label><select id="pageSize" name="pageSize"><option selected="@(list.PageSize == 10)" value="10">10</option><option selected="@(list.PageSize == 25)" value="25">25</option><option selected="@(list.PageSize == 50)" value="50">50</option><option selected="@(list.PageSize == 100)" value="100">100</option></select></div>
+            <button class="btn btn-primary" type="submit">Filtrar</button>
+            @if (hasFilters) { <a class="btn btn-secondary" asp-action="Index" asp-route-pageSize="@list.PageSize">Limpar</a> }
+        </form>
+        <div class="list-count"><strong>@list.TotalItems</strong><span>utilizadores encontrados</span></div>
     </div>
+    <div class="table-wrap"><table><thead><tr><th>Utilizador</th><th>Nome</th><th>Email</th><th>Perfil</th><th>Estado</th><th>Criado em</th><th>Ações</th></tr></thead><tbody>
+        @if (list.Items.Count == 0) { <tr><td colspan="7" class="empty-row">@(hasFilters ? "Não foram encontrados utilizadores para os filtros selecionados." : "Ainda não existem utilizadores registados.")</td></tr> }
+        else { foreach (var user in list.Items) { <tr><td><strong>@user.UserName</strong></td><td>@user.DisplayName</td><td>@user.Email</td><td>@user.Role</td><td><span class="user-state @(user.IsLocked ? "user-state-locked" : "user-state-active")">@(user.IsLocked ? "Bloqueado" : "Ativo")</span></td><td>@user.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td><td><form asp-action="ToggleLock" asp-route-id="@user.Id" method="post"><button type="submit" class="btn btn-secondary">@(user.IsLocked ? "Desbloquear" : "Bloquear")</button></form></td></tr> } }
+    </tbody></table></div>
+    <div class="list-footer"><span>A mostrar @list.FirstItem–@list.LastItem de @list.TotalItems</span><nav class="pagination" aria-label="Paginação"><a class="page-link @(list.HasPreviousPage ? "" : "disabled")" asp-action="Index" asp-route-search="@list.Search" asp-route-role="@Model.Role" asp-route-status="@Model.Status" asp-route-pageSize="@list.PageSize" asp-route-page="@(list.Page - 1)">Anterior</a><span class="page-current">Página @list.Page de @list.TotalPages</span><a class="page-link @(list.HasNextPage ? "" : "disabled")" asp-action="Index" asp-route-search="@list.Search" asp-route-role="@Model.Role" asp-route-status="@Model.Status" asp-route-pageSize="@list.PageSize" asp-route-page="@(list.Page + 1)">Seguinte</a></nav></div>
 </section>
