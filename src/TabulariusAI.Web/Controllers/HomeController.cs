@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Data.Entities;
+using TabulariusAI.Web.Models;
 using TabulariusAI.Web.Services;
 
 namespace TabulariusAI.Web.Controllers;
@@ -83,10 +85,14 @@ public sealed class HomeController : Controller
     }
 
     /// <summary>
-    /// Displays the generic application error page.
+    /// Displays the generic application error page with a request identifier for log correlation.
     /// </summary>
     /// <returns>The error page view.</returns>
-    public IActionResult Error() => View();
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error() => View(new ErrorViewModel
+    {
+        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+    });
 
     /// <summary>
     /// Creates or reuses the accounting entity and fiscal dossier associated with an imported SAF-T (PT) file.
@@ -95,7 +101,7 @@ public sealed class HomeController : Controller
     /// <param name="analysis">The validated SAF-T (PT) analysis.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task representing the asynchronous persistence operation.</returns>
-    private async Task PersistImportAsync(string fileName, Models.SaftHeaderViewModel analysis, CancellationToken cancellationToken)
+    private async Task PersistImportAsync(string fileName, SaftHeaderViewModel analysis, CancellationToken cancellationToken)
     {
         var entity = await _dbContext.AccountingEntities
             .SingleOrDefaultAsync(item => item.TaxRegistrationNumber == analysis.TaxRegistrationNumber, cancellationToken);
