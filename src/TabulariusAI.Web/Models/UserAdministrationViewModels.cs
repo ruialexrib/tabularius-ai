@@ -74,3 +74,25 @@ public sealed class EditUserViewModel
     [Required(ErrorMessage = "Selecione o perfil.")]
     public string Role { get; set; } = "User";
 }
+
+/// <summary>Represents an administrator-initiated password reset for an application user.</summary>
+public sealed class ResetUserPasswordViewModel
+{
+    /// <summary>Gets or sets the Identity user identifier.</summary>
+    [Required]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the username shown for confirmation.</summary>
+    public string UserName { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the user's display name shown for confirmation.</summary>
+    public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the new password selected by the administrator.</summary>
+    [Required(ErrorMessage = "Indique a nova palavra-passe."), DataType(DataType.Password)]
+    public string NewPassword { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the confirmation of the new password.</summary>
+    [Required(ErrorMessage = "Confirme a nova palavra-passe."), DataType(DataType.Password), Compare(nameof(NewPassword), ErrorMessage = "As palavras-passe não coincidem.")]
+    public string ConfirmPassword { get; set; } = string.Empty;
+}
