@@ -50,3 +50,27 @@ public sealed class CreateUserViewModel
     [Required(ErrorMessage = "Selecione o perfil.")]
     public string Role { get; set; } = "User";
 }
+
+/// <summary>Represents the administrator form used to edit an existing application user.</summary>
+public sealed class EditUserViewModel
+{
+    /// <summary>Gets or sets the Identity user identifier.</summary>
+    [Required]
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the username used for local authentication.</summary>
+    [Required(ErrorMessage = "Indique o nome de utilizador."), StringLength(100)]
+    public string UserName { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the name displayed in the application.</summary>
+    [Required(ErrorMessage = "Indique o nome a apresentar."), StringLength(200)]
+    public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the user's email address.</summary>
+    [Required(ErrorMessage = "Indique o email."), EmailAddress(ErrorMessage = "Indique um email válido."), StringLength(256)]
+    public string Email { get; set; } = string.Empty;
+
+    /// <summary>Gets or sets the application role assigned to the user.</summary>
+    [Required(ErrorMessage = "Selecione o perfil.")]
+    public string Role { get; set; } = "User";
+}
