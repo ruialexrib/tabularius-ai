@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using TabulariusAI.Web.Controllers;
 using TabulariusAI.Web.Data.Identity;
 using TabulariusAI.Web.Models;
@@ -22,7 +22,7 @@ public sealed class AccountControllerTests
         await using var database = new TestDatabase();
         await using var identity = new TestIdentityServices(database.Context);
         var controller = CreateController(identity);
-        var result = await controller.Login(new LoginViewModel { UserNameOrEmail = "missing", Password = StrongPassword });
+        var result = await controller.Login(new LoginViewModel { Identifier = "missing", Password = StrongPassword });
         Assert.IsType<ViewResult>(result);
         Assert.False(controller.ModelState.IsValid);
     }
@@ -35,7 +35,7 @@ public sealed class AccountControllerTests
         await using var identity = new TestIdentityServices(database.Context);
         await identity.CreateUserAsync("rui", StrongPassword);
         var controller = CreateController(identity);
-        var result = await controller.Login(new LoginViewModel { UserNameOrEmail = "rui", Password = StrongPassword, ReturnUrl = "/Dossier/Index" });
+        var result = await controller.Login(new LoginViewModel { Identifier = "rui", Password = StrongPassword, ReturnUrl = "/Dossier/Index" });
         var redirect = Assert.IsType<LocalRedirectResult>(result);
         Assert.Equal("/Dossier/Index", redirect.Url);
     }
@@ -50,7 +50,7 @@ public sealed class AccountControllerTests
         user.Email = "email@example.test";
         Assert.True((await identity.UserManager.UpdateAsync(user)).Succeeded);
         var controller = CreateController(identity);
-        var result = await controller.Login(new LoginViewModel { UserNameOrEmail = "email@example.test", Password = StrongPassword });
+        var result = await controller.Login(new LoginViewModel { Identifier = "email@example.test", Password = StrongPassword });
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Index", redirect.ActionName);
         Assert.Equal("Home", redirect.ControllerName);
@@ -65,7 +65,7 @@ public sealed class AccountControllerTests
         var user = await identity.CreateUserAsync("locked", StrongPassword);
         Assert.True((await identity.UserManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddDays(1))).Succeeded);
         var controller = CreateController(identity);
-        var result = await controller.Login(new LoginViewModel { UserNameOrEmail = "locked", Password = StrongPassword });
+        var result = await controller.Login(new LoginViewModel { Identifier = "locked", Password = StrongPassword });
         Assert.IsType<ViewResult>(result);
         Assert.False(controller.ModelState.IsValid);
     }
@@ -78,7 +78,7 @@ public sealed class AccountControllerTests
         await using var identity = new TestIdentityServices(database.Context);
         await identity.CreateUserAsync("admin", "LetMeIn", ApplicationRoles.Administrator);
         var controller = CreateController(identity);
-        var result = await controller.Login(new LoginViewModel { UserNameOrEmail = "admin", Password = "LetMeIn" });
+        var result = await controller.Login(new LoginViewModel { Identifier = "admin", Password = "LetMeIn" });
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("ChangePassword", redirect.ActionName);
     }
@@ -130,7 +130,8 @@ public sealed class AccountControllerTests
     {
         var context = new DefaultHttpContext();
         if (currentUser is not null) context.User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[] { new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, currentUser.Id) }, "Tests"));
-        var controller = new AccountController(identity.SignInManager, identity.UserManager) { ControllerContext = new ControllerContext { HttpContext = context } };
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
+        var controller = new AccountController(identity.SignInManager, identity.UserManager, configuration) { ControllerContext = new ControllerContext { HttpContext = context } };
         controller.TempData = new TempDataDictionary(context, new TestTempDataProvider());
         return controller;
     }
