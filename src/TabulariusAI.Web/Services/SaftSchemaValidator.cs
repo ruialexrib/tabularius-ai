@@ -9,7 +9,8 @@ namespace TabulariusAI.Web.Services;
 public sealed class SaftSchemaValidator(IWebHostEnvironment environment) : ISaftSchemaValidator
 {
     private const string SupportedNamespace = "urn:OECD:StandardAuditFile-Tax:PT_1.04_01";
-    private readonly string schemaPath = Path.Combine(environment.ContentRootPath, "assets", "schema", "saftpt1.04_01.xsd");
+    private const string SchemaFileName = "saftpt1.04_01.xsd";
+    private readonly string schemaPath = ResolveSchemaPath(environment.ContentRootPath);
 
     /// <inheritdoc />
     public async Task ValidateAsync(Stream stream, CancellationToken cancellationToken = default)
@@ -66,6 +67,34 @@ public sealed class SaftSchemaValidator(IWebHostEnvironment environment) : ISaft
 
             throw new InvalidDataException($"O ficheiro SAF-T (PT) não é válido segundo o XSD oficial 1.04_01. {details}");
         }
+    }
+
+    /// <summary>
+    /// Resolves the official XSD from either the application content root or the repository root.
+    /// </summary>
+    /// <param name="contentRootPath">The ASP.NET Core application content root.</param>
+    /// <returns>The expected schema path.</returns>
+    private static string ResolveSchemaPath(string contentRootPath)
+    {
+        var applicationPath = Path.Combine(contentRootPath, "assets", "schema", SchemaFileName);
+        if (File.Exists(applicationPath))
+        {
+            return applicationPath;
+        }
+
+        var directory = new DirectoryInfo(contentRootPath);
+        while (directory is not null)
+        {
+            var repositoryPath = Path.Combine(directory.FullName, "assets", "schema", SchemaFileName);
+            if (File.Exists(repositoryPath))
+            {
+                return repositoryPath;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return applicationPath;
     }
 
     /// <summary>
