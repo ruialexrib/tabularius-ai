@@ -1,5 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using TabulariusAI.Web.Data.Identity;
 using TabulariusAI.Web.Middleware;
 using TabulariusAI.Web.Tests.Infrastructure;
 using Xunit;
@@ -17,7 +20,7 @@ public sealed class MandatoryPasswordChangeMiddlewareTests
     {
         await using var database = new TestDatabase();
         await using var identity = new TestIdentityServices(database.Context);
-        var user = await identity.CreateUserAsync("admin", "LetMeIn", TabulariusAI.Web.Data.Identity.ApplicationRoles.Administrator);
+        var user = await CreateBootstrapAdministratorAsync(database, identity);
         var context = CreateContext(user.Id, "/");
         var nextCalled = false;
         var middleware = new MandatoryPasswordChangeMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
@@ -34,7 +37,7 @@ public sealed class MandatoryPasswordChangeMiddlewareTests
     {
         await using var database = new TestDatabase();
         await using var identity = new TestIdentityServices(database.Context);
-        var user = await identity.CreateUserAsync("admin", "LetMeIn", TabulariusAI.Web.Data.Identity.ApplicationRoles.Administrator);
+        var user = await CreateBootstrapAdministratorAsync(database, identity);
         var context = CreateContext(user.Id, "/Account/ChangePassword");
         var nextCalled = false;
         var middleware = new MandatoryPasswordChangeMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
@@ -50,7 +53,7 @@ public sealed class MandatoryPasswordChangeMiddlewareTests
     {
         await using var database = new TestDatabase();
         await using var identity = new TestIdentityServices(database.Context);
-        var user = await identity.CreateUserAsync("admin", StrongPassword, TabulariusAI.Web.Data.Identity.ApplicationRoles.Administrator);
+        var user = await identity.CreateUserAsync("admin", StrongPassword, ApplicationRoles.Administrator);
         var context = CreateContext(user.Id, "/");
         var nextCalled = false;
         var middleware = new MandatoryPasswordChangeMiddleware(_ => { nextCalled = true; return Task.CompletedTask; });
@@ -58,6 +61,17 @@ public sealed class MandatoryPasswordChangeMiddlewareTests
         await middleware.InvokeAsync(context, identity.UserManager);
 
         Assert.True(nextCalled);
+    }
+
+    /// <summary>Creates the exceptional bootstrap administrator credential without weakening the normal Identity password policy.</summary>
+    private static async Task<ApplicationUser> CreateBootstrapAdministratorAsync(TestDatabase database, TestIdentityServices identity)
+    {
+        var user = await identity.CreateUserAsync("admin", StrongPassword, ApplicationRoles.Administrator);
+        user.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(user, "LetMeIn");
+        database.Context.Users.Update(user);
+        await database.Context.SaveChangesAsync();
+        database.Context.ChangeTracker.Clear();
+        return await database.Context.Users.SingleAsync(item => item.Id == user.Id);
     }
 
     /// <summary>Creates an authenticated HTTP context whose name identifier resolves through Identity.</summary>
