@@ -6,7 +6,13 @@
 <section class="hero">
     <p class="eyebrow">Dossier contabilístico</p>
     <h1>@Model.AccountingEntity.Name · @Model.FiscalYear</h1>
-    <p class="lead">Este é o espaço de trabalho do exercício. As fontes importadas, análises, reconciliações, testes e relatórios serão organizados neste contexto.</p>
+    <p class="lead">Espaço de trabalho do exercício para consultar fontes, análises, reconciliações, testes e relatórios.</p>
+</section>
+
+<section class="panel">
+    <h2>SAF-T (PT)</h2>
+    <p>Consulte os ficheiros que suportam este dossier e o respetivo período contabilístico.</p>
+    <p><a asp-controller="Dossier" asp-action="SaftSummary" asp-route-id="@Model.Id">Abrir resumo SAF-T (PT)</a></p>
 </section>
 
 <section class="panel">
@@ -34,9 +40,4 @@
             </table>
         </div>
     }
-</section>
-
-<section class="panel">
-    <h2>Área de trabalho</h2>
-    <p>O próximo desenvolvimento ligará este dossier às áreas SAF-T (PT), análise contabilística, reconciliação, testes e auditoria, analytics e relatórios.</p>
 </section>
