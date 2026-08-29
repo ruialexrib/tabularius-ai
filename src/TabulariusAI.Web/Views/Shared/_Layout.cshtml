@@ -1,5 +1,7 @@
 @using TabulariusAI.Web.Models
+@using System.Runtime.InteropServices
 @inject ApplicationInfo AppInfo
+@inject IWebHostEnvironment HostEnvironment
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -20,7 +22,12 @@
         </header>
         <aside class="sidebar" aria-label="Navegação principal"><nav><p class="nav-heading">Aplicação</p><a class="nav-item" asp-controller="Home" asp-action="Index">Início</a><p class="nav-heading">Dossiers contabilísticos</p><a class="nav-item" asp-controller="Dossier" asp-action="Entities">Entidades e exercícios</a><a class="nav-item" asp-controller="Home" asp-action="Import">Importar SAF-T (PT)</a><div class="nav-context-note"><strong>Área de trabalho</strong><span>Selecione uma entidade e um exercício para aceder aos dados SAF-T (PT), análises e restantes operações do dossier.</span></div></nav></aside>
         <main class="app-content">@RenderBody()</main>
-        <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span><span class="footer-version-badge">v@(AppInfo.Version)</span></footer>
+        <footer class="contextbar">
+            <span class="context-item context-with-tooltip" tabindex="0"><span class="context-icon" aria-hidden="true">T</span> Tabularius AI<span class="context-tooltip context-tooltip-left" role="tooltip"><strong>Sobre o projeto</strong><span><small>Aplicação</small><b>Tabularius AI</b></span><span><small>Formato</small><b>SAF-T (PT)</b></span><span><small>Autor</small><b>Rui Ribeiro</b></span><span><small>Licença</small><b>MIT · Open source</b></span></span></span>
+            <span class="context-item context-with-tooltip" tabindex="0"><span class="context-status-dot" aria-hidden="true"></span> Base de dados: Online<span class="context-tooltip" role="tooltip"><strong>Base de dados</strong><span><small>Estado</small><b class="tooltip-online">● Online</b></span><span><small>Motor</small><b>SQL Server</b></span><span><small>Persistência</small><b>Dados da aplicação</b></span></span></span>
+            <span class="context-item context-with-tooltip" tabindex="0"><span class="context-icon" aria-hidden="true">PT</span> SAF-T (PT)<span class="context-tooltip" role="tooltip"><strong>Dados contabilísticos</strong><span><small>Formato</small><b>SAF-T (PT)</b></span><span><small>Processamento</small><b>Local-first</b></span><span><small>Validação XSD</small><b>Planeada</b></span></span></span>
+            <span class="context-item context-with-tooltip" tabindex="0"><span class="context-icon" aria-hidden="true">v</span> v@(AppInfo.Version)<span class="context-tooltip context-tooltip-right" role="tooltip"><strong>Versão da aplicação</strong><span><small>Tabularius AI</small><b>v@(AppInfo.Version)</b></span><span><small>Ambiente</small><b>@HostEnvironment.EnvironmentName</b></span><span><small>Runtime</small><b>@RuntimeInformation.FrameworkDescription</b></span><span><small>Execução</small><b>@(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" ? "Docker" : "Host local")</b></span></span></span>
+        </footer>
     </div>
     <div class="operation-progress" data-operation-progress aria-hidden="true" aria-live="polite" aria-label="Operação em curso">
         <div class="operation-progress-card" role="status">
