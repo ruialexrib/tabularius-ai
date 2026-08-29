@@ -1,0 +1,19 @@
+.contextbar{position:relative;z-index:1200;justify-content:flex-end;gap:4px;padding:0 18px;overflow:visible}
+.context-item{position:relative;display:inline-flex;height:30px;align-items:center;gap:7px;padding:0 9px;border-radius:7px;white-space:nowrap;transition:background .14s ease,color .14s ease}
+.context-with-tooltip{cursor:default}
+.context-with-tooltip:hover,.context-with-tooltip:focus-visible{background:#f2f7f5;color:var(--navy);outline:0}
+.context-icon{display:grid;min-width:18px;height:18px;place-items:center;border:1px solid #cfe4dc;border-radius:5px;background:#eff9f5;color:var(--green-text);font-size:8px;font-weight:900;line-height:1}
+.context-status-dot{width:7px;height:7px;border-radius:50%;background:var(--green-dark);box-shadow:0 0 0 3px rgba(21,154,112,.1)}
+.context-tooltip{position:absolute;right:0;bottom:calc(100% + 8px);z-index:3000;display:flex;width:280px;flex-direction:column;gap:8px;padding:14px;border:1px solid #dce4e9;border-radius:11px;background:#fff;color:var(--ink);box-shadow:0 16px 42px rgba(16,27,46,.18);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(5px);transition:opacity .12s ease,transform .12s ease,visibility .12s ease;white-space:normal}
+.context-with-tooltip:hover>.context-tooltip,.context-with-tooltip:focus-visible>.context-tooltip,.context-with-tooltip:focus-within>.context-tooltip{opacity:1;visibility:visible;transform:translateY(0)}
+.context-tooltip-left{right:auto;left:0}
+.context-tooltip-right{right:0;left:auto}
+.context-tooltip::after{position:absolute;right:18px;bottom:-5px;width:9px;height:9px;border-right:1px solid #dce4e9;border-bottom:1px solid #dce4e9;background:#fff;content:"";transform:rotate(45deg)}
+.context-tooltip-left::after{right:auto;left:18px}
+.context-tooltip>strong{padding-bottom:8px;border-bottom:1px solid #edf0f4;color:var(--navy);font-size:11px;font-weight:800}
+.context-tooltip>span{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.context-tooltip small{color:#8793a3;font-size:9px;line-height:1.35}
+.context-tooltip b{max-width:165px;color:#344156;font-size:10px;font-weight:750;line-height:1.35;text-align:right;overflow-wrap:anywhere}
+.context-tooltip .tooltip-online{color:var(--green-text)}
+@media(max-width:760px){.contextbar{justify-content:flex-start;overflow-x:auto;overflow-y:visible}.context-tooltip,.context-tooltip-left,.context-tooltip-right{position:fixed;right:12px;bottom:48px;left:12px;width:auto}.context-tooltip::after{display:none}}
+@media(prefers-reduced-motion:reduce){.context-tooltip{transition:none}}
