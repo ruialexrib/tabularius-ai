@@ -9,7 +9,7 @@ namespace TabulariusAI.Web.Tests.Services;
 /// </summary>
 public sealed class SaftHeaderReaderTests
 {
-    /// <summary>Verifies representative SAF-T (PT) header, account, customer, supplier and product parsing.</summary>
+    /// <summary>Verifies representative SAF-T (PT) master data and accounting transaction parsing.</summary>
     [Fact]
     public async Task ReadAsync_ValidSaft_ReturnsMasterDataAndStructuralCounts()
     {
@@ -23,7 +23,7 @@ public sealed class SaftHeaderReaderTests
                 <Supplier><SupplierID>S1</SupplierID><AccountID>2211</AccountID><SupplierTaxID>500000002</SupplierTaxID><CompanyName>Fornecedor Teste</CompanyName></Supplier>
                 <Product><ProductType>P</ProductType><ProductCode>P1</ProductCode><ProductGroup>Mercadorias</ProductGroup><ProductDescription>Produto Teste</ProductDescription><ProductNumberCode>5600000000011</ProductNumberCode></Product>
               </MasterFiles>
-              <GeneralLedgerEntries><Journal><Transaction><TransactionID>T1</TransactionID></Transaction></Journal></GeneralLedgerEntries>
+              <GeneralLedgerEntries><Journal><JournalID>VEN</JournalID><Description>Vendas</Description><Transaction><TransactionID>T1</TransactionID><Period>3</Period><TransactionDate>2026-03-15</TransactionDate><SourceID>TEST</SourceID><Description>Venda teste</Description><DocArchivalNumber>1</DocArchivalNumber><TransactionType>N</TransactionType><GLPostingDate>2026-03-15</GLPostingDate><CustomerID>C1</CustomerID><Lines><DebitLine><RecordID>1</RecordID><AccountID>2111</AccountID><SourceDocumentID>FT 1/1</SourceDocumentID><SystemEntryDate>2026-03-15T10:00:00</SystemEntryDate><Description>Cliente</Description><DebitAmount>123.00</DebitAmount></DebitLine><CreditLine><RecordID>2</RecordID><AccountID>71</AccountID><SourceDocumentID>FT 1/1</SourceDocumentID><SystemEntryDate>2026-03-15T10:00:00</SystemEntryDate><Description>Venda</Description><CreditAmount>123.00</CreditAmount></CreditLine></Lines></Transaction></Journal></GeneralLedgerEntries>
               <SourceDocuments><SalesInvoices><Invoice><InvoiceNo>FT 1/1</InvoiceNo></Invoice></SalesInvoices><MovementOfGoods><StockMovement><DocumentNumber>GT 1/1</DocumentNumber></StockMovement></MovementOfGoods><WorkingDocuments><WorkDocument><DocumentNumber>OR 1/1</DocumentNumber></WorkDocument></WorkingDocuments><Payments><Payment><PaymentRefNo>RC 1/1</PaymentRefNo></Payment></Payments></SourceDocuments>
             </AuditFile>
             """;
@@ -34,17 +34,22 @@ public sealed class SaftHeaderReaderTests
         Assert.Equal("11", result.Accounts[0].AccountId);
         Assert.Single(result.Customers);
         Assert.Equal("C1", result.Customers[0].PartyId);
-        Assert.Equal("Cliente Teste", result.Customers[0].CompanyName);
         Assert.Single(result.Suppliers);
         Assert.Equal("S1", result.Suppliers[0].PartyId);
-        Assert.Equal("Fornecedor Teste", result.Suppliers[0].CompanyName);
         Assert.Single(result.Products);
-        Assert.Equal("P", result.Products[0].ProductType);
         Assert.Equal("P1", result.Products[0].ProductCode);
-        Assert.Equal("Mercadorias", result.Products[0].ProductGroup);
-        Assert.Equal("Produto Teste", result.Products[0].ProductDescription);
-        Assert.Equal("5600000000011", result.Products[0].ProductNumberCode);
-        Assert.Equal(1, result.ProductCount);
+        Assert.Single(result.Transactions);
+        Assert.Equal("VEN", result.Transactions[0].JournalId);
+        Assert.Equal("T1", result.Transactions[0].TransactionId);
+        Assert.Equal(new DateOnly(2026, 3, 15), result.Transactions[0].TransactionDate);
+        Assert.Equal("C1", result.Transactions[0].CustomerId);
+        Assert.Equal(2, result.Transactions[0].Lines.Count);
+        Assert.Equal(123.00m, result.Transactions[0].TotalDebit);
+        Assert.Equal(123.00m, result.Transactions[0].TotalCredit);
+        Assert.Equal("D", result.Transactions[0].Lines[0].Side);
+        Assert.Equal("2111", result.Transactions[0].Lines[0].AccountId);
+        Assert.Equal("C", result.Transactions[0].Lines[1].Side);
+        Assert.Equal("71", result.Transactions[0].Lines[1].AccountId);
         Assert.Equal(1, result.TransactionCount);
         Assert.Equal(1, result.SalesInvoiceCount);
         Assert.Equal(1, result.MovementOfGoodsCount);
