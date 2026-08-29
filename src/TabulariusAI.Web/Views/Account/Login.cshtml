@@ -14,6 +14,17 @@
     <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
 </head>
 <body class="auth-page">
+    @if (Model.ShowBootstrapCredentials)
+    {
+        <aside class="bootstrap-toast" role="status" aria-live="polite">
+            <strong>Primeira utilização</strong>
+            <span>Use as credenciais iniciais:</span>
+            <span><b>Utilizador:</b> admin</span>
+            <span><b>Palavra-passe:</b> LetMeIn</span>
+            <small>Será obrigatório definir uma nova palavra-passe após a entrada.</small>
+            <span class="bootstrap-toast-progress" aria-hidden="true"></span>
+        </aside>
+    }
     <main class="auth-shell">
         <section class="auth-brand-panel">
             <div class="auth-brand"><span class="brand-mark">T</span><span>Tabularius AI</span></div>
