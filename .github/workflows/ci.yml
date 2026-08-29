@@ -28,11 +28,22 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
       - name: Restore dependencies
         run: dotnet restore TabulariusAI.sln
 
       - name: Build
         run: dotnet build TabulariusAI.sln --configuration Release --no-restore
+
+      - name: Verify EF Core migration consistency
+        run: >-
+          dotnet ef migrations has-pending-model-changes
+          --project src/TabulariusAI.Web
+          --startup-project src/TabulariusAI.Web
+          --configuration Release
+          --no-build
 
       - name: Run tests with coverage
         run: >-
