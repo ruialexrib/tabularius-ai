@@ -1,9 +1,19 @@
 :root { --navy: #111b2e; --navy2: #19263e; --green: #34d399; --green-dark: #159a70; --green-text: #087f5b; --ink: #172033; --muted: #687386; --line: #e5e9f0; --surface: #ffffff; --background: #f5f7fb; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--background); color: var(--ink); }
-.app-header { height: 64px; display: flex; align-items: center; padding: 0 32px; background: linear-gradient(110deg, #101b2f 0%, #12243a 58%, #102c38 100%); border-bottom: 1px solid rgba(255,255,255,.08); box-shadow: 0 8px 28px rgba(12,24,43,.16); }
-.brand { color: #fff; font-size: 18px; font-weight: 800; letter-spacing: .045em; text-decoration: none; }
-.app-content { max-width: 1120px; margin: 0 auto; padding: 72px 32px; }
+.app-shell { display: grid; min-height: 100vh; grid-template: 64px 1fr 38px / 248px 1fr; grid-template-areas: "top top" "side content" "foot foot"; }
+.app-header { grid-area: top; display: flex; align-items: center; gap: 20px; padding: 0 24px; background: linear-gradient(110deg, #101b2f 0%, #12243a 58%, #102c38 100%); border-bottom: 1px solid rgba(255,255,255,.08); box-shadow: 0 8px 28px rgba(12,24,43,.16); }
+.brand { display: flex; align-items: center; gap: 10px; color: #fff; font-size: 18px; font-weight: 800; letter-spacing: .045em; text-decoration: none; }
+.brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid rgba(255,255,255,.16); border-radius: 11px; background: linear-gradient(135deg, var(--green), #1fa981); color: #092b22; box-shadow: 0 6px 18px rgba(31,169,129,.2); }
+.brand-description { padding-left: 20px; border-left: 1px solid rgba(255,255,255,.13); color: #9fb0c3; font-size: .72rem; }
+.sidebar { grid-area: side; padding: 22px 14px; background: var(--navy2); color: #c5ccda; }
+.sidebar nav { display: flex; flex-direction: column; gap: 3px; }
+.nav-heading { margin: 20px 12px 6px; color: #778399; font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 8px; color: inherit; font-size: .88rem; text-decoration: none; }
+.nav-item.active { background: #234038; color: #eafff7; font-weight: 700; }
+.nav-item.disabled { opacity: .58; cursor: default; }
+.app-content { grid-area: content; width: 100%; max-width: 1180px; margin: 0 auto; padding: 42px 38px 64px; }
+.contextbar { grid-area: foot; display: flex; align-items: center; justify-content: flex-end; gap: 24px; padding: 0 24px; background: linear-gradient(180deg,#fff,#f8fafb); border-top: 1px solid #dfe6ec; color: var(--muted); font-size: .72rem; }
 .hero { max-width: 900px; }
 .eyebrow { margin: 0 0 12px; color: var(--green-text); font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 h1 { margin: 0; color: var(--navy); font-size: clamp(42px, 7vw, 72px); line-height: 1; letter-spacing: -.04em; }
@@ -36,4 +46,5 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(21,154,112,.
 .metric-card:hover { border-color: #cfe6de; background: #f9fcfb; }
 .metric-card span { color: var(--muted); font-size: 14px; font-weight: 600; line-height: 1.35; }
 .metric-card strong { margin-top: 16px; color: var(--green-text); font-size: 30px; line-height: 1; letter-spacing: -.03em; }
-@media (max-width: 700px) { .app-header { padding: 0 20px; } .app-content { padding: 48px 20px; } .upload-card { align-items: stretch; flex-direction: column; } .summary-grid, .metric-grid { grid-template-columns: 1fr; } .summary-wide { grid-column: auto; } }
+@media (max-width: 800px) { .app-shell { grid-template: 60px 1fr 44px / 72px 1fr; grid-template-areas: "top top" "side content" "foot foot"; } .brand-description { display: none; } .sidebar { padding: 18px 8px; } .nav-heading { display: none; } .nav-item { justify-content: center; padding: 10px 4px; font-size: 0; } .nav-item::first-letter { font-size: .85rem; } .app-content { padding: 32px 20px 48px; } .contextbar span:not(:last-child) { display: none; } }
+@media (max-width: 700px) { .upload-card { align-items: stretch; flex-direction: column; } .summary-grid, .metric-grid { grid-template-columns: 1fr; } .summary-wide { grid-column: auto; } }
