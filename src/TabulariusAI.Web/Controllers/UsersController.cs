@@ -11,7 +11,7 @@ namespace TabulariusAI.Web.Controllers;
 [Authorize(Roles = ApplicationRoles.Administrator)]
 public sealed class UsersController(UserManager<ApplicationUser> userManager) : Controller
 {
-    /// <summary>Displays a filtered and server-side paginated list of application users.</summary>
+    /// <summary>Displays a filtered and paginated list of application users.</summary>
     /// <param name="search">Optional free-text search across username, display name and email.</param>
     /// <param name="role">Optional application role filter.</param>
     /// <param name="status">Optional active or locked account state filter.</param>
@@ -35,18 +35,8 @@ public sealed class UsersController(UserManager<ApplicationUser> userManager) : 
                 user.DisplayName.Contains(search) ||
                 (user.Email != null && user.Email.Contains(search)));
         }
-
         if (status == "active") query = query.Where(user => !user.LockoutEnd.HasValue || user.LockoutEnd <= DateTimeOffset.UtcNow);
         if (status == "locked") query = query.Where(user => user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow);
-
-        if (role is not null)
-        {
-            var roleId = await userManager.Users
-                .SelectMany(user => user.Roles)
-                .Where(userRole => false)
-                .Select(userRole => userRole.RoleId)
-                .FirstOrDefaultAsync();
-        }
 
         var filteredUsers = await query.OrderBy(user => user.DisplayName).ThenBy(user => user.UserName).ToListAsync();
         var rows = new List<UserListItemViewModel>(filteredUsers.Count);
@@ -69,12 +59,18 @@ public sealed class UsersController(UserManager<ApplicationUser> userManager) : 
         var totalItems = rows.Count;
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
         page = Math.Min(page, totalPages);
-        var items = rows.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var model = new UserListViewModel
         {
             Role = role,
             Status = status,
-            List = new PagedListViewModel<UserListItemViewModel> { Items = items, TotalItems = totalItems, Page = page, PageSize = pageSize, Search = search }
+            List = new PagedListViewModel<UserListItemViewModel>
+            {
+                Items = rows.Skip((page - 1) * pageSize).Take(pageSize).ToList(),
+                TotalItems = totalItems,
+                Page = page,
+                PageSize = pageSize,
+                Search = search
+            }
         };
         return View(model);
     }
