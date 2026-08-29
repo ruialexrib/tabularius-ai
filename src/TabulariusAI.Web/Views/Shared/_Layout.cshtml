@@ -32,5 +32,6 @@
         <main class="app-content">@RenderBody()</main>
         <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span><span class="footer-version-badge">v@(AppInfo.Version)</span></footer>
     </div>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
