@@ -22,6 +22,7 @@
             <span><b>Utilizador:</b> admin</span>
             <span><b>Palavra-passe:</b> LetMeIn</span>
             <small>Será obrigatório definir uma nova palavra-passe após a entrada.</small>
+            <button type="button" class="bootstrap-toast-action" id="useBootstrapCredentials">Usar as credenciais</button>
             <span class="bootstrap-toast-progress" aria-hidden="true"></span>
         </aside>
     }
@@ -49,5 +50,17 @@
             </form>
         </section>
     </main>
+    @if (Model.ShowBootstrapCredentials)
+    {
+        <script>
+            document.getElementById('useBootstrapCredentials')?.addEventListener('click', function () {
+                const identifier = document.getElementById('Identifier');
+                const password = document.getElementById('Password');
+                if (identifier) identifier.value = 'admin';
+                if (password) password.value = 'LetMeIn';
+                password?.focus();
+            });
+        </script>
+    }
 </body>
 </html>
