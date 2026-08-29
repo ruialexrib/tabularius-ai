@@ -7,7 +7,7 @@ using TabulariusAI.Web.Services;
 
 namespace TabulariusAI.Web.Controllers;
 
-public sealed class DossierController(TabulariusDbContext dbContext) : Controller
+public sealed partial class DossierController(TabulariusDbContext dbContext) : Controller
 {
     private static readonly int[] AllowedPageSizes = [10, 25, 50, 100];
     public async Task<IActionResult> Entities(string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default) { var query = dbContext.AccountingEntities.AsNoTracking().Include(item => item.Dossiers).AsQueryable(); if (!string.IsNullOrWhiteSpace(search)) { var term = search.Trim(); query = query.Where(item => item.Name.Contains(term) || item.TaxRegistrationNumber.Contains(term)); } return View(await PageAsync(query.OrderBy(item => item.Name), search, page, pageSize, cancellationToken)); }
