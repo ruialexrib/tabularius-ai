@@ -21,7 +21,7 @@ builder.Services.AddControllersWithViews();
 
 var databaseProvider = builder.Configuration["Database:Provider"]?.Trim().ToLowerInvariant() ?? "sqlite";
 var isLocalMode = databaseProvider == "sqlite";
-if (isLocalMode && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS"))) builder.WebHost.UseUrls("http://127.0.0.1:0");
+if (isLocalMode && string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ASPNETCORE_URLS"))) builder.WebHost.UseUrls("http://127.0.0.1:5000");
 builder.Services.AddDbContext<TabulariusDbContext>(options =>
 {
     if (databaseProvider == "sqlite")
