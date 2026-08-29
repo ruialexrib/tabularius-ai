@@ -11,8 +11,8 @@
 
 <section class="panel">
     <h2>SAF-T (PT)</h2>
-    <p>Consulte os ficheiros que suportam este dossier e o respetivo período contabilístico.</p>
-    <p><a asp-controller="Dossier" asp-action="SaftSummary" asp-route-id="@Model.Id">Abrir resumo SAF-T (PT)</a></p>
+    <p>Consulte os dados contabilísticos preservados a partir das fontes SAF-T (PT) deste dossier.</p>
+    <p><a asp-action="SaftSummary" asp-route-id="@Model.Id">Resumo SAF-T (PT)</a> · <a asp-action="Accounts" asp-route-id="@Model.Id">Contas</a></p>
 </section>
 
 <section class="panel">
@@ -29,12 +29,7 @@
                 <tbody>
                 @foreach (var item in Model.Imports.OrderByDescending(item => item.ImportedAtUtc))
                 {
-                    <tr>
-                        <td><strong>@item.OriginalFileName</strong></td>
-                        <td>@item.SaftVersion</td>
-                        <td>@(item.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(item.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td>
-                        <td>@item.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                    </tr>
+                    <tr><td><strong>@item.OriginalFileName</strong></td><td>@item.SaftVersion</td><td>@(item.StartDate?.ToString("dd/MM/yyyy") ?? "—") – @(item.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td><td>@item.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
                 }
                 </tbody>
             </table>
