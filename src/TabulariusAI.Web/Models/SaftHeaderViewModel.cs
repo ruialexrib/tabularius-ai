@@ -26,4 +26,5 @@ public sealed class SaftHeaderViewModel
     public IList<SaftProductViewModel> Products { get; } = new List<SaftProductViewModel>();
     public IList<SaftTransactionViewModel> Transactions { get; } = new List<SaftTransactionViewModel>();
     public IList<SaftSalesInvoiceViewModel> SalesInvoices { get; } = new List<SaftSalesInvoiceViewModel>();
+    public IList<SaftStockMovementViewModel> StockMovements { get; } = new List<SaftStockMovementViewModel>();
 }
