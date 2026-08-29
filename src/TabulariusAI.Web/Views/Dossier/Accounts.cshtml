@@ -1,0 +1,42 @@
+@model TabulariusAI.Web.Data.Entities.SaftImport
+@{
+    ViewData["Title"] = $"Contas · {Model.Dossier.AccountingEntity.Name} · {Model.Dossier.FiscalYear}";
+}
+
+<section class="hero">
+    <p class="eyebrow">SAF-T (PT) · Contas</p>
+    <h1>Plano de contas</h1>
+    <p class="lead">@Model.Dossier.AccountingEntity.Name · @Model.Dossier.FiscalYear · fonte @Model.OriginalFileName</p>
+</section>
+
+<section class="panel">
+    <p><a asp-action="Details" asp-route-id="@Model.DossierId">← Voltar ao dossier</a></p>
+    @if (Model.Accounts.Count == 0)
+    {
+        <p>Esta importação não contém contas persistidas. Volte a importar o SAF-T (PT) para carregar os dados desta área.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Conta</th><th>Descrição</th><th>Débito inicial</th><th>Crédito inicial</th><th>Débito final</th><th>Crédito final</th><th>Taxonomia</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Accounts.OrderBy(item => item.AccountId))
+                {
+                    <tr>
+                        <td><strong>@item.AccountId</strong></td>
+                        <td>@item.Description</td>
+                        <td>@item.OpeningDebitBalance.ToString("N2")</td>
+                        <td>@item.OpeningCreditBalance.ToString("N2")</td>
+                        <td>@item.ClosingDebitBalance.ToString("N2")</td>
+                        <td>@item.ClosingCreditBalance.ToString("N2")</td>
+                        <td>@(item.TaxonomyReference ?? "—")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
