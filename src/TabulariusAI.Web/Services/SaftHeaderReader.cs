@@ -75,15 +75,21 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
     private static void ParseHeader(XElement element, SaftHeaderViewModel model)
     {
         var ns = element.Name.Namespace;
-        model.SaftVersion = element.Element(ns + "AuditFileVersion")?.Value;
-        model.TaxRegistrationNumber = element.Element(ns + "TaxRegistrationNumber")?.Value;
-        model.CompanyName = element.Element(ns + "CompanyName")?.Value;
-        model.FiscalYear = element.Element(ns + "FiscalYear")?.Value;
-        model.StartDate = element.Element(ns + "StartDate")?.Value;
-        model.EndDate = element.Element(ns + "EndDate")?.Value;
-        model.ProductId = element.Element(ns + "ProductID")?.Value;
-        model.ProductVersion = element.Element(ns + "ProductVersion")?.Value;
+        model.SaftVersion = GetOptionalValue(element, ns + "AuditFileVersion");
+        model.TaxRegistrationNumber = GetOptionalValue(element, ns + "TaxRegistrationNumber");
+        model.CompanyName = GetOptionalValue(element, ns + "CompanyName");
+        model.FiscalYear = GetOptionalValue(element, ns + "FiscalYear");
+        model.StartDate = GetOptionalValue(element, ns + "StartDate");
+        model.EndDate = GetOptionalValue(element, ns + "EndDate");
+        model.ProductId = GetOptionalValue(element, ns + "ProductID");
+        model.ProductVersion = GetOptionalValue(element, ns + "ProductVersion");
     }
+
+    /// <summary>Reads an optional source element value while preserving the non-null model contract.</summary>
+    /// <param name="parent">The parent XML element.</param>
+    /// <param name="name">The child element name.</param>
+    /// <returns>The source value, or an empty string when the element is absent.</returns>
+    private static string GetOptionalValue(XElement parent, XName name) => parent.Element(name)?.Value ?? string.Empty;
 
     /// <summary>Maps one general ledger account element into the import model.</summary>
     /// <param name="element">The source account element.</param>
