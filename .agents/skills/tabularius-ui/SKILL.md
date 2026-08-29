@@ -18,11 +18,22 @@ Preserve these established Denarius characteristics:
 - Header treatment based on the Denarius dark gradient `linear-gradient(110deg,#101b2f 0%,#12243a 58%,#102c38 100%)`, subtle light borders and low-noise shadows.
 - White panels/cards with subtle borders, approximately 14-16 px radii and restrained shadows rather than heavy elevation.
 - Compact analytical page headers: small uppercase emerald eyebrow, clear page title, concise supporting text and optional status/context pill.
-- Forms with clear labels, 8-9 px rounded controls, neutral `#cfd6e2`-style borders, white backgrounds, consistent control heights and emerald focus rings.
+- Forms and filters follow the Denarius control pattern: clear compact labels, 8-9 px rounded controls, neutral `#cfd6e2` borders, white backgrounds, consistent heights and emerald focus rings.
 - Primary actions use `#159a70`; secondary actions use neutral light surfaces. Destructive actions use soft red semantics.
 - Tables use compact uppercase muted headers, comfortable accounting-data rows, subtle separators, clear hover states and right-aligned action areas where appropriate.
 - Status pills use soft semantic backgrounds. Green indicates valid/positive states, red destructive/error states, and amber warning/transfer states, never relying on colour alone.
 - Keep the interface visually quiet: no unnecessary gradients, oversized decoration, excessive shadows, or competing accent colours.
+
+## SAF-T source selection
+
+- Every page whose values can differ between SAF-T (PT) imports in the same dossier must expose the shared SAF-T source selector. This includes the SAF-T summary and all source-specific master data, transactions, documents, taxes and future source-dependent analyses.
+- Do not create page-specific source selectors. Reuse the shared selector partial/component so appearance and behavior remain consistent.
+- The selector follows the Denarius filter-bar visual language: compact label, neutral bordered select, emerald focus state, restrained filter surface and professional information density.
+- Always show source traceability next to the selector: original filename, accounting period and SAF-T version.
+- If no source is explicitly selected, default to the latest accounting period, ordered by `EndDate`, then `StartDate`, then import timestamp and identifier. Do not define “current” merely as the last file imported.
+- Preserve the selected `importId` when navigating between SAF-T source-dependent pages.
+- Never silently combine values from multiple SAF-T files. A consolidated dossier view must be explicitly identified and implemented with deterministic accounting rules.
+- Pages that are genuinely dossier-level and independent of a specific SAF-T source do not require this selector.
 
 ## Workspace and available width
 
@@ -58,4 +69,4 @@ Preserve these established Denarius characteristics:
 - Render the affected page and inspect the changed state rather than relying only on compilation whenever a rendering environment is available.
 - Compare related controls for consistency and verify empty, populated, loading, validation, error, focus and responsive states when applicable.
 - Verify specifically that desktop forms and lists make effective use of the available content width and do not leave avoidable dead space.
-- Run the relevant automated tests and confirm the repository CI succeeds after the commit. If CI fails, investigate and correct the cause before considering the change complete.
+- Run the relevant automated tests and confirm repository CI for the completed change set. Do not block every non-critical intermediate UI commit waiting for CI; stop immediately when a critical change or an already-failing CI requires investigation.
