@@ -107,21 +107,33 @@ static async Task SeedIdentityAsync(WebApplication application)
     }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var administrator = await userManager.FindByNameAsync(administratorName);
+    var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
+    var normalizedAdministratorName = userManager.NormalizeName(administratorName);
+    var administrator = await dbContext.Users.SingleOrDefaultAsync(user => user.NormalizedUserName == normalizedAdministratorName)
+        ?? await dbContext.Users.SingleOrDefaultAsync(user => user.UserName == administratorName);
+
     if (administrator is null)
     {
-        administrator = new ApplicationUser { UserName = administratorName, DisplayName = "Administrador" };
+        administrator = new ApplicationUser
+        {
+            UserName = administratorName,
+            NormalizedUserName = normalizedAdministratorName,
+            DisplayName = "Administrador"
+        };
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
         administrator.PasswordHash = passwordHasher.HashPassword(administrator, temporaryPassword);
         administrator.SecurityStamp = Guid.NewGuid().ToString();
 
-        var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-        var createResult = await userStore.CreateAsync(administrator, CancellationToken.None);
-        if (!createResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator could not be created: {string.Join("; ", createResult.Errors.Select(error => error.Code))}");
+        dbContext.Users.Add(administrator);
+        await dbContext.SaveChangesAsync();
+    }
+    else if (!string.Equals(administrator.NormalizedUserName, normalizedAdministratorName, StringComparison.Ordinal))
+    {
+        administrator.NormalizedUserName = normalizedAdministratorName;
+        await dbContext.SaveChangesAsync();
     }
 
     var administratorRole = await roleManager.FindByNameAsync(ApplicationRoles.Administrator) ?? throw new InvalidOperationException("Administrator role was not found after initialization.");
-    var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
     var roleAlreadyAssigned = await dbContext.UserRoles.AnyAsync(item => item.UserId == administrator.Id && item.RoleId == administratorRole.Id);
     if (!roleAlreadyAssigned)
     {
