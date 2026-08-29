@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TabulariusAI.Web.Data;
+using TabulariusAI.Web.Data.Entities;
 
 namespace TabulariusAI.Web.Controllers;
 
@@ -69,7 +70,7 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <param name="id">The analysis dossier identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the database operation.</param>
     /// <returns>The requested dossier, or <see langword="null"/> when it does not exist.</returns>
-    private async Task<Data.Entities.AnalysisDossier?> LoadDossierAsync(int id, CancellationToken cancellationToken) =>
+    private async Task<AnalysisDossier?> LoadDossierAsync(int id, CancellationToken cancellationToken) =>
         await dbContext.AnalysisDossiers.AsNoTracking()
             .Include(item => item.AccountingEntity)
             .Include(item => item.Imports)
