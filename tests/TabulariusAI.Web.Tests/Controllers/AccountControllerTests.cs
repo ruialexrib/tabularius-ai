@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Configuration;
@@ -125,10 +124,10 @@ public sealed class AccountControllerTests
         Assert.True(await identity.UserManager.CheckPasswordAsync(user, "LetMeIn"));
     }
 
-    /// <summary>Creates an account controller with isolated HTTP and TempData state.</summary>
+    /// <summary>Creates an account controller using the same HTTP context as the real Identity sign-in manager.</summary>
     private static AccountController CreateController(TestIdentityServices identity, ApplicationUser? currentUser = null)
     {
-        var context = new DefaultHttpContext();
+        var context = identity.HttpContext;
         if (currentUser is not null) context.User = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[] { new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, currentUser.Id) }, "Tests"));
         var configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         var controller = new AccountController(identity.SignInManager, identity.UserManager, configuration) { ControllerContext = new ControllerContext { HttpContext = context } };
@@ -140,8 +139,8 @@ public sealed class AccountControllerTests
     private sealed class TestTempDataProvider : ITempDataProvider
     {
         /// <summary>Loads empty TempData.</summary>
-        public IDictionary<string, object> LoadTempData(HttpContext context) => new Dictionary<string, object>();
+        public IDictionary<string, object> LoadTempData(Microsoft.AspNetCore.Http.HttpContext context) => new Dictionary<string, object>();
         /// <summary>Accepts TempData writes without external persistence.</summary>
-        public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
+        public void SaveTempData(Microsoft.AspNetCore.Http.HttpContext context, IDictionary<string, object> values) { }
     }
 }
