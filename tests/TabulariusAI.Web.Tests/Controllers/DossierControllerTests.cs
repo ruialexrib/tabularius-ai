@@ -7,130 +7,46 @@ using Xunit;
 
 namespace TabulariusAI.Web.Tests.Controllers;
 
-/// <summary>Verifies dossier navigation, source selection, filtering and paging behavior.</summary>
+/// <summary>Verifies dossier navigation, source selection, filtering, deletion and accounting workspace behavior.</summary>
 public sealed class DossierControllerTests
 {
     /// <summary>Verifies that the latest accounting period is selected even when an older period was imported later.</summary>
-    [Fact]
-    public async Task SaftSummary_WithoutImportId_SelectsLatestAccountingPeriod()
-    {
-        await using var database = new TestDatabase();
-        var dossier = await SeedDossierAsync(database);
-        var olderPeriod = CreateImport(dossier.Id, "older.xml", new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), new DateTime(2026, 8, 20, 12, 0, 0, DateTimeKind.Utc));
-        var newerPeriod = CreateImport(dossier.Id, "newer.xml", new DateOnly(2026, 4, 1), new DateOnly(2026, 6, 30), new DateTime(2026, 8, 10, 12, 0, 0, DateTimeKind.Utc));
-        database.Context.SaftImports.AddRange(olderPeriod, newerPeriod);
-        await database.Context.SaveChangesAsync();
-
-        var result = await new DossierController(database.Context).SaftSummary(dossier.Id, null, CancellationToken.None);
-
-        var view = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<SaftImportSelectionViewModel>(view.Model);
-        Assert.Equal(newerPeriod.Id, model.SelectedImport.Id);
-    }
-
-    /// <summary>Verifies that equal accounting periods use import time and then identifier as deterministic tie breakers.</summary>
-    [Fact]
-    public async Task SaftSummary_SamePeriod_SelectsLatestImportThenHighestId()
-    {
-        await using var database = new TestDatabase();
-        var dossier = await SeedDossierAsync(database);
-        var timestamp = new DateTime(2026, 8, 20, 12, 0, 0, DateTimeKind.Utc);
-        var first = CreateImport(dossier.Id, "first.xml", new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), timestamp);
-        var second = CreateImport(dossier.Id, "second.xml", new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), timestamp);
-        database.Context.SaftImports.AddRange(first, second);
-        await database.Context.SaveChangesAsync();
-
-        var result = await new DossierController(database.Context).SaftSummary(dossier.Id, null, CancellationToken.None);
-
-        var model = Assert.IsType<SaftImportSelectionViewModel>(Assert.IsType<ViewResult>(result).Model);
-        Assert.Equal(second.Id, model.SelectedImport.Id);
-    }
-
-    /// <summary>Verifies that an explicitly requested import is preserved instead of silently selecting another source.</summary>
-    [Fact]
-    public async Task SaftSummary_WithImportId_SelectsRequestedSource()
-    {
-        await using var database = new TestDatabase();
-        var dossier = await SeedDossierAsync(database);
-        var first = CreateImport(dossier.Id, "first.xml", new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), DateTime.UtcNow.AddDays(-1));
-        var second = CreateImport(dossier.Id, "second.xml", new DateOnly(2026, 4, 1), new DateOnly(2026, 6, 30), DateTime.UtcNow);
-        database.Context.SaftImports.AddRange(first, second);
-        await database.Context.SaveChangesAsync();
-
-        var result = await new DossierController(database.Context).SaftSummary(dossier.Id, first.Id, CancellationToken.None);
-
-        var model = Assert.IsType<SaftImportSelectionViewModel>(Assert.IsType<ViewResult>(result).Model);
-        Assert.Equal(first.Id, model.SelectedImport.Id);
-    }
-
-    /// <summary>Verifies that an import belonging to another dossier cannot be selected through the current dossier route.</summary>
-    [Fact]
-    public async Task SaftSummary_WithImportFromAnotherDossier_ReturnsNotFound()
-    {
-        await using var database = new TestDatabase();
-        var firstDossier = await SeedDossierAsync(database, "Entity A", "500000001", 2026);
-        var secondDossier = await SeedDossierAsync(database, "Entity B", "500000002", 2026);
-        var firstImport = CreateImport(firstDossier.Id, "a.xml", new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), DateTime.UtcNow);
-        var secondImport = CreateImport(secondDossier.Id, "b.xml", new DateOnly(2026, 1, 1), new DateOnly(2026, 3, 31), DateTime.UtcNow);
-        database.Context.SaftImports.AddRange(firstImport, secondImport);
-        await database.Context.SaveChangesAsync();
-
-        var result = await new DossierController(database.Context).SaftSummary(firstDossier.Id, secondImport.Id, CancellationToken.None);
-
-        Assert.IsType<NotFoundResult>(result);
-    }
-
-    /// <summary>Verifies entity filtering and normalization of unsupported page sizes.</summary>
-    [Fact]
-    public async Task Entities_SearchAndInvalidPageSize_ReturnsFilteredDefaultPage()
-    {
-        await using var database = new TestDatabase();
-        database.Context.AccountingEntities.AddRange(
-            new AccountingEntity { Name = "Alpha Consulting", TaxRegistrationNumber = "500000010" },
-            new AccountingEntity { Name = "Beta Services", TaxRegistrationNumber = "500000011" });
-        await database.Context.SaveChangesAsync();
-
-        var result = await new DossierController(database.Context).Entities(" Alpha ", 0, 999, CancellationToken.None);
-
-        var model = Assert.IsType<PagedListViewModel<AccountingEntity>>(Assert.IsType<ViewResult>(result).Model);
-        Assert.Single(model.Items);
-        Assert.Equal("Alpha Consulting", model.Items[0].Name);
-        Assert.Equal(1, model.Page);
-        Assert.Equal(10, model.PageSize);
-        Assert.Equal("Alpha", model.Search);
-    }
-
-    /// <summary>Verifies that requesting a missing entity returns HTTP not found semantics.</summary>
-    [Fact]
-    public async Task Entity_MissingEntity_ReturnsNotFound()
-    {
-        await using var database = new TestDatabase();
-
-        var result = await new DossierController(database.Context).Entity(999, null, cancellationToken: CancellationToken.None);
-
-        Assert.IsType<NotFoundResult>(result);
-    }
+    [Fact] public async Task SaftSummary_WithoutImportId_SelectsLatestAccountingPeriod() { await using var database = new TestDatabase(); var dossier = await SeedDossierAsync(database); var older = CreateImport(dossier.Id,"older.xml",new(2026,1,1),new(2026,3,31),new(2026,8,20,12,0,0,DateTimeKind.Utc)); var newer = CreateImport(dossier.Id,"newer.xml",new(2026,4,1),new(2026,6,30),new(2026,8,10,12,0,0,DateTimeKind.Utc)); database.Context.SaftImports.AddRange(older,newer); await database.Context.SaveChangesAsync(); var result=await new DossierController(database.Context).SaftSummary(dossier.Id,null,CancellationToken.None); Assert.Equal(newer.Id,Assert.IsType<SaftImportSelectionViewModel>(Assert.IsType<ViewResult>(result).Model).SelectedImport.Id); }
+    /// <summary>Verifies deterministic tie breaking for equal accounting periods.</summary>
+    [Fact] public async Task SaftSummary_SamePeriod_SelectsLatestImportThenHighestId() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var timestamp=new DateTime(2026,8,20,12,0,0,DateTimeKind.Utc); var first=CreateImport(dossier.Id,"first.xml",new(2026,1,1),new(2026,3,31),timestamp); var second=CreateImport(dossier.Id,"second.xml",new(2026,1,1),new(2026,3,31),timestamp); database.Context.SaftImports.AddRange(first,second); await database.Context.SaveChangesAsync(); var result=await new DossierController(database.Context).SaftSummary(dossier.Id,null,CancellationToken.None); Assert.Equal(second.Id,Assert.IsType<SaftImportSelectionViewModel>(Assert.IsType<ViewResult>(result).Model).SelectedImport.Id); }
+    /// <summary>Verifies explicit source selection.</summary>
+    [Fact] public async Task SaftSummary_WithImportId_SelectsRequestedSource() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var first=CreateImport(dossier.Id,"first.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow.AddDays(-1)); var second=CreateImport(dossier.Id,"second.xml",new(2026,4,1),new(2026,6,30),DateTime.UtcNow); database.Context.SaftImports.AddRange(first,second); await database.Context.SaveChangesAsync(); var result=await new DossierController(database.Context).SaftSummary(dossier.Id,first.Id,CancellationToken.None); Assert.Equal(first.Id,Assert.IsType<SaftImportSelectionViewModel>(Assert.IsType<ViewResult>(result).Model).SelectedImport.Id); }
+    /// <summary>Verifies cross-dossier source isolation.</summary>
+    [Fact] public async Task SaftSummary_WithImportFromAnotherDossier_ReturnsNotFound() { await using var database=new TestDatabase(); var a=await SeedDossierAsync(database,"Entity A","500000001"); var b=await SeedDossierAsync(database,"Entity B","500000002"); var ia=CreateImport(a.Id,"a.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); var ib=CreateImport(b.Id,"b.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); database.Context.SaftImports.AddRange(ia,ib); await database.Context.SaveChangesAsync(); Assert.IsType<NotFoundResult>(await new DossierController(database.Context).SaftSummary(a.Id,ib.Id,CancellationToken.None)); }
+    /// <summary>Verifies entity filtering and paging normalization.</summary>
+    [Fact] public async Task Entities_SearchAndInvalidPageSize_ReturnsFilteredDefaultPage() { await using var database=new TestDatabase(); database.Context.AccountingEntities.AddRange(new(){Name="Alpha Consulting",TaxRegistrationNumber="500000010"},new(){Name="Beta Services",TaxRegistrationNumber="500000011"}); await database.Context.SaveChangesAsync(); var result=await new DossierController(database.Context).Entities(" Alpha ",0,999,CancellationToken.None); var model=Assert.IsType<PagedListViewModel<AccountingEntity>>(Assert.IsType<ViewResult>(result).Model); Assert.Single(model.Items); Assert.Equal(10,model.PageSize); Assert.Equal("Alpha",model.Search); }
+    /// <summary>Verifies missing entity semantics.</summary>
+    [Fact] public async Task Entity_MissingEntity_ReturnsNotFound() { await using var database=new TestDatabase(); Assert.IsType<NotFoundResult>(await new DossierController(database.Context).Entity(999,null,cancellationToken:CancellationToken.None)); }
+    /// <summary>Verifies dossier details include the owning entity and imports.</summary>
+    [Fact] public async Task Details_ExistingDossier_LoadsWorkspaceContext() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); database.Context.SaftImports.Add(CreateImport(dossier.Id,"source.xml",new(2026,1,1),new(2026,12,31),DateTime.UtcNow)); await database.Context.SaveChangesAsync(); var model=Assert.IsType<AnalysisDossier>(Assert.IsType<ViewResult>(await new DossierController(database.Context).Details(dossier.Id,CancellationToken.None)).Model); Assert.NotNull(model.AccountingEntity); Assert.Single(model.Imports); }
+    /// <summary>Verifies account filtering remains scoped to the selected import.</summary>
+    [Fact] public async Task Accounts_Search_ReturnsOnlySelectedSourceMatches() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var first=CreateImport(dossier.Id,"first.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); var second=CreateImport(dossier.Id,"second.xml",new(2026,4,1),new(2026,6,30),DateTime.UtcNow); database.Context.SaftImports.AddRange(first,second); await database.Context.SaveChangesAsync(); database.Context.SaftAccounts.AddRange(new(){SaftImportId=first.Id,AccountId="2111",Description="Clientes Alpha"},new(){SaftImportId=first.Id,AccountId="2211",Description="Fornecedores"},new(){SaftImportId=second.Id,AccountId="2111",Description="Clientes Beta"}); await database.Context.SaveChangesAsync(); var model=Assert.IsType<SaftListViewModel<SaftAccount>>(Assert.IsType<ViewResult>(await new DossierController(database.Context).Accounts(dossier.Id,first.Id,"Alpha",cancellationToken:CancellationToken.None)).Model); Assert.Single(model.List.Items); Assert.Equal("Clientes Alpha",model.List.Items[0].Description); }
+    /// <summary>Verifies an accounting entry cannot be opened through a different selected source.</summary>
+    [Fact] public async Task AccountingEntry_TransactionFromDifferentSource_ReturnsNotFound() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var first=CreateImport(dossier.Id,"first.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); var second=CreateImport(dossier.Id,"second.xml",new(2026,4,1),new(2026,6,30),DateTime.UtcNow); database.Context.SaftImports.AddRange(first,second); await database.Context.SaveChangesAsync(); var transaction=CreateTransaction(second.Id,"TX-2"); database.Context.SaftTransactions.Add(transaction); await database.Context.SaveChangesAsync(); Assert.IsType<NotFoundResult>(await new DossierController(database.Context).AccountingEntry(dossier.Id,first.Id,transaction.Id,CancellationToken.None)); }
+    /// <summary>Verifies an accounting entry detail loads its transaction lines.</summary>
+    [Fact] public async Task AccountingEntry_ValidTransaction_LoadsLines() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var import=CreateImport(dossier.Id,"source.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); database.Context.SaftImports.Add(import); await database.Context.SaveChangesAsync(); var transaction=CreateTransaction(import.Id,"TX-1"); transaction.Lines.Add(new(){RecordId="1",AccountId="2111",Description="Debit",Side="D",Amount=100m}); transaction.Lines.Add(new(){RecordId="2",AccountId="7211",Description="Credit",Side="C",Amount=100m}); database.Context.SaftTransactions.Add(transaction); await database.Context.SaveChangesAsync(); var model=Assert.IsType<SaftEntryDetailViewModel>(Assert.IsType<ViewResult>(await new DossierController(database.Context).AccountingEntry(dossier.Id,import.Id,transaction.Id,CancellationToken.None)).Model); Assert.Equal(2,model.Transaction.Lines.Count); }
+    /// <summary>Verifies the trial balance excludes zero accounts by default and applies trimmed search text.</summary>
+    [Fact] public async Task TrialBalance_DefaultFilter_ExcludesZeroAccountsAndSearches() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var import=CreateImport(dossier.Id,"source.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); database.Context.SaftImports.Add(import); await database.Context.SaveChangesAsync(); database.Context.SaftAccounts.AddRange(new(){SaftImportId=import.Id,AccountId="2111",Description="Clientes",OpeningDebitBalance=10m,ClosingDebitBalance=10m},new(){SaftImportId=import.Id,AccountId="9999",Description="Zero"}); await database.Context.SaveChangesAsync(); var model=Assert.IsType<TrialBalanceViewModel>(Assert.IsType<ViewResult>(await new DossierController(database.Context).TrialBalance(dossier.Id,import.Id," clientes ",false,CancellationToken.None)).Model); Assert.Single(model.Rows); Assert.Equal("Clientes",model.Rows[0].Description); Assert.Equal("clientes",model.Search); }
+    /// <summary>Verifies deleting an import removes it and redirects to its dossier.</summary>
+    [Fact] public async Task DeleteImport_ExistingImport_RemovesAndRedirects() { await using var database=new TestDatabase(); var dossier=await SeedDossierAsync(database); var import=CreateImport(dossier.Id,"source.xml",new(2026,1,1),new(2026,3,31),DateTime.UtcNow); database.Context.SaftImports.Add(import); await database.Context.SaveChangesAsync(); var controller=new DossierController(database.Context); AttachTempData(controller); var result=Assert.IsType<RedirectToActionResult>(await controller.DeleteImport(import.Id,CancellationToken.None)); Assert.Equal(nameof(DossierController.Details),result.ActionName); Assert.Empty(database.Context.SaftImports); }
+    /// <summary>Verifies missing deletion targets return not found.</summary>
+    [Fact] public async Task DeleteOperations_MissingTargets_ReturnNotFound() { await using var database=new TestDatabase(); var controller=new DossierController(database.Context); Assert.IsType<NotFoundResult>(await controller.DeleteEntity(999,CancellationToken.None)); Assert.IsType<NotFoundResult>(await controller.DeleteDossier(999,CancellationToken.None)); Assert.IsType<NotFoundResult>(await controller.DeleteImport(999,CancellationToken.None)); }
 
     /// <summary>Creates and persists an accounting entity with one analysis dossier.</summary>
-    private static async Task<AnalysisDossier> SeedDossierAsync(TestDatabase database, string entityName = "Test Entity", string taxId = "500000000", int fiscalYear = 2026)
-    {
-        var entity = new AccountingEntity { Name = entityName, TaxRegistrationNumber = taxId };
-        database.Context.AccountingEntities.Add(entity);
-        await database.Context.SaveChangesAsync();
-        var dossier = new AnalysisDossier { AccountingEntityId = entity.Id, Name = $"Exercício {fiscalYear}", FiscalYear = fiscalYear };
-        database.Context.AnalysisDossiers.Add(dossier);
-        await database.Context.SaveChangesAsync();
-        return dossier;
-    }
-
-    /// <summary>Creates a SAF-T (PT) import with deterministic source metadata for a dossier.</summary>
-    private static SaftImport CreateImport(int dossierId, string fileName, DateOnly startDate, DateOnly endDate, DateTime importedAtUtc) => new()
-    {
-        DossierId = dossierId,
-        OriginalFileName = fileName,
-        SaftVersion = "1.04_01",
-        StartDate = startDate,
-        EndDate = endDate,
-        ImportedAtUtc = importedAtUtc
-    };
+    private static async Task<AnalysisDossier> SeedDossierAsync(TestDatabase database,string entityName="Test Entity",string taxId="500000000",int fiscalYear=2026) { var entity=new AccountingEntity{Name=entityName,TaxRegistrationNumber=taxId}; database.Context.AccountingEntities.Add(entity); await database.Context.SaveChangesAsync(); var dossier=new AnalysisDossier{AccountingEntityId=entity.Id,Name=$"Exercício {fiscalYear}",FiscalYear=fiscalYear}; database.Context.AnalysisDossiers.Add(dossier); await database.Context.SaveChangesAsync(); return dossier; }
+    /// <summary>Creates a SAF-T (PT) import with deterministic source metadata.</summary>
+    private static SaftImport CreateImport(int dossierId,string fileName,DateOnly startDate,DateOnly endDate,DateTime importedAtUtc)=>new(){DossierId=dossierId,OriginalFileName=fileName,SaftVersion="1.04_01",StartDate=startDate,EndDate=endDate,ImportedAtUtc=importedAtUtc};
+    /// <summary>Creates a valid accounting transaction for controller integration tests.</summary>
+    private static SaftTransaction CreateTransaction(int importId,string transactionId)=>new(){SaftImportId=importId,JournalId="GJ",JournalDescription="General",TransactionId=transactionId,Period=1,TransactionDate=new(2026,1,15),SourceId="test",Description="Test transaction",TransactionType="N",GlPostingDate=new(2026,1,15)};
+    /// <summary>Attaches isolated TempData storage to a controller.</summary>
+    private static void AttachTempData(Controller controller) { var context=new Microsoft.AspNetCore.Http.DefaultHttpContext(); controller.ControllerContext=new ControllerContext{HttpContext=context}; controller.TempData=new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(context,new TestTempDataProvider()); }
+    /// <summary>Provides isolated TempData storage for controller tests.</summary>
+    private sealed class TestTempDataProvider : Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataProvider { /// <summary>Loads empty TempData.</summary>
+        public IDictionary<string,object> LoadTempData(Microsoft.AspNetCore.Http.HttpContext context)=>new Dictionary<string,object>(); /// <summary>Accepts TempData writes.</summary>
+        public void SaveTempData(Microsoft.AspNetCore.Http.HttpContext context,IDictionary<string,object> values){} }
 }
