@@ -13,24 +13,37 @@ Every commit pushed to `main` and every pull request targeting `main` must run `
 
 The CI workflow must, at minimum:
 
-1. restore the solution;
+1. restore the repository-local .NET tools and solution dependencies;
 2. build the complete solution in Release configuration with warnings treated as errors;
-3. run the complete automated test suite;
-4. collect and retain test results and code coverage artifacts.
+3. verify that the EF Core model has no pending changes that are missing from migrations;
+4. run the complete automated test suite;
+5. collect and retain test results and code coverage artifacts.
 
 A repository change is not considered verified merely because the files were committed successfully. After a commit, inspect the corresponding GitHub Actions CI run. Report the CI result accurately.
+
+Do not block on every intermediate non-critical commit in a coherent change set. Continue normal UI, view, navigation and component work when appropriate, then verify the latest CI run for the final commit. Stop and inspect CI immediately for critical changes such as EF Core model or migration changes, persistence changes, SAF-T parser changes, security changes, structural changes, or when correcting an already failing CI run.
 
 If CI fails, do not continue feature development as though the change were healthy. Inspect the failed job and logs, identify the root cause, correct the code, tests or workflow as appropriate, commit the correction, and inspect the new CI run. Repeat until CI passes or an external/environmental blocker is established. Never weaken, remove or bypass a legitimate failing test simply to make CI green.
 
 When multiple commits are made as part of one change set and GitHub concurrency cancels superseded runs, verify the latest run for the final commit.
+
+## EF Core migration consistency
+
+The repository pins `dotnet-ef` in `.config/dotnet-tools.json`. CI must restore that tool and run `dotnet ef migrations has-pending-model-changes` against `src/TabulariusAI.Web` after the Release build.
+
+Every migration must be discoverable by EF Core. Migration classes must retain the generated context and migration metadata, normally `[DbContext(typeof(TabulariusDbContext))]` and `[Migration("<migration-id>")]`, whether those attributes are in the main migration file or its generated designer file.
+
+Any change to the EF Core model is critical. Add or update the corresponding migration and model snapshot in the same change set. A pending-model-changes result is a CI failure and must not be bypassed.
 
 ## Local verification
 
 When a suitable .NET 9 environment is available, run:
 
 ```powershell
+dotnet tool restore
 dotnet restore TabulariusAI.sln
 dotnet build TabulariusAI.sln --configuration Release --no-restore
+dotnet ef migrations has-pending-model-changes --project src/TabulariusAI.Web --startup-project src/TabulariusAI.Web --configuration Release --no-build
 dotnet test TabulariusAI.sln --configuration Release --no-build
 ```
 
