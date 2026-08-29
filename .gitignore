@@ -24,6 +24,10 @@ publish/
 !*.example
 appsettings.Local.json
 
+## Runtime diagnostics
+logs/
+*.log
+
 ## OS
 .DS_Store
 Thumbs.db
