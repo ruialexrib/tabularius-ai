@@ -23,16 +23,26 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
             using var reader = XmlReader.Create(stream, settings);
             var model = new SaftHeaderViewModel();
             var rootValidated = false;
-            while (await reader.ReadAsync())
+            var advanceReader = true;
+
+            while (true)
             {
+                if (advanceReader && !await reader.ReadAsync()) break;
+                advanceReader = true;
                 cancellationToken.ThrowIfCancellationRequested();
                 if (reader.NodeType != XmlNodeType.Element) continue;
                 if (!rootValidated) { ValidateRoot(reader); rootValidated = true; continue; }
 
                 switch (reader.LocalName)
                 {
-                    case "Header": await ParseElementAsync(reader, cancellationToken, element => ParseHeader(element, model)); break;
-                    case "MasterFiles": await ParseElementAsync(reader, cancellationToken, element => ParseMasterFiles(element, model)); break;
+                    case "Header":
+                        await ParseElementAsync(reader, cancellationToken, element => ParseHeader(element, model));
+                        advanceReader = false;
+                        break;
+                    case "MasterFiles":
+                        await ParseElementAsync(reader, cancellationToken, element => ParseMasterFiles(element, model));
+                        advanceReader = false;
+                        break;
                     case "Transaction": model.TransactionCount++; break;
                     case "Invoice": model.SalesInvoiceCount++; break;
                     case "StockMovement": model.MovementOfGoodsCount++; break;
@@ -93,10 +103,8 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
         {
             foreach (var account in generalLedgerAccounts.Elements(ns + "Account")) model.Accounts.Add(ParseAccount(account));
         }
-
         foreach (var customer in element.Elements(ns + "Customer")) model.Customers.Add(ParseParty(customer, "CustomerID", "CustomerTaxID"));
         foreach (var supplier in element.Elements(ns + "Supplier")) model.Suppliers.Add(ParseParty(supplier, "SupplierID", "SupplierTaxID"));
-
         model.AccountCount = model.Accounts.Count;
         model.CustomerCount = model.Customers.Count;
         model.SupplierCount = model.Suppliers.Count;
