@@ -21,4 +21,7 @@ public sealed class LoginViewModel
 
     /// <summary>Gets or sets a value indicating whether Google authentication is configured.</summary>
     public bool GoogleEnabled { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether the local bootstrap administrator still uses the default credentials.</summary>
+    public bool ShowBootstrapCredentials { get; set; }
 }
