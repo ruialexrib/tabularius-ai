@@ -107,17 +107,20 @@ static async Task SeedIdentityAsync(WebApplication application)
     if (administrator is null)
     {
         administrator = new ApplicationUser { UserName = administratorName, DisplayName = "Administrador" };
-        var createResult = await userManager.CreateAsync(administrator);
-        if (!createResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator could not be created: {string.Join("; ", createResult.Errors.Select(error => error.Code))}");
-
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
         administrator.PasswordHash = passwordHasher.HashPassword(administrator, temporaryPassword);
         administrator.SecurityStamp = Guid.NewGuid().ToString();
-        var updateResult = await userManager.UpdateAsync(administrator);
-        if (!updateResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator password could not be initialized: {string.Join("; ", updateResult.Errors.Select(error => error.Code))}");
+
+        var store = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+        var createResult = await store.CreateAsync(administrator, CancellationToken.None);
+        if (!createResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator could not be created: {string.Join("; ", createResult.Errors.Select(error => error.Code))}");
     }
 
-    if (!await userManager.IsInRoleAsync(administrator, ApplicationRoles.Administrator)) await userManager.AddToRoleAsync(administrator, ApplicationRoles.Administrator);
+    if (!await userManager.IsInRoleAsync(administrator, ApplicationRoles.Administrator))
+    {
+        var roleResult = await userManager.AddToRoleAsync(administrator, ApplicationRoles.Administrator);
+        if (!roleResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator role could not be assigned: {string.Join("; ", roleResult.Errors.Select(error => error.Code))}");
+    }
 }
 
 public partial class Program;
