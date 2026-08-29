@@ -25,7 +25,7 @@
                 <input asp-for="ReturnUrl" type="hidden" />
                 <header><span class="auth-icon">T</span><div><h2>Iniciar sessão</h2><p>Introduza as credenciais da sua conta.</p></div></header>
                 <div asp-validation-summary="ModelOnly" class="auth-validation"></div>
-                <label asp-for="Email">Email</label><input asp-for="Email" autocomplete="username" autofocus /><span asp-validation-for="Email"></span>
+                <label asp-for="Identifier">Utilizador</label><input asp-for="Identifier" autocomplete="username" autofocus /><span asp-validation-for="Identifier"></span>
                 <label asp-for="Password">Palavra-passe</label><input asp-for="Password" type="password" autocomplete="current-password" /><span asp-validation-for="Password"></span>
                 <label class="auth-check"><input asp-for="RememberMe" /> <span>Manter sessão iniciada</span></label>
                 <button type="submit" class="auth-primary">Entrar</button>
