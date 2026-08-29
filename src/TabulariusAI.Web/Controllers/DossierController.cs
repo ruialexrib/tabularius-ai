@@ -7,7 +7,7 @@ using TabulariusAI.Web.Models;
 namespace TabulariusAI.Web.Controllers;
 
 /// <summary>
-/// Provides read-only navigation over accounting entities and their analysis dossiers.
+/// Provides navigation and data management operations over accounting entities and their analysis dossiers.
 /// </summary>
 public sealed class DossierController(TabulariusDbContext dbContext) : Controller
 {
@@ -25,6 +25,50 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <param name="id">The dossier identifier.</param><param name="cancellationToken">A cancellation token.</param>
     /// <returns>The dossier workspace view, or a not-found result.</returns>
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken) { var dossier = await LoadDossierAsync(id, cancellationToken); return dossier is null ? NotFound() : View(dossier); }
+
+    /// <summary>Deletes an accounting entity and all dossiers and imported data owned by it.</summary>
+    /// <param name="id">The accounting entity identifier.</param><param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A redirect to the entities workspace.</returns>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteEntity(int id, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.AccountingEntities.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (entity is null) return NotFound();
+        dbContext.AccountingEntities.Remove(entity);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        TempData["SuccessMessage"] = "A entidade e todos os respetivos dossiers e dados importados foram eliminados.";
+        return RedirectToAction(nameof(Entities));
+    }
+
+    /// <summary>Deletes an analysis dossier and all imported data owned by it.</summary>
+    /// <param name="id">The dossier identifier.</param><param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A redirect to the owning entity workspace.</returns>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteDossier(int id, CancellationToken cancellationToken)
+    {
+        var dossier = await dbContext.AnalysisDossiers.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (dossier is null) return NotFound();
+        var entityId = dossier.AccountingEntityId;
+        dbContext.AnalysisDossiers.Remove(dossier);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        TempData["SuccessMessage"] = "O dossier e todas as respetivas importações foram eliminados.";
+        return RedirectToAction(nameof(Entity), new { id = entityId });
+    }
+
+    /// <summary>Deletes one SAF-T (PT) import and all source data owned by it.</summary>
+    /// <param name="id">The SAF-T (PT) import identifier.</param><param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A redirect to the owning dossier workspace.</returns>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteImport(int id, CancellationToken cancellationToken)
+    {
+        var import = await dbContext.SaftImports.SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        if (import is null) return NotFound();
+        var dossierId = import.DossierId;
+        dbContext.SaftImports.Remove(import);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        TempData["SuccessMessage"] = "A importação SAF-T (PT) e os respetivos dados foram eliminados.";
+        return RedirectToAction(nameof(Details), new { id = dossierId });
+    }
 
     /// <summary>Displays the summary for a selected SAF-T (PT) source.</summary>
     /// <param name="id">The dossier identifier.</param><param name="importId">The optional SAF-T (PT) import identifier.</param><param name="cancellationToken">A cancellation token.</param>
