@@ -17,7 +17,11 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     /// <param name="returnUrl">The local URL to return to after authentication.</param>
     /// <returns>The login view or the application home page when already authenticated.</returns>
     [AllowAnonymous, HttpGet]
-    public IActionResult Login(string? returnUrl = null) => User.Identity?.IsAuthenticated == true ? RedirectToAction("Index", "Home") : View(CreateLoginModel(returnUrl));
+    public async Task<IActionResult> Login(string? returnUrl = null)
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        return View(await CreateLoginModelAsync(returnUrl));
+    }
 
     /// <summary>Authenticates an existing local account.</summary>
     /// <param name="model">The submitted credentials.</param>
@@ -25,7 +29,7 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
-        model.GoogleEnabled = IsGoogleConfigured;
+        await PopulateLoginStateAsync(model);
         if (!ModelState.IsValid) return View(model);
 
         var identifier = model.Identifier.Trim();
@@ -97,14 +101,14 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
     {
         if (!IsGoogleConfigured) return NotFound();
-        if (!string.IsNullOrWhiteSpace(remoteError)) return ExternalLoginError(returnUrl, "O Google não conseguiu concluir a autenticação.");
+        if (!string.IsNullOrWhiteSpace(remoteError)) return await ExternalLoginErrorAsync(returnUrl, "O Google não conseguiu concluir a autenticação.");
         var info = await signInManager.GetExternalLoginInfoAsync();
-        if (info is null || !string.Equals(info.LoginProvider, "Google", StringComparison.Ordinal)) return ExternalLoginError(returnUrl, "Não foi possível validar a resposta do Google.");
+        if (info is null || !string.Equals(info.LoginProvider, "Google", StringComparison.Ordinal)) return await ExternalLoginErrorAsync(returnUrl, "Não foi possível validar a resposta do Google.");
         var email = info.Principal.FindFirstValue(ClaimTypes.Email)?.Trim();
-        if (string.IsNullOrWhiteSpace(email)) return ExternalLoginError(returnUrl, "A conta Google não disponibilizou um endereço de email.");
+        if (string.IsNullOrWhiteSpace(email)) return await ExternalLoginErrorAsync(returnUrl, "A conta Google não disponibilizou um endereço de email.");
         var user = await userManager.FindByEmailAsync(email);
-        if (user is null) return ExternalLoginError(returnUrl, "Este email não está autorizado. Solicite ao administrador a criação da sua conta.");
-        if (await userManager.IsLockedOutAsync(user)) return ExternalLoginError(returnUrl, "A conta encontra-se temporariamente bloqueada.");
+        if (user is null) return await ExternalLoginErrorAsync(returnUrl, "Este email não está autorizado. Solicite ao administrador a criação da sua conta.");
+        if (await userManager.IsLockedOutAsync(user)) return await ExternalLoginErrorAsync(returnUrl, "A conta encontra-se temporariamente bloqueada.");
         await signInManager.SignInAsync(user, isPersistent: false, authenticationMethod: info.LoginProvider);
         return RedirectAfterLogin(returnUrl);
     }
@@ -120,10 +124,27 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     public IActionResult AccessDenied() => View();
 
     /// <summary>Determines whether the bootstrap administrator is still using the temporary password.</summary>
-    /// <param name="user">The authenticated application user.</param>
+    /// <param name="user">The application user to inspect.</param>
     /// <returns>True when the temporary password must be replaced; otherwise false.</returns>
     private async Task<bool> MustReplaceBootstrapPasswordAsync(ApplicationUser user) =>
         string.Equals(user.UserName, BootstrapUserName, StringComparison.OrdinalIgnoreCase) && await userManager.CheckPasswordAsync(user, BootstrapPassword);
+
+    /// <summary>Determines whether the login page should reveal the local bootstrap credentials.</summary>
+    /// <returns>True while the bootstrap administrator still uses the default password; otherwise false.</returns>
+    private async Task<bool> ShouldShowBootstrapCredentialsAsync()
+    {
+        var user = await userManager.FindByNameAsync(BootstrapUserName);
+        return user is not null && await MustReplaceBootstrapPasswordAsync(user);
+    }
+
+    /// <summary>Populates dynamic state required by the login page.</summary>
+    /// <param name="model">The login model to populate.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task PopulateLoginStateAsync(LoginViewModel model)
+    {
+        model.GoogleEnabled = IsGoogleConfigured;
+        model.ShowBootstrapCredentials = await ShouldShowBootstrapCredentialsAsync();
+    }
 
     /// <summary>Returns the login page with a generic invalid-credentials error.</summary>
     /// <param name="model">The submitted login model.</param>
@@ -145,7 +166,14 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     };
 
     /// <summary>Creates the login view model for the current configuration.</summary>
-    private LoginViewModel CreateLoginModel(string? returnUrl) => new() { ReturnUrl = returnUrl, GoogleEnabled = IsGoogleConfigured };
+    /// <param name="returnUrl">The local URL to return to after authentication.</param>
+    /// <returns>The populated login view model.</returns>
+    private async Task<LoginViewModel> CreateLoginModelAsync(string? returnUrl)
+    {
+        var model = new LoginViewModel { ReturnUrl = returnUrl };
+        await PopulateLoginStateAsync(model);
+        return model;
+    }
 
     /// <summary>Gets whether Google authentication credentials are configured.</summary>
     private bool IsGoogleConfigured => !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientId"]) && !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientSecret"]);
@@ -154,5 +182,12 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     private IActionResult RedirectAfterLogin(string? returnUrl) => Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
 
     /// <summary>Returns the login page with an external authentication error.</summary>
-    private IActionResult ExternalLoginError(string? returnUrl, string message) { ModelState.AddModelError(string.Empty, message); return View(nameof(Login), CreateLoginModel(returnUrl)); }
+    /// <param name="returnUrl">The local URL to return to after authentication.</param>
+    /// <param name="message">The user-facing authentication error.</param>
+    /// <returns>The login view with the supplied error.</returns>
+    private async Task<IActionResult> ExternalLoginErrorAsync(string? returnUrl, string message)
+    {
+        ModelState.AddModelError(string.Empty, message);
+        return View(nameof(Login), await CreateLoginModelAsync(returnUrl));
+    }
 }
