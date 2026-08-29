@@ -32,10 +32,7 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
                 switch (reader.LocalName)
                 {
                     case "Header": await ParseElementAsync(reader, cancellationToken, element => ParseHeader(element, model)); break;
-                    case "Account": await ParseElementAsync(reader, cancellationToken, element => model.Accounts.Add(ParseAccount(element))); model.AccountCount = model.Accounts.Count; break;
-                    case "Customer": await ParseElementAsync(reader, cancellationToken, element => model.Customers.Add(ParseParty(element, "CustomerID", "CustomerTaxID"))); model.CustomerCount = model.Customers.Count; break;
-                    case "Supplier": await ParseElementAsync(reader, cancellationToken, element => model.Suppliers.Add(ParseParty(element, "SupplierID", "SupplierTaxID"))); model.SupplierCount = model.Suppliers.Count; break;
-                    case "Product": model.ProductCount++; break;
+                    case "MasterFiles": await ParseElementAsync(reader, cancellationToken, element => ParseMasterFiles(element, model)); break;
                     case "Transaction": model.TransactionCount++; break;
                     case "Invoice": model.SalesInvoiceCount++; break;
                     case "StockMovement": model.MovementOfGoodsCount++; break;
@@ -83,6 +80,27 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
         model.EndDate = GetOptionalValue(element, ns + "EndDate");
         model.ProductId = GetOptionalValue(element, ns + "ProductID");
         model.ProductVersion = GetOptionalValue(element, ns + "ProductVersion");
+    }
+
+    /// <summary>Maps the SAF-T master-files subtree into the import model using exact namespace-aware element names.</summary>
+    /// <param name="element">The source MasterFiles element.</param>
+    /// <param name="model">The import model to populate.</param>
+    private static void ParseMasterFiles(XElement element, SaftHeaderViewModel model)
+    {
+        var ns = element.Name.Namespace;
+        var generalLedgerAccounts = element.Element(ns + "GeneralLedgerAccounts");
+        if (generalLedgerAccounts is not null)
+        {
+            foreach (var account in generalLedgerAccounts.Elements(ns + "Account")) model.Accounts.Add(ParseAccount(account));
+        }
+
+        foreach (var customer in element.Elements(ns + "Customer")) model.Customers.Add(ParseParty(customer, "CustomerID", "CustomerTaxID"));
+        foreach (var supplier in element.Elements(ns + "Supplier")) model.Suppliers.Add(ParseParty(supplier, "SupplierID", "SupplierTaxID"));
+
+        model.AccountCount = model.Accounts.Count;
+        model.CustomerCount = model.Customers.Count;
+        model.SupplierCount = model.Suppliers.Count;
+        model.ProductCount = element.Elements(ns + "Product").Count();
     }
 
     /// <summary>Reads an optional source element value while preserving the non-null model contract.</summary>
