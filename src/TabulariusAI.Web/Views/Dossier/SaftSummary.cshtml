@@ -1,59 +1,9 @@
-@model TabulariusAI.Web.Data.Entities.AnalysisDossier
+@model TabulariusAI.Web.Models.SaftImportSelectionViewModel
 @{
-    ViewData["Title"] = $"Resumo SAF-T (PT) · {Model.AccountingEntity.Name}";
-    var latestImport = Model.Imports.OrderByDescending(item => item.ImportedAtUtc).FirstOrDefault();
+    var import = Model.SelectedImport;
+    ViewData["Title"] = $"Resumo SAF-T (PT) · {import.Dossier.AccountingEntity.Name}";
 }
-
-<section class="hero">
-    <p class="eyebrow">SAF-T (PT) · @Model.AccountingEntity.Name · @Model.FiscalYear</p>
-    <h1>Resumo SAF-T (PT)</h1>
-    <p class="lead">Visão das fontes SAF-T (PT) atualmente associadas a este dossier contabilístico.</p>
-</section>
-
-<section class="panel">
-    <h2>Contexto</h2>
-    <div class="table-wrap">
-        <table>
-            <tbody>
-                <tr><th>Entidade</th><td>@Model.AccountingEntity.Name</td></tr>
-                <tr><th>NIF</th><td>@Model.AccountingEntity.TaxRegistrationNumber</td></tr>
-                <tr><th>Exercício</th><td>@Model.FiscalYear</td></tr>
-                <tr><th>Importações SAF-T (PT)</th><td>@Model.Imports.Count</td></tr>
-                <tr><th>Última importação</th><td>@(latestImport is null ? "—" : latestImport.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm"))</td></tr>
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<section class="panel">
-    <h2>Ficheiros SAF-T (PT)</h2>
-    @if (Model.Imports.Count == 0)
-    {
-        <p>Não existem ficheiros SAF-T (PT) associados a este dossier.</p>
-    }
-    else
-    {
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Ficheiro</th><th>Versão</th><th>Início</th><th>Fim</th><th>Importado em</th></tr></thead>
-                <tbody>
-                @foreach (var item in Model.Imports.OrderByDescending(item => item.ImportedAtUtc))
-                {
-                    <tr>
-                        <td><strong>@item.OriginalFileName</strong></td>
-                        <td>@item.SaftVersion</td>
-                        <td>@(item.StartDate?.ToString("dd/MM/yyyy") ?? "—")</td>
-                        <td>@(item.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td>
-                        <td>@item.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    }
-</section>
-
-<section class="panel">
-    <h2>Exploração SAF-T (PT)</h2>
-    <p>Contas, clientes, fornecedores e movimentos serão disponibilizados aqui quando os registos de origem passarem a ser persistidos com rastreabilidade ao ficheiro importado.</p>
-</section>
+<section class="page-header"><div><p class="eyebrow">SAF-T (PT) · @import.Dossier.AccountingEntity.Name · @import.Dossier.FiscalYear</p><h1>Resumo SAF-T (PT)</h1><p class="lead">Resumo da fonte selecionada dentro deste dossier contabilístico.</p></div><a class="btn btn-secondary" asp-action="Details" asp-route-id="@import.DossierId">Voltar ao dossier</a></section>
+<section class="panel saft-source-panel"><partial name="_SaftSourceSelector" model="Model" /></section>
+<section class="metric-grid saft-summary-metrics"><article class="metric-card"><span>Contas</span><strong>@import.Accounts.Count</strong></article><article class="metric-card"><span>Clientes</span><strong>@import.Customers.Count</strong></article><article class="metric-card"><span>Fornecedores</span><strong>@import.Suppliers.Count</strong></article></section>
+<section class="panel"><div class="card-header"><div><p class="section-kicker">Fonte selecionada</p><h2>Detalhes da importação</h2></div></div><div class="table-wrap"><table><tbody><tr><th>Entidade</th><td>@import.Dossier.AccountingEntity.Name</td></tr><tr><th>NIF</th><td>@import.Dossier.AccountingEntity.TaxRegistrationNumber</td></tr><tr><th>Exercício</th><td>@import.Dossier.FiscalYear</td></tr><tr><th>Ficheiro</th><td>@import.OriginalFileName</td></tr><tr><th>Versão SAF-T (PT)</th><td>@import.SaftVersion</td></tr><tr><th>Período</th><td>@(import.StartDate?.ToString("dd/MM/yyyy") ?? "—") — @(import.EndDate?.ToString("dd/MM/yyyy") ?? "—")</td></tr><tr><th>Importado em</th><td>@import.ImportedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr></tbody></table></div></section>
