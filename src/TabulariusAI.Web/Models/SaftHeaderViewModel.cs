@@ -47,4 +47,6 @@ public sealed class SaftHeaderViewModel
     public IList<SaftPartyViewModel> Suppliers { get; } = new List<SaftPartyViewModel>();
     /// <summary>Gets the products and services parsed from the SAF-T (PT) master files section.</summary>
     public IList<SaftProductViewModel> Products { get; } = new List<SaftProductViewModel>();
+    /// <summary>Gets the accounting transactions parsed from GeneralLedgerEntries.</summary>
+    public IList<SaftTransactionViewModel> Transactions { get; } = new List<SaftTransactionViewModel>();
 }
