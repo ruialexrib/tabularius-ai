@@ -16,7 +16,7 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <summary>Displays a filtered and paginated list of accounting entities.</summary>
     /// <param name="search">Optional entity name or tax identifier search.</param><param name="page">The requested one-based page.</param><param name="pageSize">The requested page size.</param><param name="cancellationToken">A cancellation token.</param>
     /// <returns>The entities list view.</returns>
-    public async Task<IActionResult> Entities(string? search, int page = 1, int pageSize = 25, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Entities(string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var query = dbContext.AccountingEntities.AsNoTracking().Include(item => item.Dossiers).AsQueryable();
         if (!string.IsNullOrWhiteSpace(search))
@@ -61,7 +61,7 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     public async Task<IActionResult> SaftSummary(int id, int? importId, CancellationToken cancellationToken) => await ImportViewAsync(id, importId, cancellationToken, query => query.Include(item => item.Accounts).Include(item => item.Customers).Include(item => item.Suppliers));
 
     /// <summary>Displays a filtered and paginated chart of accounts from a selected SAF-T (PT) import.</summary>
-    public async Task<IActionResult> Accounts(int id, int? importId, string? search, int page = 1, int pageSize = 25, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Accounts(int id, int? importId, string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var source = await LoadSourceAsync(id, importId, cancellationToken); if (source is null) return NotFound();
         var query = dbContext.SaftAccounts.AsNoTracking().Where(item => item.SaftImportId == source.SelectedImport.Id);
@@ -70,7 +70,7 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     }
 
     /// <summary>Displays a filtered and paginated customer list from a selected SAF-T (PT) import.</summary>
-    public async Task<IActionResult> Customers(int id, int? importId, string? search, int page = 1, int pageSize = 25, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Customers(int id, int? importId, string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var source = await LoadSourceAsync(id, importId, cancellationToken); if (source is null) return NotFound();
         var query = dbContext.SaftCustomers.AsNoTracking().Where(item => item.SaftImportId == source.SelectedImport.Id);
@@ -79,7 +79,7 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     }
 
     /// <summary>Displays a filtered and paginated supplier list from a selected SAF-T (PT) import.</summary>
-    public async Task<IActionResult> Suppliers(int id, int? importId, string? search, int page = 1, int pageSize = 25, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Suppliers(int id, int? importId, string? search, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
         var source = await LoadSourceAsync(id, importId, cancellationToken); if (source is null) return NotFound();
         var query = dbContext.SaftSuppliers.AsNoTracking().Where(item => item.SaftImportId == source.SelectedImport.Id);
@@ -104,7 +104,7 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <summary>Creates a normalized server-side page from a query.</summary>
     private static async Task<PagedListViewModel<T>> PageAsync<T>(IQueryable<T> query, string? search, int page, int pageSize, CancellationToken cancellationToken)
     {
-        pageSize = AllowedPageSizes.Contains(pageSize) ? pageSize : 25; page = Math.Max(1, page);
+        pageSize = AllowedPageSizes.Contains(pageSize) ? pageSize : 10; page = Math.Max(1, page);
         var total = await query.CountAsync(cancellationToken); var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize)); page = Math.Min(page, totalPages);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
         return new PagedListViewModel<T> { Items = items, TotalItems = total, Page = page, PageSize = pageSize, Search = search?.Trim() };
