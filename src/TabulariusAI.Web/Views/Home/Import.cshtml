@@ -25,7 +25,7 @@
                     <div asp-validation-summary="All" class="validation-summary"></div>
 
                     <div class="import-actions">
-                        <button type="submit" class="btn btn-primary">Validar e importar</button>
+                        <button type="submit" class="btn btn-primary">Importar ficheiro</button>
                         <a class="btn btn-secondary" asp-controller="Dossier" asp-action="Entities">Ver entidades e exercícios</a>
                     </div>
                 </form>
@@ -33,15 +33,15 @@
         </div>
 
         <aside class="import-reference" aria-label="Processo de importação">
-            <span class="import-reference-label">Antes de importar</span>
-            <h2>Validação automática</h2>
-            <p>O ficheiro é verificado antes de qualquer informação ser adicionada ao dossier.</p>
+            <span class="import-reference-label">Processo de importação</span>
+            <h2>Leitura automática</h2>
+            <p>O Tabularius identifica a informação essencial do ficheiro antes de a adicionar ao dossier contabilístico.</p>
 
             <div class="import-checks">
-                <div><span>1</span><p><strong>Ficheiro XML</strong><small>Verificação do formato e estrutura.</small></p></div>
-                <div><span>2</span><p><strong>SAF-T (PT) 1.04_01</strong><small>Validação segundo as regras suportadas do schema oficial.</small></p></div>
+                <div><span>1</span><p><strong>Ficheiro XML</strong><small>Verificação do formato de ficheiro.</small></p></div>
+                <div><span>2</span><p><strong>Leitura SAF-T (PT)</strong><small>Identificação da entidade, exercício, período e dados disponíveis.</small></p></div>
                 <div><span>3</span><p><strong>Duplicados</strong><small>O mesmo ficheiro não é importado duas vezes.</small></p></div>
-                <div><span>4</span><p><strong>Importação</strong><small>Os dados só são guardados depois das validações.</small></p></div>
+                <div><span>4</span><p><strong>Importação</strong><small>Os dados são associados ao respetivo dossier contabilístico.</small></p></div>
             </div>
 
             <div class="import-reference-note">
@@ -60,9 +60,9 @@
                 <p class="section-kicker">Importação concluída</p>
                 <h2>@Model.CompanyName · @Model.FiscalYear</h2>
                 <p>@Model.StartDate — @Model.EndDate · SAF-T (PT) @Model.SaftVersion</p>
-                <p class="status-message status-success">@(TempData["SaftImportValidation"] ?? "Ficheiro validado e importado com sucesso.")</p>
+                <p class="status-message status-success">@(TempData["SaftImportValidation"] ?? "Ficheiro importado com sucesso.")</p>
             </div>
-            <span class="status-pill status-pill-success">Validado · Importado</span>
+            <span class="status-pill status-pill-success">Importado</span>
         </div>
     </section>
 }
