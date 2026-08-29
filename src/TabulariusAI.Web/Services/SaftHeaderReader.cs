@@ -6,14 +6,10 @@ using TabulariusAI.Web.Models;
 
 namespace TabulariusAI.Web.Services;
 
-/// <summary>
-/// Reads SAF-T (PT) header, master-file and accounting data using secure streaming XML parsing.
-/// </summary>
 public sealed class SaftHeaderReader : ISaftHeaderReader
 {
     static SaftHeaderReader() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    /// <inheritdoc />
     public async Task<SaftHeaderViewModel> ReadAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -21,14 +17,10 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
         try
         {
             using var reader = XmlReader.Create(stream, settings);
-            var model = new SaftHeaderViewModel();
-            var rootValidated = false;
-            var advanceReader = true;
+            var model = new SaftHeaderViewModel(); var rootValidated = false; var advanceReader = true;
             while (true)
             {
-                if (advanceReader && !await reader.ReadAsync()) break;
-                advanceReader = true;
-                cancellationToken.ThrowIfCancellationRequested();
+                if (advanceReader && !await reader.ReadAsync()) break; advanceReader = true; cancellationToken.ThrowIfCancellationRequested();
                 if (reader.NodeType != XmlNodeType.Element) continue;
                 if (!rootValidated) { ValidateRoot(reader); rootValidated = true; continue; }
                 switch (reader.LocalName)
@@ -36,118 +28,47 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
                     case "Header": await ParseElementAsync(reader, cancellationToken, element => ParseHeader(element, model)); advanceReader = false; break;
                     case "MasterFiles": await ParseElementAsync(reader, cancellationToken, element => ParseMasterFiles(element, model)); advanceReader = false; break;
                     case "Journal": await ParseElementAsync(reader, cancellationToken, element => ParseJournal(element, model)); advanceReader = false; break;
-                    case "Invoice": model.SalesInvoiceCount++; break;
+                    case "Invoice": await ParseElementAsync(reader, cancellationToken, element => model.SalesInvoices.Add(ParseSalesInvoice(element))); advanceReader = false; break;
                     case "StockMovement": model.MovementOfGoodsCount++; break;
                     case "WorkDocument": model.WorkingDocumentCount++; break;
                     case "Payment": model.PaymentCount++; break;
                 }
             }
-            model.TransactionCount = model.Transactions.Count;
-            ValidateRequiredHeader(model);
-            return model;
+            model.TransactionCount = model.Transactions.Count; model.SalesInvoiceCount = model.SalesInvoices.Count; ValidateRequiredHeader(model); return model;
         }
         catch (XmlException exception) { throw new InvalidDataException($"Não foi possível ler o XML SAF-T (PT): {exception.Message}", exception); }
     }
 
-    /// <summary>Reads the current XML element as an isolated subtree and applies a mapper.</summary>
-    /// <param name="reader">The reader positioned on the source element.</param><param name="cancellationToken">A token used to cancel the operation.</param><param name="map">The mapping operation applied to the parsed element.</param>
-    /// <returns>A task representing the asynchronous read operation.</returns>
     private static async Task ParseElementAsync(XmlReader reader, CancellationToken cancellationToken, Action<XElement> map) { var node = await XNode.ReadFromAsync(reader, cancellationToken); if (node is XElement element) map(element); }
-
-    /// <summary>Validates that the document root identifies a Portuguese SAF-T namespace.</summary>
-    /// <param name="reader">The XML reader positioned at the document root.</param>
     private static void ValidateRoot(XmlReader reader) { if (!string.Equals(reader.LocalName, "AuditFile", StringComparison.Ordinal) || !reader.NamespaceURI.StartsWith("urn:OECD:StandardAuditFile-Tax:PT_", StringComparison.Ordinal)) throw new InvalidDataException("O ficheiro XML não contém uma estrutura SAF-T (PT) reconhecida."); }
-
-    /// <summary>Maps the SAF-T header subtree into the import model without advancing over adjacent fields.</summary>
-    /// <param name="element">The source header element.</param><param name="model">The import model to populate.</param>
     private static void ParseHeader(XElement element, SaftHeaderViewModel model) { var ns = element.Name.Namespace; model.SaftVersion = GetOptionalValue(element, ns + "AuditFileVersion"); model.TaxRegistrationNumber = GetOptionalValue(element, ns + "TaxRegistrationNumber"); model.CompanyName = GetOptionalValue(element, ns + "CompanyName"); model.FiscalYear = GetOptionalValue(element, ns + "FiscalYear"); model.StartDate = GetOptionalValue(element, ns + "StartDate"); model.EndDate = GetOptionalValue(element, ns + "EndDate"); model.ProductId = GetOptionalValue(element, ns + "ProductID"); model.ProductVersion = GetOptionalValue(element, ns + "ProductVersion"); }
+    private static void ParseMasterFiles(XElement element, SaftHeaderViewModel model) { var ns = element.Name.Namespace; var accounts = element.Element(ns + "GeneralLedgerAccounts"); if (accounts is not null) foreach (var account in accounts.Elements(ns + "Account")) model.Accounts.Add(ParseAccount(account)); foreach (var customer in element.Elements(ns + "Customer")) model.Customers.Add(ParseParty(customer, "CustomerID", "CustomerTaxID")); foreach (var supplier in element.Elements(ns + "Supplier")) model.Suppliers.Add(ParseParty(supplier, "SupplierID", "SupplierTaxID")); foreach (var product in element.Elements(ns + "Product")) model.Products.Add(ParseProduct(product)); model.AccountCount = model.Accounts.Count; model.CustomerCount = model.Customers.Count; model.SupplierCount = model.Suppliers.Count; model.ProductCount = model.Products.Count; }
+    private static void ParseJournal(XElement element, SaftHeaderViewModel model) { var ns = element.Name.Namespace; var journalId = GetRequiredValue(element, ns + "JournalID"); var description = GetRequiredValue(element, ns + "Description"); foreach (var transaction in element.Elements(ns + "Transaction")) model.Transactions.Add(ParseTransaction(transaction, journalId, description)); }
+    private static SaftTransactionViewModel ParseTransaction(XElement element, string journalId, string journalDescription) { var ns = element.Name.Namespace; var result = new SaftTransactionViewModel { JournalId = journalId, JournalDescription = journalDescription, TransactionId = GetRequiredValue(element, ns + "TransactionID"), Period = ParseInt(element, ns + "Period"), TransactionDate = ParseDate(element, ns + "TransactionDate"), SourceId = GetRequiredValue(element, ns + "SourceID"), Description = GetRequiredValue(element, ns + "Description"), DocArchivalNumber = element.Element(ns + "DocArchivalNumber")?.Value, TransactionType = GetRequiredValue(element, ns + "TransactionType"), GlPostingDate = ParseDate(element, ns + "GLPostingDate"), CustomerId = element.Element(ns + "CustomerID")?.Value, SupplierId = element.Element(ns + "SupplierID")?.Value }; var lines = element.Element(ns + "Lines") ?? throw new InvalidDataException("O SAF-T (PT) contém uma transação contabilística sem Lines."); foreach (var line in lines.Elements(ns + "DebitLine")) result.Lines.Add(ParseTransactionLine(line, "D", ns + "DebitAmount")); foreach (var line in lines.Elements(ns + "CreditLine")) result.Lines.Add(ParseTransactionLine(line, "C", ns + "CreditAmount")); return result; }
+    private static SaftTransactionLineViewModel ParseTransactionLine(XElement element, string side, XName amountName) { var ns = element.Name.Namespace; return new SaftTransactionLineViewModel { RecordId = GetRequiredValue(element, ns + "RecordID"), AccountId = GetRequiredValue(element, ns + "AccountID"), SourceDocumentId = element.Element(ns + "SourceDocumentID")?.Value, SystemEntryDate = ParseOptionalDateTime(element, ns + "SystemEntryDate"), Description = GetRequiredValue(element, ns + "Description"), Side = side, Amount = ParseDecimal(element, amountName) }; }
 
-    /// <summary>Maps the SAF-T master-files subtree into the import model using exact namespace-aware element names.</summary>
-    /// <param name="element">The source MasterFiles element.</param><param name="model">The import model to populate.</param>
-    private static void ParseMasterFiles(XElement element, SaftHeaderViewModel model)
+    private static SaftSalesInvoiceViewModel ParseSalesInvoice(XElement element)
     {
-        var ns = element.Name.Namespace;
-        var generalLedgerAccounts = element.Element(ns + "GeneralLedgerAccounts");
-        if (generalLedgerAccounts is not null) foreach (var account in generalLedgerAccounts.Elements(ns + "Account")) model.Accounts.Add(ParseAccount(account));
-        foreach (var customer in element.Elements(ns + "Customer")) model.Customers.Add(ParseParty(customer, "CustomerID", "CustomerTaxID"));
-        foreach (var supplier in element.Elements(ns + "Supplier")) model.Suppliers.Add(ParseParty(supplier, "SupplierID", "SupplierTaxID"));
-        foreach (var product in element.Elements(ns + "Product")) model.Products.Add(ParseProduct(product));
-        model.AccountCount = model.Accounts.Count; model.CustomerCount = model.Customers.Count; model.SupplierCount = model.Suppliers.Count; model.ProductCount = model.Products.Count;
+        var ns = element.Name.Namespace; var status = element.Element(ns + "DocumentStatus"); var totals = element.Element(ns + "DocumentTotals") ?? throw new InvalidDataException("O SAF-T (PT) contém uma fatura sem DocumentTotals.");
+        var result = new SaftSalesInvoiceViewModel { InvoiceNo = GetRequiredValue(element, ns + "InvoiceNo"), InvoiceStatus = status?.Element(ns + "InvoiceStatus")?.Value ?? string.Empty, InvoiceDate = ParseDate(element, ns + "InvoiceDate"), InvoiceType = GetRequiredValue(element, ns + "InvoiceType"), SourceId = GetRequiredValue(element, ns + "SourceID"), CustomerId = element.Element(ns + "CustomerID")?.Value, SystemEntryDate = ParseOptionalDateTime(element, ns + "SystemEntryDate"), TaxPayable = ParseDecimal(totals, ns + "TaxPayable"), NetTotal = ParseDecimal(totals, ns + "NetTotal"), GrossTotal = ParseDecimal(totals, ns + "GrossTotal") };
+        foreach (var line in element.Elements(ns + "Line")) result.Lines.Add(ParseSalesInvoiceLine(line)); return result;
+    }
+    private static SaftSalesInvoiceLineViewModel ParseSalesInvoiceLine(XElement element)
+    {
+        var ns = element.Name.Namespace; var tax = element.Element(ns + "Tax");
+        return new SaftSalesInvoiceLineViewModel { LineNumber = GetRequiredValue(element, ns + "LineNumber"), ProductCode = GetRequiredValue(element, ns + "ProductCode"), ProductDescription = GetRequiredValue(element, ns + "ProductDescription"), Quantity = ParseDecimal(element, ns + "Quantity"), UnitOfMeasure = GetRequiredValue(element, ns + "UnitOfMeasure"), UnitPrice = ParseDecimal(element, ns + "UnitPrice"), TaxPointDate = ParseOptionalDate(element, ns + "TaxPointDate"), TaxType = tax?.Element(ns + "TaxType")?.Value, TaxCode = tax?.Element(ns + "TaxCode")?.Value, TaxPercentage = ParseOptionalDecimal(tax, ns + "TaxPercentage"), DebitAmount = ParseOptionalDecimal(element, ns + "DebitAmount") ?? 0m, CreditAmount = ParseOptionalDecimal(element, ns + "CreditAmount") ?? 0m };
     }
 
-    /// <summary>Maps one journal and its accounting transactions into the import model.</summary>
-    /// <param name="element">The source journal element.</param><param name="model">The import model to populate.</param>
-    private static void ParseJournal(XElement element, SaftHeaderViewModel model)
-    {
-        var ns = element.Name.Namespace;
-        var journalId = GetRequiredValue(element, ns + "JournalID");
-        var journalDescription = GetRequiredValue(element, ns + "Description");
-        foreach (var transaction in element.Elements(ns + "Transaction")) model.Transactions.Add(ParseTransaction(transaction, journalId, journalDescription));
-    }
-
-    /// <summary>Maps one general-ledger transaction and its debit and credit lines.</summary>
-    /// <param name="element">The source transaction element.</param><param name="journalId">The containing journal identifier.</param><param name="journalDescription">The containing journal description.</param><returns>The parsed accounting transaction.</returns>
-    private static SaftTransactionViewModel ParseTransaction(XElement element, string journalId, string journalDescription)
-    {
-        var ns = element.Name.Namespace;
-        var result = new SaftTransactionViewModel
-        {
-            JournalId = journalId,
-            JournalDescription = journalDescription,
-            TransactionId = GetRequiredValue(element, ns + "TransactionID"),
-            Period = ParseInt(element, ns + "Period"),
-            TransactionDate = ParseDate(element, ns + "TransactionDate"),
-            SourceId = GetRequiredValue(element, ns + "SourceID"),
-            Description = GetRequiredValue(element, ns + "Description"),
-            DocArchivalNumber = element.Element(ns + "DocArchivalNumber")?.Value,
-            TransactionType = GetRequiredValue(element, ns + "TransactionType"),
-            GlPostingDate = ParseDate(element, ns + "GLPostingDate"),
-            CustomerId = element.Element(ns + "CustomerID")?.Value,
-            SupplierId = element.Element(ns + "SupplierID")?.Value
-        };
-        var lines = element.Element(ns + "Lines");
-        if (lines is null) throw new InvalidDataException("O SAF-T (PT) contém uma transação contabilística sem Lines.");
-        foreach (var line in lines.Elements(ns + "DebitLine")) result.Lines.Add(ParseTransactionLine(line, "D", ns + "DebitAmount"));
-        foreach (var line in lines.Elements(ns + "CreditLine")) result.Lines.Add(ParseTransactionLine(line, "C", ns + "CreditAmount"));
-        return result;
-    }
-
-    /// <summary>Maps one debit or credit transaction line.</summary>
-    /// <param name="element">The source line element.</param><param name="side">D for debit or C for credit.</param><param name="amountName">The amount element name appropriate to the line side.</param><returns>The parsed accounting line.</returns>
-    private static SaftTransactionLineViewModel ParseTransactionLine(XElement element, string side, XName amountName)
-    {
-        var ns = element.Name.Namespace;
-        return new SaftTransactionLineViewModel { RecordId = GetRequiredValue(element, ns + "RecordID"), AccountId = GetRequiredValue(element, ns + "AccountID"), SourceDocumentId = element.Element(ns + "SourceDocumentID")?.Value, SystemEntryDate = ParseOptionalDateTime(element, ns + "SystemEntryDate"), Description = GetRequiredValue(element, ns + "Description"), Side = side, Amount = ParseDecimal(element, amountName) };
-    }
-
-    /// <summary>Reads an optional source element value while preserving the non-null model contract.</summary>
     private static string GetOptionalValue(XElement parent, XName name) => parent.Element(name)?.Value ?? string.Empty;
-
-    /// <summary>Maps one general ledger account element into the import model.</summary>
     private static SaftAccountViewModel ParseAccount(XElement element) { var ns = element.Name.Namespace; return new SaftAccountViewModel { AccountId = GetRequiredValue(element, ns + "AccountID"), Description = GetRequiredValue(element, ns + "AccountDescription"), OpeningDebitBalance = ParseDecimal(element, ns + "OpeningDebitBalance"), OpeningCreditBalance = ParseDecimal(element, ns + "OpeningCreditBalance"), ClosingDebitBalance = ParseDecimal(element, ns + "ClosingDebitBalance"), ClosingCreditBalance = ParseDecimal(element, ns + "ClosingCreditBalance"), TaxonomyReference = element.Element(ns + "TaxonomyReference")?.Value }; }
-
-    /// <summary>Maps one customer or supplier master-file element into a common import model.</summary>
-    private static SaftPartyViewModel ParseParty(XElement element, string idElementName, string taxElementName) { var ns = element.Name.Namespace; return new SaftPartyViewModel { PartyId = GetRequiredValue(element, ns + idElementName), AccountId = GetRequiredValue(element, ns + "AccountID"), TaxId = GetRequiredValue(element, ns + taxElementName), CompanyName = GetRequiredValue(element, ns + "CompanyName") }; }
-
-    /// <summary>Maps one product or service master-file element into the import model.</summary>
-    /// <param name="element">The source product element.</param><returns>The parsed product or service.</returns>
+    private static SaftPartyViewModel ParseParty(XElement element, string id, string tax) { var ns = element.Name.Namespace; return new SaftPartyViewModel { PartyId = GetRequiredValue(element, ns + id), AccountId = GetRequiredValue(element, ns + "AccountID"), TaxId = GetRequiredValue(element, ns + tax), CompanyName = GetRequiredValue(element, ns + "CompanyName") }; }
     private static SaftProductViewModel ParseProduct(XElement element) { var ns = element.Name.Namespace; return new SaftProductViewModel { ProductType = GetRequiredValue(element, ns + "ProductType"), ProductCode = GetRequiredValue(element, ns + "ProductCode"), ProductGroup = element.Element(ns + "ProductGroup")?.Value, ProductDescription = GetRequiredValue(element, ns + "ProductDescription"), ProductNumberCode = GetRequiredValue(element, ns + "ProductNumberCode") }; }
-
-    /// <summary>Reads a required source element value.</summary>
     private static string GetRequiredValue(XElement parent, XName name) { var value = parent.Element(name)?.Value; if (string.IsNullOrWhiteSpace(value)) throw new InvalidDataException($"O SAF-T (PT) contém um registo sem o campo obrigatório {name.LocalName}."); return value; }
-
-    /// <summary>Parses a required SAF-T decimal value using invariant culture.</summary>
     private static decimal ParseDecimal(XElement parent, XName name) { var source = GetRequiredValue(parent, name); if (!decimal.TryParse(source, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)) throw new InvalidDataException($"O SAF-T (PT) contém um valor inválido em {name.LocalName}."); return value; }
-
-    /// <summary>Parses a required integer value using invariant culture.</summary>
+    private static decimal? ParseOptionalDecimal(XElement? parent, XName name) { var source = parent?.Element(name)?.Value; if (string.IsNullOrWhiteSpace(source)) return null; if (!decimal.TryParse(source, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)) throw new InvalidDataException($"O SAF-T (PT) contém um valor inválido em {name.LocalName}."); return value; }
     private static int ParseInt(XElement parent, XName name) { var source = GetRequiredValue(parent, name); if (!int.TryParse(source, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value)) throw new InvalidDataException($"O SAF-T (PT) contém um valor inválido em {name.LocalName}."); return value; }
-
-    /// <summary>Parses a required ISO date value.</summary>
     private static DateOnly ParseDate(XElement parent, XName name) { var source = GetRequiredValue(parent, name); if (!DateOnly.TryParseExact(source, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value)) throw new InvalidDataException($"O SAF-T (PT) contém uma data inválida em {name.LocalName}."); return value; }
-
-    /// <summary>Parses an optional ISO date-time value.</summary>
+    private static DateOnly? ParseOptionalDate(XElement parent, XName name) { var source = parent.Element(name)?.Value; if (string.IsNullOrWhiteSpace(source)) return null; if (!DateOnly.TryParseExact(source, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var value)) throw new InvalidDataException($"O SAF-T (PT) contém uma data inválida em {name.LocalName}."); return value; }
     private static DateTime? ParseOptionalDateTime(XElement parent, XName name) { var source = parent.Element(name)?.Value; if (string.IsNullOrWhiteSpace(source)) return null; if (!DateTime.TryParse(source, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var value)) throw new InvalidDataException($"O SAF-T (PT) contém uma data/hora inválida em {name.LocalName}."); return value; }
-
-    /// <summary>Validates the minimum required header values after the document has been streamed.</summary>
     private static void ValidateRequiredHeader(SaftHeaderViewModel model) { if (string.IsNullOrWhiteSpace(model.SaftVersion)) throw new InvalidDataException("O cabeçalho SAF-T (PT) não contém o campo obrigatório AuditFileVersion."); if (string.IsNullOrWhiteSpace(model.CompanyName)) throw new InvalidDataException("O cabeçalho SAF-T (PT) não contém o campo obrigatório CompanyName."); if (string.IsNullOrWhiteSpace(model.TaxRegistrationNumber)) throw new InvalidDataException("O cabeçalho SAF-T (PT) não contém o campo obrigatório TaxRegistrationNumber."); }
 }
