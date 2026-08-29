@@ -41,4 +41,8 @@ public sealed class SaftHeaderViewModel
     public int PaymentCount { get; set; }
     /// <summary>Gets the general ledger accounts parsed from the SAF-T (PT) master files section.</summary>
     public IList<SaftAccountViewModel> Accounts { get; } = new List<SaftAccountViewModel>();
+    /// <summary>Gets the customers parsed from the SAF-T (PT) master files section.</summary>
+    public IList<SaftPartyViewModel> Customers { get; } = new List<SaftPartyViewModel>();
+    /// <summary>Gets the suppliers parsed from the SAF-T (PT) master files section.</summary>
+    public IList<SaftPartyViewModel> Suppliers { get; } = new List<SaftPartyViewModel>();
 }
