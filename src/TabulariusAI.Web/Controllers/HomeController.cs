@@ -13,7 +13,7 @@ namespace TabulariusAI.Web.Controllers;
 /// <summary>
 /// Handles requests for the main Tabularius AI application pages.
 /// </summary>
-public sealed class HomeController(ISaftHeaderReader saftHeaderReader, ISaftSchemaValidator saftSchemaValidator, TabulariusDbContext dbContext) : Controller
+public sealed class HomeController(ISaftHeaderReader saftHeaderReader, TabulariusDbContext dbContext) : Controller
 {
     private const long MaximumSaftFileSize = 100 * 1024 * 1024;
 
@@ -26,10 +26,10 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, ISaftSche
     [HttpGet]
     public IActionResult Import() => View();
 
-    /// <summary>Validates an uploaded SAF-T (PT) XML file against the official XSD and persists its dossier data.</summary>
+    /// <summary>Processes an uploaded SAF-T (PT) XML file and persists its dossier data.</summary>
     /// <param name="saftFile">The SAF-T (PT) XML file uploaded by the user.</param>
     /// <param name="cancellationToken">A token used to cancel the request.</param>
-    /// <returns>The import page containing either the extracted result or a validation error.</returns>
+    /// <returns>The import page containing either the extracted result or an import error.</returns>
     [HttpPost, ValidateAntiForgeryToken, RequestFormLimits(MultipartBodyLengthLimit = MaximumSaftFileSize), RequestSizeLimit(MaximumSaftFileSize)]
     public async Task<IActionResult> UploadSaftAsync(IFormFile? saftFile, CancellationToken cancellationToken)
     {
@@ -45,19 +45,14 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, ISaftSche
                 return View("Import");
             }
 
-            await using (var validationStream = saftFile.OpenReadStream())
-            {
-                await saftSchemaValidator.ValidateAsync(validationStream, cancellationToken);
-            }
-
             await using var stream = saftFile.OpenReadStream();
             var analysis = await saftHeaderReader.ReadAsync(stream, cancellationToken);
             await PersistImportAsync(saftFile.FileName, contentHash, analysis, cancellationToken);
-            TempData["SaftImportValidation"] = "Ficheiro validado com sucesso contra o XSD oficial SAF-T (PT) 1.04_01 e importado.";
+            TempData["SaftImportValidation"] = "Ficheiro SAF-T (PT) analisado e importado com sucesso.";
             return View("Import", analysis);
         }
         catch (InvalidDataException exception) { ModelState.AddModelError("saftFile", exception.Message); return View("Import"); }
-        catch (DbUpdateException) { ModelState.AddModelError("saftFile", "O ficheiro foi validado e analisado, mas não foi possível guardar os dados do dossier localmente."); return View("Import"); }
+        catch (DbUpdateException) { ModelState.AddModelError("saftFile", "O ficheiro foi analisado, mas não foi possível guardar os dados do dossier localmente."); return View("Import"); }
     }
 
     /// <summary>Displays the generic application error page with a request identifier for log correlation.</summary>
@@ -76,7 +71,7 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, ISaftSche
     }
 
     /// <summary>Creates or reuses the entity and dossier and persists source-traceable SAF-T (PT) data.</summary>
-    /// <param name="fileName">The original uploaded file name.</param><param name="contentHash">The SHA-256 identity of the exact source file.</param><param name="analysis">The validated SAF-T (PT) analysis.</param><param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <param name="fileName">The original uploaded file name.</param><param name="contentHash">The SHA-256 identity of the exact source file.</param><param name="analysis">The parsed SAF-T (PT) analysis.</param><param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task representing the asynchronous persistence operation.</returns>
     private async Task PersistImportAsync(string fileName, string contentHash, SaftHeaderViewModel analysis, CancellationToken cancellationToken)
     {
