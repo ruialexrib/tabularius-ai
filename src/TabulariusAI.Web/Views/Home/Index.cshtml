@@ -4,13 +4,13 @@
 }
 
 <section class="hero">
-    <p class="eyebrow">Análise SAF-T</p>
+    <p class="eyebrow">Análise SAF-T (PT)</p>
     <h1>Tabularius AI</h1>
-    <p class="lead">Importe um ficheiro SAF-T para validar o documento e consultar os principais dados do cabeçalho.</p>
+    <p class="lead">Importe um ficheiro SAF-T (PT) para validar o documento e consultar os principais dados do cabeçalho.</p>
 
     <form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="upload-card">
         <div class="upload-field">
-            <label for="saftFile">Ficheiro SAF-T</label>
+            <label for="saftFile">Ficheiro SAF-T (PT)</label>
             <input id="saftFile" name="saftFile" type="file" accept=".xml,text/xml,application/xml" />
             <span>Formato XML, até 100 MB.</span>
         </div>
@@ -23,7 +23,7 @@
         <section class="result-card" aria-labelledby="saft-summary-title">
             <div class="result-heading">
                 <p class="eyebrow">Ficheiro validado</p>
-                <h2 id="saft-summary-title">Cabeçalho SAF-T</h2>
+                <h2 id="saft-summary-title">Cabeçalho SAF-T (PT)</h2>
             </div>
             <dl class="summary-grid">
                 <div><dt>Empresa</dt><dd>@Model.CompanyName</dd></div>
@@ -33,7 +33,7 @@
                 <div><dt>Data final</dt><dd>@Model.EndDate</dd></div>
                 <div><dt>Software</dt><dd>@Model.ProductId</dd></div>
                 <div><dt>Versão do software</dt><dd>@Model.ProductVersion</dd></div>
-                <div class="summary-wide"><dt>Namespace SAF-T</dt><dd>@Model.SaftVersion</dd></div>
+                <div class="summary-wide"><dt>Versão SAF-T (PT)</dt><dd>@Model.SaftVersion</dd></div>
             </dl>
         </section>
     }
