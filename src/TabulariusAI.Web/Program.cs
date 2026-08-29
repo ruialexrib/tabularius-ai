@@ -95,6 +95,7 @@ static async Task ApplyDatabaseMigrationsAsync(WebApplication application)
 static async Task SeedIdentityAsync(WebApplication application)
 {
     const string administratorName = "admin";
+    const string administratorEmail = "admin@tabularius.local";
     const string temporaryPassword = "LetMeIn";
 
     await using var scope = application.Services.CreateAsyncScope();
@@ -111,6 +112,7 @@ static async Task SeedIdentityAsync(WebApplication application)
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
     var normalizedAdministratorName = userManager.NormalizeName(administratorName);
+    var normalizedAdministratorEmail = userManager.NormalizeEmail(administratorEmail);
     var bootstrapUsers = await dbContext.Users
         .Where(user => user.UserName == administratorName || user.NormalizedUserName == normalizedAdministratorName)
         .OrderBy(user => user.CreatedAtUtc)
@@ -124,6 +126,9 @@ static async Task SeedIdentityAsync(WebApplication application)
         {
             UserName = administratorName,
             NormalizedUserName = normalizedAdministratorName,
+            Email = administratorEmail,
+            NormalizedEmail = normalizedAdministratorEmail,
+            EmailConfirmed = true,
             DisplayName = "Administrador"
         };
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
@@ -146,6 +151,9 @@ static async Task SeedIdentityAsync(WebApplication application)
 
         administrator.UserName = administratorName;
         administrator.NormalizedUserName = normalizedAdministratorName;
+        administrator.Email = administratorEmail;
+        administrator.NormalizedEmail = normalizedAdministratorEmail;
+        administrator.EmailConfirmed = true;
         if (string.IsNullOrWhiteSpace(administrator.DisplayName)) administrator.DisplayName = "Administrador";
         await dbContext.SaveChangesAsync();
     }
