@@ -6,7 +6,7 @@
 <section class="hero">
     <p class="eyebrow">Dossier</p>
     <h1>Entidades</h1>
-    <p class="lead">Empresas e organizações identificadas a partir das importações SAF-T (PT).</p>
+    <p class="lead">Selecione uma empresa para consultar os respetivos exercícios e continuar a análise contabilística.</p>
 </section>
 
 <section class="panel">
@@ -18,11 +18,16 @@
     {
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Entidade</th><th>NIF</th><th>Dossiers</th><th>Criada em</th></tr></thead>
+                <thead><tr><th>Entidade</th><th>NIF</th><th>Dossiers</th><th></th></tr></thead>
                 <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr><td><strong>@item.Name</strong></td><td>@item.TaxRegistrationNumber</td><td>@item.Dossiers.Count</td><td>@item.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+                    <tr>
+                        <td><strong>@item.Name</strong></td>
+                        <td>@item.TaxRegistrationNumber</td>
+                        <td>@item.Dossiers.Count</td>
+                        <td><a asp-controller="Dossier" asp-action="Entity" asp-route-id="@item.Id">Abrir entidade</a></td>
+                    </tr>
                 }
                 </tbody>
             </table>
