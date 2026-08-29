@@ -7,6 +7,16 @@ description: Implement and review Portuguese SAF-T import, validation, mapping a
 
 Use this skill whenever work affects SAF-T XML ingestion, validation, domain mapping, accounting data or derived analytics.
 
+## Repository reference SAF-T
+
+- The repository contains the demonstration file `assets/saft_idemo599999999.xml` as a development reference for the concrete SAF-T (PT) structure used by the project.
+- Consult this file whenever implementation work requires confirmation of actual element hierarchy, section placement, field names, namespaces, representative values or relationships in a SAF-T (PT) document instead of relying on memory or assumptions.
+- Use the demonstration file as a structural and exploratory reference when implementing or reviewing parsers, mappings, persistence, navigation, accounting analyses and SAF-T-derived tests.
+- Do not assume that the demonstration file exhaustively represents every valid SAF-T (PT) file, optional field, schema version or edge case. Implementation must remain namespace-aware and follow the supported SAF-T (PT) contract.
+- Do not copy identifying or accounting values from the demonstration file into production defaults, logs, documentation examples or application behavior.
+- Prefer small synthetic fixtures for focused automated unit tests. The demonstration file may be used for repository-level integration or regression tests when testing the real document structure materially improves coverage and its demonstrative status has been confirmed.
+- If the demonstration asset is renamed, replaced or supplemented, inspect the current `assets/` directory before assuming its path or contents.
+
 ## Import boundary
 
 - Treat every SAF-T file as untrusted external input and as sensitive business and accounting data.
