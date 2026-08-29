@@ -12,8 +12,7 @@ namespace TabulariusAI.Web.Controllers;
 /// <summary>
 /// Handles requests for the main Tabularius AI application pages.
 /// </summary>
-public sealed class HomeController
-    (ISaftHeaderReader saftHeaderReader, TabulariusDbContext dbContext) : Controller
+public sealed class HomeController(ISaftHeaderReader saftHeaderReader, TabulariusDbContext dbContext) : Controller
 {
     private const long MaximumSaftFileSize = 100 * 1024 * 1024;
 
@@ -25,28 +24,12 @@ public sealed class HomeController
     /// <param name="saftFile">The SAF-T (PT) XML file uploaded by the user.</param>
     /// <param name="cancellationToken">A token used to cancel the request.</param>
     /// <returns>The home page containing either the extracted analysis or a validation error.</returns>
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    [RequestFormLimits(MultipartBodyLengthLimit = MaximumSaftFileSize)]
-    [RequestSizeLimit(MaximumSaftFileSize)]
+    [HttpPost, ValidateAntiForgeryToken, RequestFormLimits(MultipartBodyLengthLimit = MaximumSaftFileSize), RequestSizeLimit(MaximumSaftFileSize)]
     public async Task<IActionResult> UploadSaftAsync(IFormFile? saftFile, CancellationToken cancellationToken)
     {
-        if (saftFile is null || saftFile.Length == 0)
-        {
-            ModelState.AddModelError("saftFile", "Selecione um ficheiro SAF-T (PT) em formato XML.");
-            return View("Index");
-        }
-        if (saftFile.Length > MaximumSaftFileSize)
-        {
-            ModelState.AddModelError("saftFile", "O ficheiro SAF-T (PT) não pode exceder 100 MB.");
-            return View("Index");
-        }
-        if (!string.Equals(Path.GetExtension(saftFile.FileName), ".xml", StringComparison.OrdinalIgnoreCase))
-        {
-            ModelState.AddModelError("saftFile", "O ficheiro selecionado deve ter a extensão .xml.");
-            return View("Index");
-        }
-
+        if (saftFile is null || saftFile.Length == 0) { ModelState.AddModelError("saftFile", "Selecione um ficheiro SAF-T (PT) em formato XML."); return View("Index"); }
+        if (saftFile.Length > MaximumSaftFileSize) { ModelState.AddModelError("saftFile", "O ficheiro SAF-T (PT) não pode exceder 100 MB."); return View("Index"); }
+        if (!string.Equals(Path.GetExtension(saftFile.FileName), ".xml", StringComparison.OrdinalIgnoreCase)) { ModelState.AddModelError("saftFile", "O ficheiro selecionado deve ter a extensão .xml."); return View("Index"); }
         try
         {
             await using var stream = saftFile.OpenReadStream();
@@ -54,16 +37,8 @@ public sealed class HomeController
             await PersistImportAsync(saftFile.FileName, analysis, cancellationToken);
             return View("Index", analysis);
         }
-        catch (InvalidDataException exception)
-        {
-            ModelState.AddModelError("saftFile", exception.Message);
-            return View("Index");
-        }
-        catch (DbUpdateException)
-        {
-            ModelState.AddModelError("saftFile", "O ficheiro foi analisado, mas não foi possível guardar os dados do dossier localmente.");
-            return View("Index");
-        }
+        catch (InvalidDataException exception) { ModelState.AddModelError("saftFile", exception.Message); return View("Index"); }
+        catch (DbUpdateException) { ModelState.AddModelError("saftFile", "O ficheiro foi analisado, mas não foi possível guardar os dados do dossier localmente."); return View("Index"); }
     }
 
     /// <summary>Displays the generic application error page with a request identifier for log correlation.</summary>
@@ -80,49 +55,16 @@ public sealed class HomeController
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var entity = await dbContext.AccountingEntities.SingleOrDefaultAsync(item => item.TaxRegistrationNumber == analysis.TaxRegistrationNumber, cancellationToken);
-        if (entity is null)
-        {
-            entity = new AccountingEntity { Name = analysis.CompanyName, TaxRegistrationNumber = analysis.TaxRegistrationNumber };
-            dbContext.AccountingEntities.Add(entity);
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-        else if (!string.Equals(entity.Name, analysis.CompanyName, StringComparison.Ordinal))
-        {
-            entity.Name = analysis.CompanyName;
-        }
-
-        if (!int.TryParse(analysis.FiscalYear, NumberStyles.None, CultureInfo.InvariantCulture, out var fiscalYear) || fiscalYear <= 0)
-        {
-            throw new InvalidDataException("O SAF-T (PT) não contém um exercício fiscal válido.");
-        }
-
+        if (entity is null) { entity = new AccountingEntity { Name = analysis.CompanyName, TaxRegistrationNumber = analysis.TaxRegistrationNumber }; dbContext.AccountingEntities.Add(entity); await dbContext.SaveChangesAsync(cancellationToken); }
+        else if (!string.Equals(entity.Name, analysis.CompanyName, StringComparison.Ordinal)) entity.Name = analysis.CompanyName;
+        if (!int.TryParse(analysis.FiscalYear, NumberStyles.None, CultureInfo.InvariantCulture, out var fiscalYear) || fiscalYear <= 0) throw new InvalidDataException("O SAF-T (PT) não contém um exercício fiscal válido.");
         var dossier = await dbContext.AnalysisDossiers.SingleOrDefaultAsync(item => item.AccountingEntityId == entity.Id && item.FiscalYear == fiscalYear, cancellationToken);
-        if (dossier is null)
-        {
-            dossier = new AnalysisDossier { AccountingEntityId = entity.Id, FiscalYear = fiscalYear, Name = $"Exercício {fiscalYear}" };
-            dbContext.AnalysisDossiers.Add(dossier);
-        }
+        if (dossier is null) { dossier = new AnalysisDossier { AccountingEntityId = entity.Id, FiscalYear = fiscalYear, Name = $"Exercício {fiscalYear}" }; dbContext.AnalysisDossiers.Add(dossier); }
 
-        var import = new SaftImport
-        {
-            OriginalFileName = Path.GetFileName(fileName),
-            SaftVersion = analysis.SaftVersion,
-            StartDate = ParseDate(analysis.StartDate),
-            EndDate = ParseDate(analysis.EndDate)
-        };
-        foreach (var source in analysis.Accounts)
-        {
-            import.Accounts.Add(new SaftAccount
-            {
-                AccountId = source.AccountId,
-                Description = source.Description,
-                OpeningDebitBalance = source.OpeningDebitBalance,
-                OpeningCreditBalance = source.OpeningCreditBalance,
-                ClosingDebitBalance = source.ClosingDebitBalance,
-                ClosingCreditBalance = source.ClosingCreditBalance,
-                TaxonomyReference = source.TaxonomyReference
-            });
-        }
+        var import = new SaftImport { OriginalFileName = Path.GetFileName(fileName), SaftVersion = analysis.SaftVersion, StartDate = ParseDate(analysis.StartDate), EndDate = ParseDate(analysis.EndDate) };
+        foreach (var source in analysis.Accounts) import.Accounts.Add(new SaftAccount { AccountId = source.AccountId, Description = source.Description, OpeningDebitBalance = source.OpeningDebitBalance, OpeningCreditBalance = source.OpeningCreditBalance, ClosingDebitBalance = source.ClosingDebitBalance, ClosingCreditBalance = source.ClosingCreditBalance, TaxonomyReference = source.TaxonomyReference });
+        foreach (var source in analysis.Customers) import.Customers.Add(new SaftCustomer { CustomerId = source.PartyId, AccountId = source.AccountId, TaxId = source.TaxId, CompanyName = source.CompanyName });
+        foreach (var source in analysis.Suppliers) import.Suppliers.Add(new SaftSupplier { SupplierId = source.PartyId, AccountId = source.AccountId, TaxId = source.TaxId, CompanyName = source.CompanyName });
         dossier.Imports.Add(import);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
