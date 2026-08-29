@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using TabulariusAI.Web.Data;
 
 #nullable disable
 
@@ -7,6 +9,8 @@ namespace TabulariusAI.Web.Migrations;
 /// <summary>
 /// Adds a stable content identity used to prevent duplicate SAF-T (PT) imports.
 /// </summary>
+[DbContext(typeof(TabulariusDbContext))]
+[Migration("20260829203000_AddSaftContentHash")]
 public partial class AddSaftContentHash : Migration
 {
     /// <inheritdoc />
