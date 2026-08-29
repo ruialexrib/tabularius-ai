@@ -6,15 +6,13 @@ namespace TabulariusAI.Web.Services;
 /// <summary>Calculates trial-balance rows deterministically from SAF-T accounts and accounting lines.</summary>
 public static class TrialBalanceCalculator
 {
-    /// <summary>Calculates trial-balance rows for the supplied accounts and transaction lines.</summary>
-    /// <param name="accounts">Accounts from one SAF-T (PT) import.</param>
-    /// <param name="lines">Accounting lines from the same SAF-T (PT) import.</param>
-    /// <returns>Trial-balance rows ordered by account identifier.</returns>
     public static IReadOnlyList<TrialBalanceRowViewModel> Calculate(IEnumerable<SaftAccount> accounts, IEnumerable<SaftTransactionLine> lines)
     {
         ArgumentNullException.ThrowIfNull(accounts);
         ArgumentNullException.ThrowIfNull(lines);
 
+        var accountList = accounts.ToList();
+        var accountIds = accountList.Select(item => item.AccountId).ToArray();
         var movements = lines
             .GroupBy(item => item.AccountId, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
@@ -26,13 +24,17 @@ public static class TrialBalanceCalculator
                 },
                 StringComparer.OrdinalIgnoreCase);
 
-        return accounts
+        return accountList
             .Select(account =>
             {
                 movements.TryGetValue(account.AccountId, out var movement);
                 var debitMovements = movement?.Debit ?? 0m;
                 var creditMovements = movement?.Credit ?? 0m;
                 var netClosing = account.OpeningDebitBalance - account.OpeningCreditBalance + debitMovements - creditMovements;
+                var isAggregateAccount = accountIds.Any(candidate =>
+                    candidate.Length > account.AccountId.Length &&
+                    candidate.StartsWith(account.AccountId, StringComparison.OrdinalIgnoreCase));
+
                 return new TrialBalanceRowViewModel
                 {
                     AccountId = account.AccountId,
@@ -44,7 +46,8 @@ public static class TrialBalanceCalculator
                     ClosingDebit = netClosing > 0m ? netClosing : 0m,
                     ClosingCredit = netClosing < 0m ? -netClosing : 0m,
                     ReportedClosingDebit = account.ClosingDebitBalance,
-                    ReportedClosingCredit = account.ClosingCreditBalance
+                    ReportedClosingCredit = account.ClosingCreditBalance,
+                    IsAggregateAccount = isAggregateAccount
                 };
             })
             .OrderBy(item => item.AccountId, StringComparer.OrdinalIgnoreCase)
