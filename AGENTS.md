@@ -36,7 +36,8 @@ These instructions apply to every task in this repository.
 ## Repository workflows
 
 - Work through feature branches and pull requests. Keep `main` stable.
-- Use the project skills under `.agents/skills/` for coding standards, Git workflow, quality checks, UI work, SAF-T processing, persistence and AI workflows.
+- Use the project skills under `.agents/skills/` for coding standards, Git workflow, quality checks, UI work, SAF-T processing, persistence, AI workflows and development versioning.
+- Apply `tabularius-development-versioning` whenever repository modifications begin so each change set receives a distinct prerelease development version.
 - Write Git commit messages in English using Conventional Commits.
 - Do not merge a pull request unless the user explicitly asks for or approves the merge.
 - Prefer squash merge for completed feature pull requests.
