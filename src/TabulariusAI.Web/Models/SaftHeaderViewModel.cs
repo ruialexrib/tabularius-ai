@@ -1,12 +1,12 @@
 namespace TabulariusAI.Web.Models;
 
 /// <summary>
-/// Represents the SAF-T header information displayed after a successful file analysis.
+/// Represents the SAF-T (PT) header and structural summary displayed after a successful file analysis.
 /// </summary>
 public sealed class SaftHeaderViewModel
 {
     /// <summary>
-    /// Gets or sets the SAF-T namespace or schema identifier detected in the document.
+    /// Gets or sets the SAF-T (PT) version declared in the document header.
     /// </summary>
     public string SaftVersion { get; set; } = string.Empty;
 
@@ -44,4 +44,49 @@ public sealed class SaftHeaderViewModel
     /// Gets or sets the product version of the software that generated the SAF-T file.
     /// </summary>
     public string ProductVersion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the number of general ledger accounts declared in MasterFiles.
+    /// </summary>
+    public int AccountCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of customers declared in MasterFiles.
+    /// </summary>
+    public int CustomerCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of suppliers declared in MasterFiles.
+    /// </summary>
+    public int SupplierCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of products or services declared in MasterFiles.
+    /// </summary>
+    public int ProductCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of accounting transactions declared in GeneralLedgerEntries.
+    /// </summary>
+    public int TransactionCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of sales invoices declared in SourceDocuments.
+    /// </summary>
+    public int SalesInvoiceCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of movement of goods documents declared in SourceDocuments.
+    /// </summary>
+    public int MovementOfGoodsCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of working documents declared in SourceDocuments.
+    /// </summary>
+    public int WorkingDocumentCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of payment documents declared in SourceDocuments.
+    /// </summary>
+    public int PaymentCount { get; set; }
 }
