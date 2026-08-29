@@ -29,6 +29,8 @@ builder.Services.AddScoped<ISaftHeaderReader, SaftHeaderReader>();
 
 var app = builder.Build();
 
+await ApplyDatabaseMigrationsAsync(app);
+
 app.UseSerilogRequestLogging(options =>
 {
     options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
@@ -61,4 +63,27 @@ catch (Exception exception)
 finally
 {
     Log.CloseAndFlush();
+}
+
+/// <summary>
+/// Applies pending Entity Framework Core migrations to the local Tabularius database.
+/// </summary>
+/// <param name="application">The running web application.</param>
+/// <returns>A task representing the asynchronous migration operation.</returns>
+static async Task ApplyDatabaseMigrationsAsync(WebApplication application)
+{
+    await using var scope = application.Services.CreateAsyncScope();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
+
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
+        await dbContext.Database.MigrateAsync();
+        logger.LogInformation("Local database migrations applied successfully.");
+    }
+    catch (Exception exception)
+    {
+        logger.LogCritical(exception, "Local database migration failed during application startup.");
+        throw;
+    }
 }
