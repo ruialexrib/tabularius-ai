@@ -20,25 +20,73 @@ Developed by [Rui Ribeiro](https://github.com/ruialexrib)
 
 ## About
 
-Tabularius AI is a local-first accounting analysis workspace for importing, exploring and analysing Portuguese **SAF-T (PT)** data. It is designed around the accounting workflow **Entity → Accounting dossier / fiscal year → SAF-T (PT) imports → Analysis**, providing a structured foundation for accounting control, reconciliation, testing and assisted interpretation.
+Tabularius AI is a local-first accounting analysis workspace for importing, exploring and analysing Portuguese **SAF-T (PT)** data. It follows the accounting workflow **Entity → Accounting dossier / fiscal year → SAF-T (PT) source → Analysis**, keeping the selected company, fiscal year and source explicit throughout the workspace.
 
-The application supports both a lightweight Windows deployment using SQLite and a shared server deployment using SQL Server and Docker. Deterministic accounting processing remains separate from optional AI-assisted features.
+The application combines structured SAF-T (PT) exploration with deterministic accounting analysis, including trial balance, general ledger, income statement and balance sheet views. It supports both lightweight Windows deployment using SQLite and shared server deployment using SQL Server and Docker. Optional AI-assisted interpretation is designed to remain separate from deterministic accounting calculations.
 
 ## Highlights
 
-- Import and structured exploration of Portuguese SAF-T (PT) files
+- Import and structured persistence of Portuguese SAF-T (PT) files
 - Entity and accounting dossier / fiscal year organisation
-- Multiple SAF-T (PT) imports with explicit source and accounting-period selection
-- Chart of accounts, customers, suppliers and products
-- General ledger transactions and accounting entry details
-- Source traceability across SAF-T (PT) views
-- Authentication, user roles and administration
+- Multiple SAF-T (PT) imports per dossier with explicit source and accounting-period selection
+- Deterministic latest-source selection with visible source traceability
+- Chart of accounts exploration and search
+- Customer, supplier and product master-data exploration
+- General ledger transaction listing with journal, document and account search
+- Detailed accounting-entry view with debit and credit lines
+- Trial balance calculated from imported accounts and ledger movements
+- Trial balance filtering and optional display of zero-balance accounts
+- Income statement analysis based on deterministic accounting rules
+- Balance sheet analysis based on imported accounting data
+- Modern dossier-centred workspace and responsive interface
+- Authentication and role-based user administration with ASP.NET Core Identity
 - Local Windows mode with SQLite
 - Multi-user server mode with SQL Server 2022 Express and Docker Compose
-- Foundation for trial balance, general ledger, journal, reconciliation and accounting tests
-- Provider-neutral architecture for future AI-assisted accounting analysis
+- Automated xUnit test suite and GitHub Actions CI
+- Provider-neutral foundation for future AI-assisted accounting interpretation
 
 > SAF-T (PT) XSD validation is currently deferred. Imported files are parsed and processed by the application, but the current release does not claim validation against the official XSD schema.
+
+## Accounting workspace
+
+The application is organised around the accounting context rather than around isolated files:
+
+```text
+Entity
+  └── Accounting dossier / fiscal year
+        └── SAF-T (PT) source
+              ├── Summary
+              ├── Chart of accounts
+              ├── Customers
+              ├── Suppliers
+              ├── Products
+              ├── General ledger
+              │     └── Accounting entry detail
+              └── Analysis
+                    ├── Trial balance
+                    ├── Income statement
+                    └── Balance sheet
+```
+
+When several SAF-T (PT) files exist for the same dossier, Tabularius AI does not silently aggregate their balances. A source is selected explicitly and propagated through the accounting views, preserving the relationship between each analysis and the underlying imported file.
+
+## Current accounting analysis
+
+### Trial balance
+
+The trial balance combines account opening and reported closing balances with debit and credit movements extracted from general-ledger transactions. Users can search by account or description and optionally include accounts without balances or movements.
+
+### General ledger
+
+Imported accounting transactions can be explored by date, journal and transaction. Search also covers descriptions, archival document references, account identifiers and source-document references. Individual entries expose their debit and credit lines for detailed inspection.
+
+### Income statement
+
+The income statement is calculated deterministically from the imported chart of accounts and accounting movements. Generative AI is not used to calculate accounting totals.
+
+### Balance sheet
+
+The balance sheet provides a deterministic accounting view derived from the selected SAF-T (PT) source, preserving the same dossier and source context used by the other analysis areas.
 
 ## Technology
 
@@ -51,6 +99,7 @@ The application supports both a lightweight Windows deployment using SQLite and 
 | **Docker Compose** | Reproducible server deployment |
 | **ASP.NET Core Identity** | Authentication, roles and user administration |
 | **xUnit** | Automated tests |
+| **GitHub Actions** | Build, migration and test validation |
 
 ## Deployment modes
 
@@ -155,25 +204,21 @@ dotnet run --project src/TabulariusAI.Web
 
 Development uses the SQLite profile by default.
 
+Run the automated tests with:
+
+```powershell
+dotnet test
+```
+
+The GitHub Actions CI workflow restores dependencies, builds the solution, checks Entity Framework migrations and executes the automated test suite with coverage collection.
+
 On Windows, `start.bat` can also be used during development to monitor the `main` branch, update the local checkout and restart the application after new commits.
 
 ## Product direction
 
-The application follows a dossier-centred accounting model:
+The current product already provides the core SAF-T (PT) workspace, general-ledger exploration and the first deterministic financial-statement analyses. Planned areas include reconciliation workflows, accounting tests and controls, richer analytical views and optional AI-assisted interpretation.
 
-```text
-Entity
-  └── Accounting dossier / fiscal year
-        └── SAF-T (PT) imports
-              ├── Accounts
-              ├── Customers
-              ├── Suppliers
-              ├── Products
-              ├── Accounting entries
-              └── Analysis and controls
-```
-
-The next product areas include trial balance, general ledger, journal views, reconciliation, accounting tests and optional AI-assisted interpretation. AI functionality is intended to assist analysis rather than replace deterministic accounting calculations.
+AI functionality is intended to explain, contextualise and assist accounting analysis rather than replace deterministic calculations or become the source of accounting totals.
 
 ## Security and data
 
