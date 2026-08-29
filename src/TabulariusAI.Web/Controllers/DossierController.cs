@@ -47,11 +47,31 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <returns>The dossier workspace view, or a not-found result.</returns>
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
     {
-        var dossier = await dbContext.AnalysisDossiers.AsNoTracking()
+        var dossier = await LoadDossierAsync(id, cancellationToken);
+        return dossier is null ? NotFound() : View(dossier);
+    }
+
+    /// <summary>
+    /// Displays the SAF-T (PT) source summary for a selected accounting dossier.
+    /// </summary>
+    /// <param name="id">The analysis dossier identifier.</param>
+    /// <param name="cancellationToken">A token used to cancel the database operation.</param>
+    /// <returns>The SAF-T (PT) summary view, or a not-found result.</returns>
+    public async Task<IActionResult> SaftSummary(int id, CancellationToken cancellationToken)
+    {
+        var dossier = await LoadDossierAsync(id, cancellationToken);
+        return dossier is null ? NotFound() : View(dossier);
+    }
+
+    /// <summary>
+    /// Loads a dossier with the entity and SAF-T (PT) imports required by workspace views.
+    /// </summary>
+    /// <param name="id">The analysis dossier identifier.</param>
+    /// <param name="cancellationToken">A token used to cancel the database operation.</param>
+    /// <returns>The requested dossier, or <see langword="null"/> when it does not exist.</returns>
+    private async Task<Data.Entities.AnalysisDossier?> LoadDossierAsync(int id, CancellationToken cancellationToken) =>
+        await dbContext.AnalysisDossiers.AsNoTracking()
             .Include(item => item.AccountingEntity)
             .Include(item => item.Imports)
             .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-        return dossier is null ? NotFound() : View(dossier);
-    }
 }
