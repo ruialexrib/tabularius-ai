@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Serilog;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Data.Identity;
@@ -29,6 +30,7 @@ builder.Services.AddDbContext<TabulariusDbContext>(options =>
         var configuredConnection = builder.Configuration.GetConnectionString("Tabularius");
         var connectionString = string.IsNullOrWhiteSpace(configuredConnection) || configuredConnection.Contains("MSSQLLocalDB", StringComparison.OrdinalIgnoreCase) ? $"Data Source={Path.Combine(dataDirectory, "tabularius.db")}" : configuredConnection;
         options.UseSqlite(connectionString);
+        options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
     }
     else if (databaseProvider == "sqlserver") options.UseSqlServer(builder.Configuration.GetConnectionString("Tabularius") ?? throw new InvalidOperationException("ConnectionStrings:Tabularius is required for SQL Server mode."));
     else throw new InvalidOperationException($"Unsupported database provider '{databaseProvider}'. Use 'Sqlite' or 'SqlServer'.");
@@ -72,19 +74,7 @@ static async Task InitializeDatabaseAsync(WebApplication application, string pro
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
-        if (provider == "sqlite")
-        {
-            var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync()).ToArray();
-            foreach (var migration in pendingMigrations)
-            {
-                logger.LogInformation("Applying SQLite migration {Migration}.", migration);
-                await dbContext.Database.MigrateAsync(migration);
-            }
-        }
-        else
-        {
-            await dbContext.Database.MigrateAsync();
-        }
+        await dbContext.Database.MigrateAsync();
         logger.LogInformation("Database initialized and migrations applied successfully using {Provider}.", provider);
     }
     catch (Exception exception) { logger.LogCritical(exception, "Database initialization failed using {Provider}.", provider); throw; }
