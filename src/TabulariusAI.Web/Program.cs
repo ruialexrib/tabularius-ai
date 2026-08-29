@@ -72,7 +72,19 @@ static async Task InitializeDatabaseAsync(WebApplication application, string pro
     try
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
-        await dbContext.Database.MigrateAsync();
+        if (provider == "sqlite")
+        {
+            var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync()).ToArray();
+            foreach (var migration in pendingMigrations)
+            {
+                logger.LogInformation("Applying SQLite migration {Migration}.", migration);
+                await dbContext.Database.MigrateAsync(migration);
+            }
+        }
+        else
+        {
+            await dbContext.Database.MigrateAsync();
+        }
         logger.LogInformation("Database initialized and migrations applied successfully using {Provider}.", provider);
     }
     catch (Exception exception) { logger.LogCritical(exception, "Database initialization failed using {Provider}.", provider); throw; }
