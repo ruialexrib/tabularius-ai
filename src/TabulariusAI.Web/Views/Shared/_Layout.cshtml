@@ -14,33 +14,19 @@
         </header>
         <aside class="sidebar" aria-label="Navegação principal">
             <nav>
-                <a class="nav-item" asp-controller="Home" asp-action="Index">Dashboard</a>
-                <p class="nav-heading">Dossier</p>
-                <a class="nav-item" asp-controller="Dossier" asp-action="Entities">Entidades</a>
-                <p class="nav-heading">SAF-T (PT)</p>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Resumo</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Contas</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Clientes</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Fornecedores</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Movimentos</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Documentos</a>
-                <p class="nav-heading">Contabilidade</p>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Análise contabilística</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Reconciliação</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Testes e auditoria</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Analytics</a>
-                <p class="nav-heading">Inteligência</p>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Assistente AI</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Relatórios</a>
+                <p class="nav-heading">Aplicação</p>
+                <a class="nav-item" asp-controller="Home" asp-action="Index">Início</a>
+                <p class="nav-heading">Dossiers contabilísticos</p>
+                <a class="nav-item" asp-controller="Dossier" asp-action="Entities">Entidades e exercícios</a>
+                <a class="nav-item" asp-controller="Home" asp-action="Import">Importar SAF-T (PT)</a>
+                <div class="nav-context-note">
+                    <strong>Área de trabalho</strong>
+                    <span>Selecione uma entidade e um exercício para aceder aos dados SAF-T (PT), análises e restantes operações do dossier.</span>
+                </div>
             </nav>
         </aside>
-        <main class="app-content">
-            @RenderBody()
-        </main>
-        <footer class="contextbar">
-            <span>Tabularius AI</span>
-            <span>SAF-T (PT)</span>
-        </footer>
+        <main class="app-content">@RenderBody()</main>
+        <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span></footer>
     </div>
 </body>
 </html>
