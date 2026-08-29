@@ -13,7 +13,7 @@ namespace TabulariusAI.Web.Controllers;
 /// <summary>
 /// Handles requests for the main Tabularius AI application pages.
 /// </summary>
-public sealed class HomeController(ISaftHeaderReader saftHeaderReader, TabulariusDbContext dbContext) : Controller
+public sealed class HomeController(ISaftHeaderReader saftHeaderReader, ISaftSchemaValidator saftSchemaValidator, TabulariusDbContext dbContext) : Controller
 {
     private const long MaximumSaftFileSize = 100 * 1024 * 1024;
 
@@ -26,7 +26,7 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, Tabulariu
     [HttpGet]
     public IActionResult Import() => View();
 
-    /// <summary>Validates an uploaded SAF-T (PT) XML file and persists its dossier data.</summary>
+    /// <summary>Validates an uploaded SAF-T (PT) XML file against the official XSD and persists its dossier data.</summary>
     /// <param name="saftFile">The SAF-T (PT) XML file uploaded by the user.</param>
     /// <param name="cancellationToken">A token used to cancel the request.</param>
     /// <returns>The import page containing either the extracted result or a validation error.</returns>
@@ -45,13 +45,19 @@ public sealed class HomeController(ISaftHeaderReader saftHeaderReader, Tabulariu
                 return View("Import");
             }
 
+            await using (var validationStream = saftFile.OpenReadStream())
+            {
+                await saftSchemaValidator.ValidateAsync(validationStream, cancellationToken);
+            }
+
             await using var stream = saftFile.OpenReadStream();
             var analysis = await saftHeaderReader.ReadAsync(stream, cancellationToken);
             await PersistImportAsync(saftFile.FileName, contentHash, analysis, cancellationToken);
+            TempData["SaftImportValidation"] = "Ficheiro validado com sucesso contra o XSD oficial SAF-T (PT) 1.04_01 e importado.";
             return View("Import", analysis);
         }
         catch (InvalidDataException exception) { ModelState.AddModelError("saftFile", exception.Message); return View("Import"); }
-        catch (DbUpdateException) { ModelState.AddModelError("saftFile", "O ficheiro foi analisado, mas não foi possível guardar os dados do dossier localmente."); return View("Import"); }
+        catch (DbUpdateException) { ModelState.AddModelError("saftFile", "O ficheiro foi validado e analisado, mas não foi possível guardar os dados do dossier localmente."); return View("Import"); }
     }
 
     /// <summary>Displays the generic application error page with a request identifier for log correlation.</summary>
