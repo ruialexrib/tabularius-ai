@@ -85,7 +85,7 @@ static async Task InitializeDatabaseAsync(WebApplication application, string pro
 /// <param name="dbContext">The application database context.</param>
 /// <param name="logger">The database initialization logger.</param>
 /// <returns>A task representing the asynchronous baseline operation.</returns>
-static async Task BaselineLegacySqliteDatabaseAsync(TabulariusDbContext dbContext, ILogger logger)
+static async Task BaselineLegacySqliteDatabaseAsync(TabulariusDbContext dbContext, Microsoft.Extensions.Logging.ILogger logger)
 {
     const string salesMigration = "20260830220000_AddSaftSalesInvoices";
     await dbContext.Database.OpenConnectionAsync();
@@ -99,7 +99,7 @@ static async Task BaselineLegacySqliteDatabaseAsync(TabulariusDbContext dbContex
         if (!hasExistingSchema) return;
 
         var appliedMigrations = (await dbContext.Database.GetAppliedMigrationsAsync()).ToHashSet(StringComparer.Ordinal);
-        var knownMigrations = (await dbContext.Database.GetMigrationsAsync()).Where(migration => string.CompareOrdinal(migration, salesMigration) < 0).ToArray();
+        var knownMigrations = dbContext.Database.GetMigrations().Where(migration => string.CompareOrdinal(migration, salesMigration) < 0).ToArray();
         var baselined = 0;
         foreach (var migration in knownMigrations)
         {
