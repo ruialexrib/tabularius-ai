@@ -34,7 +34,7 @@ public partial class TabulariusDbContextModelSnapshot : ModelSnapshot
             b.Property<int>("Id").ValueGeneratedOnAdd().HasColumnType("int"); SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
             b.Property<int>("AccountingEntityId").HasColumnType("int"); b.Property<DateTime>("CreatedAtUtc").HasColumnType("datetime2");
             b.Property<int>("FiscalYear").HasColumnType("int"); b.Property<string>("Name").IsRequired().HasMaxLength(200).HasColumnType("nvarchar(200)");
-            b.HasKey("Id"); b.HasIndex("AccountingEntityId"); b.HasIndex("AccountingEntityId", "FiscalYear").IsUnique(); b.ToTable("AnalysisDossiers");
+            b.HasKey("Id"); b.HasIndex("AccountingEntityId", "FiscalYear").IsUnique(); b.ToTable("AnalysisDossiers");
         });
 
         modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftImport", b =>

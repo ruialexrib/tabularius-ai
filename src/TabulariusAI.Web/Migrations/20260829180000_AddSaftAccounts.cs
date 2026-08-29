@@ -16,6 +16,10 @@ public partial class AddSaftAccounts : Migration
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.DropIndex(
+            name: "IX_AnalysisDossiers_AccountingEntityId",
+            table: "AnalysisDossiers");
+
         migrationBuilder.CreateIndex(
             name: "IX_AnalysisDossiers_AccountingEntityId_FiscalYear",
             table: "AnalysisDossiers",
@@ -59,5 +63,9 @@ public partial class AddSaftAccounts : Migration
     {
         migrationBuilder.DropTable(name: "SaftAccounts");
         migrationBuilder.DropIndex(name: "IX_AnalysisDossiers_AccountingEntityId_FiscalYear", table: "AnalysisDossiers");
+        migrationBuilder.CreateIndex(
+            name: "IX_AnalysisDossiers_AccountingEntityId",
+            table: "AnalysisDossiers",
+            column: "AccountingEntityId");
     }
 }
