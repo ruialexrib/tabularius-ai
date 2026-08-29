@@ -7,25 +7,35 @@ description: Implement and review Portuguese SAF-T import, validation, mapping a
 
 Use this skill whenever work affects SAF-T XML ingestion, validation, domain mapping, accounting data or derived analytics.
 
+## Asset organization
+
+Keep SAF-T development assets separated by purpose:
+
+- `assets/schema/` contains official versioned SAF-T (PT) schemas and must not contain synthetic test data.
+- `assets/reference/` contains authoritative or demonstrative reference files used to understand the real SAF-T (PT) structure.
+- `assets/test-data/` contains synthetic SAF-T fixtures. Group multi-period fixtures by company so relationships between periods remain explicit.
+- Do not place new SAF-T files directly in the `assets/` root when they clearly belong to one of these categories.
+
 ## Official SAF-T (PT) schema
 
 - The authoritative schema for SAF-T (PT) version `1.04_01` is published by the Portuguese Tax and Customs Authority (Autoridade Tributária e Aduaneira) at `https://info.portaldasfinancas.gov.pt/apps/saft-pt04/saftpt1.04_01.xsd`.
-- Keep a repository-local copy at `assets/saftpt1.04_01.xsd`. The local asset is the schema used by development, automated tests and application validation; the Portal das Finanças URL remains the authoritative upstream source.
+- Keep the repository-local copy at `assets/schema/saftpt1.04_01.xsd`. The local asset is the schema used by development, automated tests and application validation; the Portal das Finanças URL remains the authoritative upstream source.
 - Every SAF-T (PT) `1.04_01` file accepted by Tabularius AI must be validated against this XSD before its accounting data is persisted or analysed. Namespace/header checks alone are not sufficient validation.
 - XSD validation failure must reject the import and return an actionable user-facing validation error. A failed validation must never leave partially persisted data.
 - Tests and synthetic SAF-T assets must also be validated against the repository XSD. Do not knowingly keep invalid synthetic SAF-T fixtures merely because the current parser can read them.
-- When the official XSD changes or another SAF-T version is supported, preserve the schemas by version and select validation according to the SAF-T namespace/version. Never silently validate one SAF-T version against a different schema.
-- Treat the repository XSD as an external specification asset: do not casually edit it to make an invalid SAF-T pass. If a compatibility issue is discovered between an XML/XSD engine and the official schema, document and test the compatibility handling separately while preserving the official schema unchanged.
+- When the official XSD changes or another SAF-T version is supported, preserve schemas by version in `assets/schema/` and select validation according to the SAF-T namespace/version. Never silently validate one SAF-T version against a different schema.
+- Treat repository XSD files as external specification assets: do not casually edit them to make an invalid SAF-T pass. If a compatibility issue is discovered between an XML/XSD engine and the official schema, document and test the compatibility handling separately while preserving the official schema unchanged.
 
 ## Repository reference SAF-T
 
-- The repository contains the demonstration file `assets/saft_idemo599999999.xml` as a development reference for the concrete SAF-T (PT) structure used by the project.
+- The repository contains the demonstration file `assets/reference/saft_idemo599999999.xml` as a development reference for the concrete SAF-T (PT) structure used by the project.
 - Consult this file whenever implementation work requires confirmation of actual element hierarchy, section placement, field names, namespaces, representative values or relationships in a SAF-T (PT) document instead of relying on memory or assumptions.
 - Use the demonstration file as a structural and exploratory reference when implementing or reviewing parsers, mappings, persistence, navigation, accounting analyses and SAF-T-derived tests.
 - Do not assume that the demonstration file exhaustively represents every valid SAF-T (PT) file, optional field, schema version or edge case. Implementation must remain namespace-aware and follow the supported SAF-T (PT) contract.
 - Do not copy identifying or accounting values from the demonstration file into production defaults, logs, documentation examples or application behavior.
 - Prefer small synthetic fixtures for focused automated unit tests. The demonstration file may be used for repository-level integration or regression tests when testing the real document structure materially improves coverage and its demonstrative status has been confirmed.
-- If the demonstration asset is renamed, replaced or supplemented, inspect the current `assets/` directory before assuming its path or contents.
+- Synthetic multi-period company fixtures are stored under `assets/test-data/<company>/`.
+- If an asset is renamed, replaced or supplemented, inspect the current `assets/` hierarchy before assuming its path or contents.
 
 ## Import boundary
 
@@ -61,6 +71,6 @@ Use this skill whenever work affects SAF-T XML ingestion, validation, domain map
 
 ## Testing
 
-- Validate the demonstration SAF-T and all synthetic SAF-T fixtures against `assets/saftpt1.04_01.xsd` as part of the relevant automated quality checks.
+- Validate the demonstration SAF-T in `assets/reference/` and all synthetic SAF-T fixtures under `assets/test-data/` against `assets/schema/saftpt1.04_01.xsd` as part of the relevant automated quality checks.
 - Cover representative supported SAF-T versions and namespaces, malformed XML, XSD-invalid XML, unsupported versions, missing mandatory fields, duplicate data, invalid values, decimal precision, date parsing, boundary dates, transactional rollback, empty collections and large-file behavior as those capabilities are implemented.
 - Never commit real taxpayer SAF-T data as a test fixture.
