@@ -23,7 +23,7 @@ public sealed class UsersControllerTests
         await using var database = new TestDatabase();
         await using var identity = new TestIdentityServices(database.Context);
         var controller = CreateController(identity, null);
-        var model = new CreateUserViewModel { UserName = "maria", DisplayName = "Maria Silva", Email = "maria@example.test", Password = StrongPassword, ConfirmPassword = StrongPassword, Role = ApplicationRoles.User };
+        var model = new CreateUserViewModel { UserName = "maria", DisplayName = "Maria Silva", Email = "maria@example.test", Password = StrongPassword, Role = ApplicationRoles.User };
 
         var result = await controller.Create(model);
 
@@ -40,7 +40,7 @@ public sealed class UsersControllerTests
         await using var database = new TestDatabase();
         await using var identity = new TestIdentityServices(database.Context);
         var controller = CreateController(identity, null);
-        var model = new CreateUserViewModel { UserName = "maria", DisplayName = "Maria", Email = "maria@example.test", Password = StrongPassword, ConfirmPassword = StrongPassword, Role = "Owner" };
+        var model = new CreateUserViewModel { UserName = "maria", DisplayName = "Maria", Email = "maria@example.test", Password = StrongPassword, Role = "Owner" };
 
         var result = await controller.Create(model);
 
