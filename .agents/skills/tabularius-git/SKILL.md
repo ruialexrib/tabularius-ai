@@ -1,19 +1,20 @@
 ---
 name: tabularius-git
-description: Manage Tabularius AI branches, commits and pull requests while keeping main stable and changes reviewable.
+description: Manage Tabularius AI branches, commits and pull requests while enforcing the repository quality gate.
 ---
 
 # Tabularius AI Git workflow
 
-Use this skill whenever creating branches, commits or pull requests.
+Use this skill whenever creating branches, commits or pull requests. Quality and CI behavior is defined centrally by `tabularius-quality`; do not duplicate its detailed test policy here.
 
 ## Branches and pull requests
 
-- Keep `main` stable and develop changes on focused branches.
+- Keep `main` stable and normally develop changes on focused branches.
 - Use descriptive branch names such as `feat/saft-import`, `feat/localdb`, `style/dashboard` or `fix/import-validation`.
 - Keep each pull request focused on one coherent change set.
 - Do not merge a pull request unless the user explicitly asks for or approves the merge.
 - Prefer squash merge after review so feature history remains concise.
+- When the user has explicitly requested direct development on `main`, follow that instruction until revoked, but the mandatory CI gate still applies to every pushed commit.
 
 ## Commit messages
 
@@ -32,10 +33,16 @@ Use `feat`, `fix`, `style`, `refactor`, `test`, `docs`, `build`, `ci` or `chore`
 - A request for a commit message does not authorize staging, committing, pushing, tagging or publishing.
 - Never invent issue or pull request references.
 
-## Before a pull request
+## After every commit
+
+Apply `tabularius-quality`. Inspect the GitHub Actions CI run corresponding to the latest relevant commit. A successful GitHub write is not evidence that the code builds or tests pass.
+
+If CI fails, investigate the failed step and logs, correct the root cause, commit the correction and inspect the replacement CI run before continuing normal feature development. If a run was cancelled because a newer commit superseded it, verify the latest final commit instead.
+
+## Before a pull request or merge
 
 - Review the actual changed files and diff.
 - Preserve unrelated changes and separate independent work when appropriate.
-- Verify that C# changes comply with `tabularius-coding`, including English XML documentation on classes and methods.
-- Run the appropriate build and tests when available.
+- Verify C# documentation and architecture rules through `tabularius-coding`.
+- Apply the full `tabularius-quality` gate and require a passing CI result.
 - State clearly what was verified and what remains unverified.
