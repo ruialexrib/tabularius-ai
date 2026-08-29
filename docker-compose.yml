@@ -28,9 +28,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Database__Provider: SqlServer
       ConnectionStrings__Tabularius: Server=tabularius-ai-db;Database=TabulariusAI;User Id=sa;Password=${TABULARIUS_DB_PASSWORD};TrustServerCertificate=True
-      DataProtection__KeysPath: /var/lib/tabularius-ai/keys
     volumes:
-      - tabularius-ai-data-protection:/var/lib/tabularius-ai/keys
       - tabularius-ai-logs:/app/logs
     ports:
       - "8080:8080"
@@ -40,7 +38,7 @@ services:
     networks:
       - tabularius-ai-network
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail --silent --show-error http://localhost:8080/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "test -r /proc/1/cmdline && grep -aq 'TabulariusAI.Web.dll' /proc/1/cmdline"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -49,7 +47,6 @@ services:
 
 volumes:
   tabularius-ai-sql-data:
-  tabularius-ai-data-protection:
   tabularius-ai-logs:
 
 networks:
