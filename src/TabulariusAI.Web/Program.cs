@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Data.Identity;
+using TabulariusAI.Web.Middleware;
 using TabulariusAI.Web.Models;
 using TabulariusAI.Web.Services;
 
@@ -69,6 +70,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+app.UseMiddleware<MandatoryPasswordChangeMiddleware>();
 app.UseAuthorization();
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
