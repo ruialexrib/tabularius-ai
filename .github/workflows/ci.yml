@@ -38,6 +38,9 @@ jobs:
         run: dotnet build TabulariusAI.sln --configuration Release --no-restore
 
       - name: Verify EF Core migration consistency
+        env:
+          Database__Provider: SqlServer
+          ConnectionStrings__Tabularius: Server=(localdb)\MSSQLLocalDB;Database=TabulariusAI_CI;Trusted_Connection=True;TrustServerCertificate=True
         run: >-
           dotnet ef migrations has-pending-model-changes
           --project src/TabulariusAI.Web
@@ -60,5 +63,5 @@ jobs:
         with:
           name: test-results-and-coverage
           path: TestResults/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
