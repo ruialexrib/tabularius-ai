@@ -28,11 +28,14 @@ Use `feat`, `fix`, `style`, `refactor`, `test`, `docs`, `build`, `ci` or `chore`
 - Use imperative wording, lowercase after the colon and no final period.
 - Describe the outcome rather than implementation trivia.
 - Do not mention AI authorship, Codex or generated-by attribution.
-- Never commit secrets, API keys, real SAF-T files, LocalDB data files or sensitive accounting data.
+- Never commit secrets, API keys, real SAF-T files, LocalDB data files, database backups or sensitive accounting data.
+- A request for a commit message does not authorize staging, committing, pushing, tagging or publishing.
+- Never invent issue or pull request references.
 
 ## Before a pull request
 
 - Review the actual changed files and diff.
+- Preserve unrelated changes and separate independent work when appropriate.
 - Verify that C# changes comply with `tabularius-coding`, including English XML documentation on classes and methods.
 - Run the appropriate build and tests when available.
 - State clearly what was verified and what remains unverified.
