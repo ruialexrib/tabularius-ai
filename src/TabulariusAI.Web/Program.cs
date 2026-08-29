@@ -99,7 +99,11 @@ static async Task SeedIdentityAsync(WebApplication application)
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     foreach (var role in ApplicationRoles.All)
     {
-        if (!await roleManager.RoleExistsAsync(role)) await roleManager.CreateAsync(new IdentityRole(role));
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            var roleCreateResult = await roleManager.CreateAsync(new IdentityRole(role));
+            if (!roleCreateResult.Succeeded) throw new InvalidOperationException($"Application role could not be created: {string.Join("; ", roleCreateResult.Errors.Select(error => error.Code))}");
+        }
     }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -111,15 +115,18 @@ static async Task SeedIdentityAsync(WebApplication application)
         administrator.PasswordHash = passwordHasher.HashPassword(administrator, temporaryPassword);
         administrator.SecurityStamp = Guid.NewGuid().ToString();
 
-        var store = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
-        var createResult = await store.CreateAsync(administrator, CancellationToken.None);
+        var userStore = scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+        var createResult = await userStore.CreateAsync(administrator, CancellationToken.None);
         if (!createResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator could not be created: {string.Join("; ", createResult.Errors.Select(error => error.Code))}");
     }
 
-    if (!await userManager.IsInRoleAsync(administrator, ApplicationRoles.Administrator))
+    var role = await roleManager.FindByNameAsync(ApplicationRoles.Administrator) ?? throw new InvalidOperationException("Administrator role was not found after initialization.");
+    var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
+    var roleAlreadyAssigned = await dbContext.UserRoles.AnyAsync(item => item.UserId == administrator.Id && item.RoleId == role.Id);
+    if (!roleAlreadyAssigned)
     {
-        var roleResult = await userManager.AddToRoleAsync(administrator, ApplicationRoles.Administrator);
-        if (!roleResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator role could not be assigned: {string.Join("; ", roleResult.Errors.Select(error => error.Code))}");
+        dbContext.UserRoles.Add(new IdentityUserRole<string> { UserId = administrator.Id, RoleId = role.Id });
+        await dbContext.SaveChangesAsync();
     }
 }
 
