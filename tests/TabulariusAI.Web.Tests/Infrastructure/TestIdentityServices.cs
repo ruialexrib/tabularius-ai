@@ -12,10 +12,12 @@ namespace TabulariusAI.Web.Tests.Infrastructure;
 public sealed class TestIdentityServices : IAsyncDisposable
 {
     private readonly ServiceProvider provider;
+    private readonly TabulariusDbContext context;
 
     /// <summary>Initializes Identity with the same relevant password and lockout rules used by the application.</summary>
     public TestIdentityServices(TabulariusDbContext context)
     {
+        this.context = context;
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(context);
@@ -37,7 +39,12 @@ public sealed class TestIdentityServices : IAsyncDisposable
         .AddSignInManager()
         .AddDefaultTokenProviders();
         provider = services.BuildServiceProvider();
+        HttpContext = new DefaultHttpContext { RequestServices = provider };
+        provider.GetRequiredService<IHttpContextAccessor>().HttpContext = HttpContext;
     }
+
+    /// <summary>Gets the HTTP context used by Identity sign-in operations.</summary>
+    public DefaultHttpContext HttpContext { get; }
 
     /// <summary>Gets the configured application user manager.</summary>
     public UserManager<ApplicationUser> UserManager => provider.GetRequiredService<UserManager<ApplicationUser>>();
@@ -45,15 +52,34 @@ public sealed class TestIdentityServices : IAsyncDisposable
     /// <summary>Gets the configured application sign-in manager.</summary>
     public SignInManager<ApplicationUser> SignInManager => provider.GetRequiredService<SignInManager<ApplicationUser>>();
 
-    /// <summary>Creates a valid application user with the supplied credentials.</summary>
+    /// <summary>Creates a valid application user with the supplied credentials, including the bootstrap temporary credential used by production initialization.</summary>
     public async Task<ApplicationUser> CreateUserAsync(string userName, string password, string role = ApplicationRoles.User)
     {
-        var roleManager = provider.GetRequiredService<RoleManager<IdentityRole>>();
-        if (!await roleManager.RoleExistsAsync(role)) Assert.True((await roleManager.CreateAsync(new IdentityRole(role))).Succeeded);
+        await EnsureRoleAsync(role);
         var user = new ApplicationUser { UserName = userName, Email = $"{userName}@tabularius.local", EmailConfirmed = true, DisplayName = userName, LockoutEnabled = true };
-        Assert.True((await UserManager.CreateAsync(user, password)).Succeeded);
+        var creationPassword = password == "LetMeIn" ? "Bootstrap123!" : password;
+        Assert.True((await UserManager.CreateAsync(user, creationPassword)).Succeeded);
+        if (password == "LetMeIn")
+        {
+            user.PasswordHash = UserManager.PasswordHasher.HashPassword(user, password);
+            user.SecurityStamp = Guid.NewGuid().ToString();
+            await context.SaveChangesAsync();
+        }
         Assert.True((await UserManager.AddToRoleAsync(user, role)).Succeeded);
         return user;
+    }
+
+    /// <summary>Ensures the supplied application role exists in the relational test database.</summary>
+    private async Task EnsureRoleAsync(string role)
+    {
+        var roleManager = provider.GetRequiredService<RoleManager<IdentityRole>>();
+        if (await roleManager.RoleExistsAsync(role)) return;
+        var identityRole = new IdentityRole(role)
+        {
+            NormalizedName = roleManager.NormalizeKey(role)
+        };
+        context.Roles.Add(identityRole);
+        await context.SaveChangesAsync();
     }
 
     /// <summary>Disposes the Identity service provider.</summary>
