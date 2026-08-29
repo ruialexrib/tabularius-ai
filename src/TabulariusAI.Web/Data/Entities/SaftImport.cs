@@ -31,4 +31,6 @@ public sealed class SaftImport
     public ICollection<SaftSupplier> Suppliers { get; } = new List<SaftSupplier>();
     /// <summary>Gets the products and services imported from this exact SAF-T (PT) source.</summary>
     public ICollection<SaftProduct> Products { get; } = new List<SaftProduct>();
+    /// <summary>Gets the accounting transactions imported from this exact SAF-T (PT) source.</summary>
+    public ICollection<SaftTransaction> Transactions { get; } = new List<SaftTransaction>();
 }
