@@ -1,12 +1,11 @@
 using System.Text;
 using System.Xml;
-using System.Xml.Linq;
 using TabulariusAI.Web.Models;
 
 namespace TabulariusAI.Web.Services;
 
 /// <summary>
-/// Reads SAF-T header information from XML documents using secure XML parser settings.
+/// Reads SAF-T (PT) header information and structural metrics using secure streaming XML parsing.
 /// </summary>
 public sealed class SaftHeaderReader : ISaftHeaderReader
 {
@@ -33,66 +32,114 @@ public sealed class SaftHeaderReader : ISaftHeaderReader
         try
         {
             using var reader = XmlReader.Create(stream, settings);
-            var document = await XDocument.LoadAsync(reader, LoadOptions.None, cancellationToken);
-            var root = document.Root;
+            var model = new SaftHeaderViewModel();
+            var rootValidated = false;
 
-            if (root is null || !string.Equals(root.Name.LocalName, "AuditFile", StringComparison.Ordinal))
+            while (await reader.ReadAsync())
             {
-                throw new InvalidDataException("O ficheiro XML não contém uma estrutura SAF-T reconhecida.");
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (reader.NodeType != XmlNodeType.Element)
+                {
+                    continue;
+                }
+
+                if (!rootValidated)
+                {
+                    if (!string.Equals(reader.LocalName, "AuditFile", StringComparison.Ordinal))
+                    {
+                        throw new InvalidDataException("O ficheiro XML não contém uma estrutura SAF-T (PT) reconhecida.");
+                    }
+
+                    rootValidated = true;
+                    continue;
+                }
+
+                switch (reader.LocalName)
+                {
+                    case "AuditFileVersion":
+                        model.SaftVersion = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "TaxRegistrationNumber" when string.IsNullOrEmpty(model.TaxRegistrationNumber):
+                        model.TaxRegistrationNumber = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "CompanyName" when string.IsNullOrEmpty(model.CompanyName):
+                        model.CompanyName = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "FiscalYear":
+                        model.FiscalYear = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "StartDate":
+                        model.StartDate = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "EndDate":
+                        model.EndDate = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "ProductID":
+                        model.ProductId = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "ProductVersion":
+                        model.ProductVersion = await reader.ReadElementContentAsStringAsync();
+                        break;
+                    case "Account":
+                        model.AccountCount++;
+                        break;
+                    case "Customer":
+                        model.CustomerCount++;
+                        break;
+                    case "Supplier":
+                        model.SupplierCount++;
+                        break;
+                    case "Product":
+                        model.ProductCount++;
+                        break;
+                    case "Transaction":
+                        model.TransactionCount++;
+                        break;
+                    case "Invoice":
+                        model.SalesInvoiceCount++;
+                        break;
+                    case "StockMovement":
+                        model.MovementOfGoodsCount++;
+                        break;
+                    case "WorkDocument":
+                        model.WorkingDocumentCount++;
+                        break;
+                    case "Payment":
+                        model.PaymentCount++;
+                        break;
+                }
             }
 
-            var header = root.Elements().FirstOrDefault(element => element.Name.LocalName == "Header")
-                ?? throw new InvalidDataException("O ficheiro SAF-T não contém a secção Header.");
-
-            var companyName = GetRequiredValue(header, "CompanyName");
-            var taxRegistrationNumber = GetRequiredValue(header, "TaxRegistrationNumber");
-
-            return new SaftHeaderViewModel
-            {
-                SaftVersion = GetValue(header, "AuditFileVersion"),
-                CompanyName = companyName,
-                TaxRegistrationNumber = taxRegistrationNumber,
-                FiscalYear = GetValue(header, "FiscalYear"),
-                StartDate = GetValue(header, "StartDate"),
-                EndDate = GetValue(header, "EndDate"),
-                ProductId = GetValue(header, "ProductID"),
-                ProductVersion = GetValue(header, "ProductVersion")
-            };
+            ValidateRequiredHeader(model);
+            return model;
         }
         catch (XmlException exception)
         {
-            throw new InvalidDataException($"Não foi possível ler o XML SAF-T: {exception.Message}", exception);
+            throw new InvalidDataException($"Não foi possível ler o XML SAF-T (PT): {exception.Message}", exception);
         }
     }
 
     /// <summary>
-    /// Gets the trimmed value of a direct child element by its local XML name.
+    /// Validates the minimum required header values after the document has been streamed.
     /// </summary>
-    /// <param name="parent">The parent XML element.</param>
-    /// <param name="localName">The local name of the child element.</param>
-    /// <returns>The child value, or an empty string when the element is absent.</returns>
-    private static string GetValue(XElement parent, string localName)
+    /// <param name="model">The parsed SAF-T (PT) summary.</param>
+    /// <exception cref="InvalidDataException">Thrown when required header data is missing.</exception>
+    private static void ValidateRequiredHeader(SaftHeaderViewModel model)
     {
-        return parent.Elements()
-            .FirstOrDefault(element => string.Equals(element.Name.LocalName, localName, StringComparison.Ordinal))?
-            .Value.Trim() ?? string.Empty;
-    }
-
-    /// <summary>
-    /// Gets a required direct child value and rejects a missing or empty element.
-    /// </summary>
-    /// <param name="parent">The parent XML element.</param>
-    /// <param name="localName">The local name of the required child element.</param>
-    /// <returns>The non-empty child value.</returns>
-    /// <exception cref="InvalidDataException">Thrown when the required element is missing or empty.</exception>
-    private static string GetRequiredValue(XElement parent, string localName)
-    {
-        var value = GetValue(parent, localName);
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(model.SaftVersion))
         {
-            throw new InvalidDataException($"O cabeçalho SAF-T não contém o campo obrigatório {localName}.");
+            throw new InvalidDataException("O cabeçalho SAF-T (PT) não contém o campo obrigatório AuditFileVersion.");
         }
 
-        return value;
+        if (string.IsNullOrWhiteSpace(model.CompanyName))
+        {
+            throw new InvalidDataException("O cabeçalho SAF-T (PT) não contém o campo obrigatório CompanyName.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.TaxRegistrationNumber))
+        {
+            throw new InvalidDataException("O cabeçalho SAF-T (PT) não contém o campo obrigatório TaxRegistrationNumber.");
+        }
     }
 }
