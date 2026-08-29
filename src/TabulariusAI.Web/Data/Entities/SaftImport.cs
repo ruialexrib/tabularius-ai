@@ -23,4 +23,8 @@ public sealed class SaftImport
     public AnalysisDossier Dossier { get; set; } = null!;
     /// <summary>Gets the ledger accounts imported from this exact SAF-T (PT) source.</summary>
     public ICollection<SaftAccount> Accounts { get; } = new List<SaftAccount>();
+    /// <summary>Gets the customers imported from this exact SAF-T (PT) source.</summary>
+    public ICollection<SaftCustomer> Customers { get; } = new List<SaftCustomer>();
+    /// <summary>Gets the suppliers imported from this exact SAF-T (PT) source.</summary>
+    public ICollection<SaftSupplier> Suppliers { get; } = new List<SaftSupplier>();
 }
