@@ -13,165 +13,54 @@ namespace TabulariusAI.Web.Tests.Controllers;
 /// <summary>Verifies administrator user creation, editing, password reset, filtering and lock behavior.</summary>
 public sealed class UsersControllerTests
 {
-    private const string StrongPassword = "ValidPass123!";
-    private const string NewPassword = "AnotherPass456!";
-
-    /// <summary>Verifies that creating a valid user persists the account and selected role.</summary>
-    [Fact]
-    public async Task Create_ValidUser_CreatesAccountAndRole()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var controller = CreateController(identity, null);
-        var model = new CreateUserViewModel { UserName = "maria", DisplayName = "Maria Silva", Email = "maria@example.test", Password = StrongPassword, Role = ApplicationRoles.User };
-
-        var result = await controller.Create(model);
-
-        Assert.IsType<RedirectToActionResult>(result);
-        var user = await identity.UserManager.FindByNameAsync("maria");
-        Assert.NotNull(user);
-        Assert.True(await identity.UserManager.IsInRoleAsync(user!, ApplicationRoles.User));
-    }
-
-    /// <summary>Verifies that an unsupported application role is rejected without creating an account.</summary>
-    [Fact]
-    public async Task Create_InvalidRole_ReturnsFormWithoutCreatingUser()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var controller = CreateController(identity, null);
-        var model = new CreateUserViewModel { UserName = "maria", DisplayName = "Maria", Email = "maria@example.test", Password = StrongPassword, Role = "Owner" };
-
-        var result = await controller.Create(model);
-
-        Assert.IsType<ViewResult>(result);
-        Assert.False(controller.ModelState.IsValid);
-        Assert.Null(await identity.UserManager.FindByNameAsync("maria"));
-    }
-
-    /// <summary>Verifies that editing an account updates its profile and application role.</summary>
-    [Fact]
-    public async Task Edit_ValidChange_UpdatesProfileAndRole()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var admin = await identity.CreateUserAsync("admin2", StrongPassword, ApplicationRoles.Administrator);
-        var user = await identity.CreateUserAsync("joao", StrongPassword);
-        var controller = CreateController(identity, admin);
-        var model = new EditUserViewModel { Id = user.Id, UserName = "joao.novo", DisplayName = "João Novo", Email = "joao.novo@example.test", Role = ApplicationRoles.Administrator };
-
-        var result = await controller.Edit(model);
-
-        Assert.IsType<RedirectToActionResult>(result);
-        var updated = await identity.UserManager.FindByIdAsync(user.Id);
-        Assert.Equal("joao.novo", updated!.UserName);
-        Assert.Equal("João Novo", updated.DisplayName);
-        Assert.True(await identity.UserManager.IsInRoleAsync(updated, ApplicationRoles.Administrator));
-    }
-
-    /// <summary>Verifies that the signed-in administrator cannot remove their own administrator role.</summary>
-    [Fact]
-    public async Task Edit_CurrentAdministratorDemotion_IsRejected()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var admin = await identity.CreateUserAsync("admin2", StrongPassword, ApplicationRoles.Administrator);
-        var controller = CreateController(identity, admin);
-        var model = new EditUserViewModel { Id = admin.Id, UserName = admin.UserName!, DisplayName = admin.DisplayName, Email = admin.Email!, Role = ApplicationRoles.User };
-
-        var result = await controller.Edit(model);
-
-        Assert.IsType<ViewResult>(result);
-        Assert.False(controller.ModelState.IsValid);
-        Assert.True(await identity.UserManager.IsInRoleAsync(admin, ApplicationRoles.Administrator));
-    }
-
-    /// <summary>Verifies that an administrator can reset another user's password.</summary>
-    [Fact]
-    public async Task ResetPassword_ValidPassword_ReplacesCredential()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var admin = await identity.CreateUserAsync("admin2", StrongPassword, ApplicationRoles.Administrator);
-        var user = await identity.CreateUserAsync("ana", StrongPassword);
-        var controller = CreateController(identity, admin);
-        var model = new ResetUserPasswordViewModel { Id = user.Id, NewPassword = NewPassword, ConfirmPassword = NewPassword };
-
-        var result = await controller.ResetPassword(model);
-
-        Assert.IsType<RedirectToActionResult>(result);
-        Assert.True(await identity.UserManager.CheckPasswordAsync(user, NewPassword));
-        Assert.False(await identity.UserManager.CheckPasswordAsync(user, StrongPassword));
-    }
-
-    /// <summary>Verifies that administrators cannot lock the account used for the current session.</summary>
-    [Fact]
-    public async Task ToggleLock_CurrentUser_DoesNotLockAccount()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var admin = await identity.CreateUserAsync("admin2", StrongPassword, ApplicationRoles.Administrator);
-        var controller = CreateController(identity, admin);
-
-        var result = await controller.ToggleLock(admin.Id);
-
-        Assert.IsType<RedirectToActionResult>(result);
-        Assert.False(await identity.UserManager.IsLockedOutAsync(admin));
-    }
-
-    /// <summary>Verifies that locking and unlocking another account toggles its effective lock state.</summary>
-    [Fact]
-    public async Task ToggleLock_OtherUser_TogglesLockState()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var admin = await identity.CreateUserAsync("admin2", StrongPassword, ApplicationRoles.Administrator);
-        var user = await identity.CreateUserAsync("pedro", StrongPassword);
-        var controller = CreateController(identity, admin);
-
-        await controller.ToggleLock(user.Id);
-        Assert.True(await identity.UserManager.IsLockedOutAsync(user));
-        await controller.ToggleLock(user.Id);
-        Assert.False(await identity.UserManager.IsLockedOutAsync(user));
-    }
-
-    /// <summary>Verifies search and role filtering and page-size normalization on the administration list.</summary>
-    [Fact]
-    public async Task Index_SearchAndRole_ReturnsMatchingNormalizedPage()
-    {
-        await using var database = new TestDatabase();
-        await using var identity = new TestIdentityServices(database.Context);
-        var admin = await identity.CreateUserAsync("admin2", StrongPassword, ApplicationRoles.Administrator);
-        var user = await identity.CreateUserAsync("searchable", StrongPassword);
-        user.DisplayName = "Pessoa Pesquisável";
-        Assert.True((await identity.UserManager.UpdateAsync(user)).Succeeded);
-        var controller = CreateController(identity, admin);
-
-        var result = await controller.Index("Pesquisável", ApplicationRoles.User, "active", -2, 999);
-
-        var model = Assert.IsType<UserListViewModel>(Assert.IsType<ViewResult>(result).Model);
-        Assert.Equal(1, model.List.Page);
-        Assert.Equal(10, model.List.PageSize);
-        Assert.Single(model.List.Items);
-        Assert.Equal("searchable", model.List.Items[0].UserName);
-    }
+    private const string StrongPassword="ValidPass123!"; private const string NewPassword="AnotherPass456!";
+    /// <summary>Verifies valid user creation and role assignment.</summary>
+    [Fact] public async Task Create_ValidUser_CreatesAccountAndRole(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var c=CreateController(id,null);var r=await c.Create(new(){UserName="maria",DisplayName="Maria Silva",Email="maria@example.test",Password=StrongPassword,Role=ApplicationRoles.User});Assert.IsType<RedirectToActionResult>(r);var u=await id.UserManager.FindByNameAsync("maria");Assert.NotNull(u);Assert.True(await id.UserManager.IsInRoleAsync(u!,ApplicationRoles.User));}
+    /// <summary>Verifies unsupported roles are rejected.</summary>
+    [Fact] public async Task Create_InvalidRole_ReturnsFormWithoutCreatingUser(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var c=CreateController(id,null);var r=await c.Create(new(){UserName="maria",DisplayName="Maria",Email="maria@example.test",Password=StrongPassword,Role="Owner"});Assert.IsType<ViewResult>(r);Assert.False(c.ModelState.IsValid);Assert.Null(await id.UserManager.FindByNameAsync("maria"));}
+    /// <summary>Verifies Identity password-policy errors are surfaced and the account is not created.</summary>
+    [Fact] public async Task Create_WeakPassword_ReturnsLocalizedValidationError(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var c=CreateController(id,null);var r=await c.Create(new(){UserName="weak",DisplayName="Weak",Email="weak@example.test",Password="short",Role=ApplicationRoles.User});Assert.IsType<ViewResult>(r);Assert.False(c.ModelState.IsValid);Assert.Null(await id.UserManager.FindByNameAsync("weak"));}
+    /// <summary>Verifies duplicate usernames are rejected by Identity.</summary>
+    [Fact] public async Task Create_DuplicateUserName_ReturnsFormError(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);await id.CreateUserAsync("existing",StrongPassword);var c=CreateController(id,null);var r=await c.Create(new(){UserName="existing",DisplayName="Duplicate",Email="different@example.test",Password=StrongPassword,Role=ApplicationRoles.User});Assert.IsType<ViewResult>(r);Assert.False(c.ModelState.IsValid);}
+    /// <summary>Verifies the creation GET action returns an empty model.</summary>
+    [Fact] public async Task Create_Get_ReturnsEmptyModel(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);Assert.IsType<CreateUserViewModel>(Assert.IsType<ViewResult>(CreateController(id,null).Create()).Model);}
+    /// <summary>Verifies editing updates profile and role.</summary>
+    [Fact] public async Task Edit_ValidChange_UpdatesProfileAndRole(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var admin=await id.CreateUserAsync("admin2",StrongPassword,ApplicationRoles.Administrator);var user=await id.CreateUserAsync("joao",StrongPassword);var r=await CreateController(id,admin).Edit(new(){Id=user.Id,UserName="joao.novo",DisplayName="João Novo",Email="joao.novo@example.test",Role=ApplicationRoles.Administrator});Assert.IsType<RedirectToActionResult>(r);var updated=await id.UserManager.FindByIdAsync(user.Id);Assert.Equal("joao.novo",updated!.UserName);Assert.True(await id.UserManager.IsInRoleAsync(updated,ApplicationRoles.Administrator));}
+    /// <summary>Verifies current administrators cannot demote themselves.</summary>
+    [Fact] public async Task Edit_CurrentAdministratorDemotion_IsRejected(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var admin=await id.CreateUserAsync("admin2",StrongPassword,ApplicationRoles.Administrator);var c=CreateController(id,admin);var r=await c.Edit(new(){Id=admin.Id,UserName=admin.UserName!,DisplayName=admin.DisplayName,Email=admin.Email!,Role=ApplicationRoles.User});Assert.IsType<ViewResult>(r);Assert.False(c.ModelState.IsValid);Assert.True(await id.UserManager.IsInRoleAsync(admin,ApplicationRoles.Administrator));}
+    /// <summary>Verifies editing a missing user returns not found for both GET and POST.</summary>
+    [Fact] public async Task Edit_MissingUser_ReturnsNotFound(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var c=CreateController(id,null);Assert.IsType<NotFoundResult>(await c.Edit("missing"));Assert.IsType<NotFoundResult>(await c.Edit(new(){Id="missing",UserName="x",DisplayName="x",Email="x@example.test",Role=ApplicationRoles.User}));}
+    /// <summary>Verifies the edit GET action exposes the persisted role and profile.</summary>
+    [Fact] public async Task Edit_GetExistingUser_ReturnsProfileAndRole(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var user=await id.CreateUserAsync("editor",StrongPassword,ApplicationRoles.Administrator);var model=Assert.IsType<EditUserViewModel>(Assert.IsType<ViewResult>(await CreateController(id,null).Edit(user.Id)).Model);Assert.Equal("editor",model.UserName);Assert.Equal(ApplicationRoles.Administrator,model.Role);}
+    /// <summary>Verifies invalid role changes are rejected before persistence.</summary>
+    [Fact] public async Task Edit_InvalidRole_ReturnsFormError(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var user=await id.CreateUserAsync("editor",StrongPassword);var c=CreateController(id,null);var r=await c.Edit(new(){Id=user.Id,UserName="editor",DisplayName="Editor",Email=user.Email!,Role="Owner"});Assert.IsType<ViewResult>(r);Assert.False(c.ModelState.IsValid);}
+    /// <summary>Verifies password reset replaces credentials.</summary>
+    [Fact] public async Task ResetPassword_ValidPassword_ReplacesCredential(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var admin=await id.CreateUserAsync("admin2",StrongPassword,ApplicationRoles.Administrator);var user=await id.CreateUserAsync("ana",StrongPassword);var r=await CreateController(id,admin).ResetPassword(new(){Id=user.Id,NewPassword=NewPassword,ConfirmPassword=NewPassword});Assert.IsType<RedirectToActionResult>(r);Assert.True(await id.UserManager.CheckPasswordAsync(user,NewPassword));}
+    /// <summary>Verifies reset GET returns user identity data and missing users return not found.</summary>
+    [Fact] public async Task ResetPassword_Get_CoversExistingAndMissingUsers(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var user=await id.CreateUserAsync("reset",StrongPassword);var c=CreateController(id,null);var model=Assert.IsType<ResetUserPasswordViewModel>(Assert.IsType<ViewResult>(await c.ResetPassword(user.Id)).Model);Assert.Equal("reset",model.UserName);Assert.IsType<NotFoundResult>(await c.ResetPassword("missing"));}
+    /// <summary>Verifies invalid reset model state does not change credentials.</summary>
+    [Fact] public async Task ResetPassword_InvalidModelState_ReturnsFormWithoutChangingPassword(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var user=await id.CreateUserAsync("reset",StrongPassword);var c=CreateController(id,null);c.ModelState.AddModelError("NewPassword","invalid");var r=await c.ResetPassword(new(){Id=user.Id,NewPassword=NewPassword,ConfirmPassword=NewPassword});Assert.IsType<ViewResult>(r);Assert.True(await id.UserManager.CheckPasswordAsync(user,StrongPassword));}
+    /// <summary>Verifies weak reset passwords surface Identity validation errors.</summary>
+    [Fact] public async Task ResetPassword_WeakPassword_ReturnsFormError(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var user=await id.CreateUserAsync("reset",StrongPassword);var c=CreateController(id,null);var r=await c.ResetPassword(new(){Id=user.Id,NewPassword="weak",ConfirmPassword="weak"});Assert.IsType<ViewResult>(r);Assert.False(c.ModelState.IsValid);Assert.True(await id.UserManager.CheckPasswordAsync(user,StrongPassword));}
+    /// <summary>Verifies reset POST returns not found for unknown users.</summary>
+    [Fact] public async Task ResetPassword_PostMissingUser_ReturnsNotFound(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);Assert.IsType<NotFoundResult>(await CreateController(id,null).ResetPassword(new(){Id="missing",NewPassword=NewPassword,ConfirmPassword=NewPassword}));}
+    /// <summary>Verifies current users cannot lock themselves.</summary>
+    [Fact] public async Task ToggleLock_CurrentUser_DoesNotLockAccount(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var admin=await id.CreateUserAsync("admin2",StrongPassword,ApplicationRoles.Administrator);var r=await CreateController(id,admin).ToggleLock(admin.Id);Assert.IsType<RedirectToActionResult>(r);Assert.False(await id.UserManager.IsLockedOutAsync(admin));}
+    /// <summary>Verifies another user's lock state can be toggled.</summary>
+    [Fact] public async Task ToggleLock_OtherUser_TogglesLockState(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var admin=await id.CreateUserAsync("admin2",StrongPassword,ApplicationRoles.Administrator);var user=await id.CreateUserAsync("pedro",StrongPassword);var c=CreateController(id,admin);await c.ToggleLock(user.Id);Assert.True(await id.UserManager.IsLockedOutAsync(user));await c.ToggleLock(user.Id);Assert.False(await id.UserManager.IsLockedOutAsync(user));}
+    /// <summary>Verifies missing lock targets return not found.</summary>
+    [Fact] public async Task ToggleLock_MissingUser_ReturnsNotFound(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);Assert.IsType<NotFoundResult>(await CreateController(id,null).ToggleLock("missing"));}
+    /// <summary>Verifies search, role filtering and page normalization.</summary>
+    [Fact] public async Task Index_SearchAndRole_ReturnsMatchingNormalizedPage(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var admin=await id.CreateUserAsync("admin2",StrongPassword,ApplicationRoles.Administrator);var user=await id.CreateUserAsync("searchable",StrongPassword);user.DisplayName="Pessoa Pesquisável";Assert.True((await id.UserManager.UpdateAsync(user)).Succeeded);var model=Assert.IsType<UserListViewModel>(Assert.IsType<ViewResult>(await CreateController(id,admin).Index("Pesquisável",ApplicationRoles.User,"active",-2,999)).Model);Assert.Equal(10,model.List.PageSize);Assert.Single(model.List.Items);}
+    /// <summary>Verifies locked status filtering only returns effectively locked users.</summary>
+    [Fact] public async Task Index_LockedStatus_ReturnsOnlyLockedUsers(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);var active=await id.CreateUserAsync("active",StrongPassword);var locked=await id.CreateUserAsync("locked",StrongPassword);Assert.True((await id.UserManager.SetLockoutEndDateAsync(locked,DateTimeOffset.UtcNow.AddDays(1))).Succeeded);var model=Assert.IsType<UserListViewModel>(Assert.IsType<ViewResult>(await CreateController(id,null).Index(null,null,"locked",1,25)).Model);Assert.Single(model.List.Items);Assert.Equal("locked",model.List.Items[0].UserName);Assert.True(model.List.Items[0].IsLocked);Assert.DoesNotContain(model.List.Items,x=>x.Id==active.Id);}
+    /// <summary>Verifies unsupported filters are normalized and an out-of-range page is clamped.</summary>
+    [Fact] public async Task Index_InvalidFiltersAndHighPage_AreNormalized(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);await id.CreateUserAsync("user",StrongPassword);var model=Assert.IsType<UserListViewModel>(Assert.IsType<ViewResult>(await CreateController(id,null).Index("   ","Owner","unknown",99,10)).Model);Assert.Null(model.Role);Assert.Null(model.Status);Assert.Equal(1,model.List.Page);Assert.Single(model.List.Items);}
 
     /// <summary>Creates a controller with authenticated claims and in-memory TempData.</summary>
-    private static UsersController CreateController(TestIdentityServices identity, ApplicationUser? currentUser)
-    {
-        var context = new DefaultHttpContext();
-        if (currentUser is not null) context.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, currentUser.Id) }, "Tests"));
-        var controller = new UsersController(identity.UserManager) { ControllerContext = new ControllerContext { HttpContext = context } };
-        controller.TempData = new TempDataDictionary(context, new TestTempDataProvider());
-        return controller;
-    }
-
-    /// <summary>Provides isolated TempData storage for controller tests.</summary>
-    private sealed class TestTempDataProvider : ITempDataProvider
-    {
-        /// <summary>Loads empty TempData.</summary>
-        public IDictionary<string, object> LoadTempData(HttpContext context) => new Dictionary<string, object>();
-        /// <summary>Accepts TempData writes without external persistence.</summary>
-        public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
-    }
+    private static UsersController CreateController(TestIdentityServices identity,ApplicationUser? currentUser){var context=new DefaultHttpContext();if(currentUser is not null)context.User=new ClaimsPrincipal(new ClaimsIdentity(new[]{new Claim(ClaimTypes.NameIdentifier,currentUser.Id)},"Tests"));var controller=new UsersController(identity.UserManager){ControllerContext=new ControllerContext{HttpContext=context}};controller.TempData=new TempDataDictionary(context,new TestTempDataProvider());return controller;}
+    /// <summary>Provides isolated TempData storage.</summary>
+    private sealed class TestTempDataProvider:ITempDataProvider{/// <summary>Loads empty TempData.</summary>
+        public IDictionary<string,object> LoadTempData(HttpContext context)=>new Dictionary<string,object>();/// <summary>Accepts TempData writes.</summary>
+        public void SaveTempData(HttpContext context,IDictionary<string,object> values){} }
 }
