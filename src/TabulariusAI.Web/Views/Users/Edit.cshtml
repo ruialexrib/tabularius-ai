@@ -1,0 +1,40 @@
+@model TabulariusAI.Web.Models.EditUserViewModel
+@using TabulariusAI.Web.Data.Identity
+@{
+    ViewData["Title"] = "Editar utilizador";
+    var hasErrors = !ViewData.ModelState.IsValid;
+}
+<section class="user-editor-page" aria-labelledby="user-editor-title">
+    <div class="user-editor-card">
+        <div class="user-editor-main">
+            <div class="user-editor-icon" aria-hidden="true">U</div>
+            <div class="user-editor-copy">
+                <p class="eyebrow">Administração de acessos</p>
+                <h1 id="user-editor-title">Editar utilizador</h1>
+                <p class="lead">Atualize a identificação da conta e o respetivo nível de acesso ao Tabularius AI.</p>
+                @if (hasErrors) { <div class="user-editor-alert" role="alert"><span aria-hidden="true">!</span><div><strong>Não foi possível atualizar o utilizador</strong><div asp-validation-summary="All"></div></div></div> }
+                <form asp-action="Edit" method="post" class="user-editor-form">
+                    <input asp-for="Id" type="hidden" />
+                    <div class="user-editor-section">
+                        <div class="user-editor-section-heading"><span>01</span><div><strong>Identificação</strong><small>Dados utilizados para identificar a conta na aplicação.</small></div></div>
+                        <div class="user-editor-grid">
+                            <div class="user-editor-field"><label asp-for="DisplayName">Nome a apresentar</label><input asp-for="DisplayName" autocomplete="name" /><span asp-validation-for="DisplayName"></span></div>
+                            <div class="user-editor-field"><label asp-for="UserName">Utilizador</label><input asp-for="UserName" autocomplete="off" /><span asp-validation-for="UserName"></span></div>
+                            <div class="user-editor-field user-editor-field-wide"><label asp-for="Email">Email</label><input asp-for="Email" type="email" autocomplete="email" /><span asp-validation-for="Email"></span></div>
+                        </div>
+                    </div>
+                    <div class="user-editor-section">
+                        <div class="user-editor-section-heading"><span>02</span><div><strong>Acesso</strong><small>Defina o perfil funcional atribuído a esta conta.</small></div></div>
+                        <div class="user-editor-grid"><div class="user-editor-field"><label asp-for="Role">Perfil</label><select asp-for="Role"><option value="@ApplicationRoles.User">Utilizador</option><option value="@ApplicationRoles.Administrator">Administrador</option></select><span asp-validation-for="Role"></span></div></div>
+                    </div>
+                    <div class="user-editor-actions"><button type="submit" class="btn btn-primary">Guardar alterações</button><a class="btn btn-secondary" asp-action="Index">Cancelar</a></div>
+                </form>
+            </div>
+        </div>
+        <aside class="user-editor-reference" aria-label="Informação sobre edição da conta">
+            <span class="user-editor-reference-label">Controlo de acesso</span><h2>Editar a conta</h2><p>As alterações de identificação e perfil produzem efeito na conta selecionada.</p>
+            <div class="user-role-cards"><div><span>U</span><p><strong>Utilizador</strong><small>Acesso às áreas funcionais e aos dossiers contabilísticos autorizados.</small></p></div><div><span>A</span><p><strong>Administrador</strong><small>Inclui a gestão de utilizadores e das configurações administrativas.</small></p></div></div>
+            <div class="user-editor-reference-note"><strong>Palavra-passe</strong><span>A palavra-passe não é alterada neste formulário. A redefinição será disponibilizada como operação separada.</span></div>
+        </aside>
+    </div>
+</section>
