@@ -87,7 +87,7 @@ static async Task ApplyDatabaseMigrationsAsync(WebApplication application)
     catch (Exception exception) { logger.LogCritical(exception, "Local database migration failed during application startup."); throw; }
 }
 
-/// <summary>Ensures the application roles and the local bootstrap administrator exist.</summary>
+/// <summary>Ensures the application roles and the local bootstrap administrator exist and repairs bootstrap duplicates left by interrupted initialization attempts.</summary>
 /// <param name="application">The running web application.</param>
 /// <returns>A task representing the asynchronous identity seed operation.</returns>
 static async Task SeedIdentityAsync(WebApplication application)
@@ -109,10 +109,14 @@ static async Task SeedIdentityAsync(WebApplication application)
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
     var normalizedAdministratorName = userManager.NormalizeName(administratorName);
-    var administrator = await dbContext.Users.SingleOrDefaultAsync(user => user.NormalizedUserName == normalizedAdministratorName)
-        ?? await dbContext.Users.SingleOrDefaultAsync(user => user.UserName == administratorName);
+    var bootstrapUsers = await dbContext.Users
+        .Where(user => user.UserName == administratorName || user.NormalizedUserName == normalizedAdministratorName)
+        .OrderBy(user => user.CreatedAtUtc)
+        .ThenBy(user => user.Id)
+        .ToListAsync();
 
-    if (administrator is null)
+    ApplicationUser administrator;
+    if (bootstrapUsers.Count == 0)
     {
         administrator = new ApplicationUser
         {
@@ -123,13 +127,24 @@ static async Task SeedIdentityAsync(WebApplication application)
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
         administrator.PasswordHash = passwordHasher.HashPassword(administrator, temporaryPassword);
         administrator.SecurityStamp = Guid.NewGuid().ToString();
-
         dbContext.Users.Add(administrator);
         await dbContext.SaveChangesAsync();
     }
-    else if (!string.Equals(administrator.NormalizedUserName, normalizedAdministratorName, StringComparison.Ordinal))
+    else
     {
+        administrator = bootstrapUsers[0];
+        var duplicateUsers = bootstrapUsers.Skip(1).ToList();
+        if (duplicateUsers.Count > 0)
+        {
+            var duplicateIds = duplicateUsers.Select(user => user.Id).ToArray();
+            var duplicateRoles = await dbContext.UserRoles.Where(item => duplicateIds.Contains(item.UserId)).ToListAsync();
+            if (duplicateRoles.Count > 0) dbContext.UserRoles.RemoveRange(duplicateRoles);
+            dbContext.Users.RemoveRange(duplicateUsers);
+        }
+
+        administrator.UserName = administratorName;
         administrator.NormalizedUserName = normalizedAdministratorName;
+        if (string.IsNullOrWhiteSpace(administrator.DisplayName)) administrator.DisplayName = "Administrador";
         await dbContext.SaveChangesAsync();
     }
 
