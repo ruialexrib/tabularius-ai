@@ -7,28 +7,37 @@
         overflow: hidden !important;
     }
 
-    .app-shell {
+    body {
         position: fixed;
         inset: 0;
+    }
+
+    .app-shell {
+        position: fixed !important;
+        inset: 0 !important;
         display: grid;
-        width: 100vw;
-        height: 100dvh;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
         min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-        grid-template-columns: 248px minmax(0, 1fr);
-        grid-template-rows: 64px minmax(0, 1fr) 38px;
+        min-height: 0 !important;
+        max-height: 100vh;
+        max-height: 100dvh;
+        overflow: hidden !important;
+        grid-template-columns: 248px minmax(0, 1fr) !important;
+        grid-template-rows: 64px minmax(0, 1fr) 38px !important;
         grid-template-areas:
             "top top"
             "side content"
-            "foot foot";
+            "foot foot" !important;
     }
 
     .app-header {
         grid-area: top;
         position: relative;
-        z-index: 30;
+        z-index: 100;
         min-width: 0;
+        min-height: 0;
         overflow: visible;
     }
 
@@ -36,6 +45,7 @@
         grid-area: side;
         min-width: 0;
         min-height: 0;
+        max-height: 100%;
         overflow-x: hidden;
         overflow-y: auto;
         overscroll-behavior: contain;
@@ -43,21 +53,30 @@
 
     .app-content {
         grid-area: content;
-        width: auto;
+        position: relative;
+        width: auto !important;
+        height: 100%;
         min-width: 0;
         min-height: 0;
+        max-width: 100%;
         max-height: 100%;
-        overflow-x: auto;
-        overflow-y: auto;
+        overflow-x: auto !important;
+        overflow-y: scroll !important;
         overscroll-behavior: contain;
         scrollbar-gutter: stable;
+    }
+
+    .app-content > * {
+        max-width: 100%;
     }
 
     .contextbar {
         grid-area: foot;
         position: relative;
-        z-index: 30;
+        z-index: 100;
         min-width: 0;
+        min-height: 38px;
+        max-height: 38px;
         overflow: visible;
     }
 }
