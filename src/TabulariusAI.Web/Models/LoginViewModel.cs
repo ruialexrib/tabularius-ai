@@ -5,9 +5,9 @@ namespace TabulariusAI.Web.Models;
 /// <summary>Represents the credentials and options submitted from the login page.</summary>
 public sealed class LoginViewModel
 {
-    /// <summary>Gets or sets the account email address.</summary>
-    [Required(ErrorMessage = "Indique o email."), EmailAddress(ErrorMessage = "Indique um email válido.")]
-    public string Email { get; set; } = string.Empty;
+    /// <summary>Gets or sets the account username or email address.</summary>
+    [Required(ErrorMessage = "Indique o utilizador.")]
+    public string Identifier { get; set; } = string.Empty;
 
     /// <summary>Gets or sets the account password.</summary>
     [Required(ErrorMessage = "Indique a palavra-passe.")]
