@@ -14,11 +14,11 @@
         </header>
         <aside class="sidebar" aria-label="Navegação principal">
             <nav>
-                <a class="nav-item active" asp-controller="Home" asp-action="Index">Dashboard</a>
+                <a class="nav-item" asp-controller="Home" asp-action="Index">Dashboard</a>
                 <p class="nav-heading">Dossier</p>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Entidades</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Dossiers</a>
-                <a class="nav-item disabled" href="#" aria-disabled="true">Importações</a>
+                <a class="nav-item" asp-controller="Dossier" asp-action="Entities">Entidades</a>
+                <a class="nav-item" asp-controller="Dossier" asp-action="Dossiers">Dossiers</a>
+                <a class="nav-item" asp-controller="Dossier" asp-action="Imports">Importações</a>
                 <p class="nav-heading">SAF-T (PT)</p>
                 <a class="nav-item disabled" href="#" aria-disabled="true">Resumo</a>
                 <a class="nav-item disabled" href="#" aria-disabled="true">Contas</a>
