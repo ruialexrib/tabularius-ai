@@ -97,11 +97,11 @@ static async Task SeedIdentityAsync(WebApplication application)
 
     await using var scope = application.Services.CreateAsyncScope();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in ApplicationRoles.All)
+    foreach (var roleName in ApplicationRoles.All)
     {
-        if (!await roleManager.RoleExistsAsync(role))
+        if (!await roleManager.RoleExistsAsync(roleName))
         {
-            var roleCreateResult = await roleManager.CreateAsync(new IdentityRole(role));
+            var roleCreateResult = await roleManager.CreateAsync(new IdentityRole(roleName));
             if (!roleCreateResult.Succeeded) throw new InvalidOperationException($"Application role could not be created: {string.Join("; ", roleCreateResult.Errors.Select(error => error.Code))}");
         }
     }
@@ -120,12 +120,12 @@ static async Task SeedIdentityAsync(WebApplication application)
         if (!createResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator could not be created: {string.Join("; ", createResult.Errors.Select(error => error.Code))}");
     }
 
-    var role = await roleManager.FindByNameAsync(ApplicationRoles.Administrator) ?? throw new InvalidOperationException("Administrator role was not found after initialization.");
+    var administratorRole = await roleManager.FindByNameAsync(ApplicationRoles.Administrator) ?? throw new InvalidOperationException("Administrator role was not found after initialization.");
     var dbContext = scope.ServiceProvider.GetRequiredService<TabulariusDbContext>();
-    var roleAlreadyAssigned = await dbContext.UserRoles.AnyAsync(item => item.UserId == administrator.Id && item.RoleId == role.Id);
+    var roleAlreadyAssigned = await dbContext.UserRoles.AnyAsync(item => item.UserId == administrator.Id && item.RoleId == administratorRole.Id);
     if (!roleAlreadyAssigned)
     {
-        dbContext.UserRoles.Add(new IdentityUserRole<string> { UserId = administrator.Id, RoleId = role.Id });
+        dbContext.UserRoles.Add(new IdentityUserRole<string> { UserId = administrator.Id, RoleId = administratorRole.Id });
         await dbContext.SaveChangesAsync();
     }
 }
