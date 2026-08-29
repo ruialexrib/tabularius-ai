@@ -87,29 +87,37 @@ static async Task ApplyDatabaseMigrationsAsync(WebApplication application)
     catch (Exception exception) { logger.LogCritical(exception, "Local database migration failed during application startup."); throw; }
 }
 
-/// <summary>Ensures the application roles and optional initial administrator exist.</summary>
+/// <summary>Ensures the application roles and the local bootstrap administrator exist.</summary>
 /// <param name="application">The running web application.</param>
 /// <returns>A task representing the asynchronous identity seed operation.</returns>
 static async Task SeedIdentityAsync(WebApplication application)
 {
-    await using var scope = application.Services.CreateAsyncScope();
-    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    foreach (var role in ApplicationRoles.All) if (!await roleManager.RoleExistsAsync(role)) await roleManager.CreateAsync(new IdentityRole(role));
+    const string administratorName = "admin";
+    const string temporaryPassword = "LetMeIn";
 
-    var email = configuration["InitialAdmin:Email"];
-    var password = configuration["InitialAdmin:Password"];
-    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password)) return;
+    await using var scope = application.Services.CreateAsyncScope();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var role in ApplicationRoles.All)
+    {
+        if (!await roleManager.RoleExistsAsync(role)) await roleManager.CreateAsync(new IdentityRole(role));
+    }
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var user = await userManager.FindByEmailAsync(email);
-    if (user is null)
+    var administrator = await userManager.FindByNameAsync(administratorName);
+    if (administrator is null)
     {
-        user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true, DisplayName = configuration["InitialAdmin:DisplayName"] ?? "Administrador" };
-        var result = await userManager.CreateAsync(user, password);
-        if (!result.Succeeded) throw new InvalidOperationException($"Initial administrator could not be created: {string.Join("; ", result.Errors.Select(error => error.Code))}");
+        administrator = new ApplicationUser { UserName = administratorName, DisplayName = "Administrador" };
+        var createResult = await userManager.CreateAsync(administrator);
+        if (!createResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator could not be created: {string.Join("; ", createResult.Errors.Select(error => error.Code))}");
+
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<ApplicationUser>>();
+        administrator.PasswordHash = passwordHasher.HashPassword(administrator, temporaryPassword);
+        administrator.SecurityStamp = Guid.NewGuid().ToString();
+        var updateResult = await userManager.UpdateAsync(administrator);
+        if (!updateResult.Succeeded) throw new InvalidOperationException($"Bootstrap administrator password could not be initialized: {string.Join("; ", updateResult.Errors.Select(error => error.Code))}");
     }
-    if (!await userManager.IsInRoleAsync(user, ApplicationRoles.Administrator)) await userManager.AddToRoleAsync(user, ApplicationRoles.Administrator);
+
+    if (!await userManager.IsInRoleAsync(administrator, ApplicationRoles.Administrator)) await userManager.AddToRoleAsync(administrator, ApplicationRoles.Administrator);
 }
 
 public partial class Program;
