@@ -23,7 +23,7 @@ public sealed class SaftSalesInvoiceLineViewModel
     public decimal Quantity { get; set; }
     public string UnitOfMeasure { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
-    public decimal TaxPointDate { get; set; }
+    public DateOnly? TaxPointDate { get; set; }
     public string? TaxType { get; set; }
     public string? TaxCode { get; set; }
     public decimal? TaxPercentage { get; set; }
