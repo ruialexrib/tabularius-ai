@@ -26,10 +26,10 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <returns>The dossier workspace view, or a not-found result.</returns>
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken) { var dossier = await LoadDossierAsync(id, cancellationToken); return dossier is null ? NotFound() : View(dossier); }
 
-    /// <summary>Displays the SAF-T (PT) source summary for a selected accounting dossier.</summary>
-    /// <param name="id">The dossier identifier.</param><param name="cancellationToken">A cancellation token.</param>
-    /// <returns>The SAF-T summary view.</returns>
-    public async Task<IActionResult> SaftSummary(int id, CancellationToken cancellationToken) { var dossier = await LoadDossierAsync(id, cancellationToken); return dossier is null ? NotFound() : View(dossier); }
+    /// <summary>Displays the summary for a selected SAF-T (PT) source.</summary>
+    /// <param name="id">The dossier identifier.</param><param name="importId">The optional SAF-T (PT) import identifier.</param><param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The selected SAF-T summary.</returns>
+    public async Task<IActionResult> SaftSummary(int id, int? importId, CancellationToken cancellationToken) => await ImportViewAsync(id, importId, cancellationToken, query => query.Include(item => item.Accounts).Include(item => item.Customers).Include(item => item.Suppliers));
 
     /// <summary>Displays the chart of accounts from a selected SAF-T (PT) import.</summary>
     /// <param name="id">The dossier identifier.</param><param name="importId">The optional SAF-T (PT) import identifier.</param><param name="cancellationToken">A cancellation token.</param>
@@ -51,22 +51,13 @@ public sealed class DossierController(TabulariusDbContext dbContext) : Controlle
     /// <returns>The current action view or a not-found result.</returns>
     private async Task<IActionResult> ImportViewAsync(int id, int? importId, CancellationToken cancellationToken, Func<IQueryable<SaftImport>, IQueryable<SaftImport>> include)
     {
-        var availableImports = await dbContext.SaftImports.AsNoTracking()
-            .Where(item => item.DossierId == id)
-            .OrderByDescending(item => item.EndDate)
-            .ThenByDescending(item => item.StartDate)
-            .ThenByDescending(item => item.ImportedAtUtc)
-            .ToListAsync(cancellationToken);
-
+        var availableImports = await dbContext.SaftImports.AsNoTracking().Where(item => item.DossierId == id).OrderByDescending(item => item.EndDate).ThenByDescending(item => item.StartDate).ThenByDescending(item => item.ImportedAtUtc).ThenByDescending(item => item.Id).ToListAsync(cancellationToken);
         if (availableImports.Count == 0) return NotFound();
-
         var selectedId = importId ?? availableImports[0].Id;
         if (!availableImports.Any(item => item.Id == selectedId)) return NotFound();
-
         IQueryable<SaftImport> query = dbContext.SaftImports.AsNoTracking().Include(item => item.Dossier).ThenInclude(item => item.AccountingEntity);
         var selectedImport = await include(query).SingleOrDefaultAsync(item => item.Id == selectedId && item.DossierId == id, cancellationToken);
         if (selectedImport is null) return NotFound();
-
         return View(new SaftImportSelectionViewModel { SelectedImport = selectedImport, AvailableImports = availableImports });
     }
 
