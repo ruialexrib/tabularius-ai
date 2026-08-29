@@ -1,5 +1,68 @@
 @model TabulariusAI.Web.Models.SaftHeaderViewModel?
-@{ ViewData["Title"] = "Importar SAF-T (PT)"; }
-<section class="page-header"><div><p class="eyebrow">Fontes contabilísticas</p><h1>Importar SAF-T (PT)</h1><p class="lead">Adicione uma fonte SAF-T (PT). A entidade e o exercício são identificados a partir do próprio ficheiro.</p></div><a class="btn btn-secondary" asp-controller="Dossier" asp-action="Entities">Ver entidades</a></section>
-<section class="form-card" aria-labelledby="upload-title"><div class="card-header"><div><p class="section-kicker">Nova fonte</p><h2 id="upload-title">Ficheiro SAF-T (PT)</h2><p>Selecione um ficheiro XML SAF-T (PT). Antes da importação, o documento é validado contra o XSD oficial SAF-T (PT) 1.04_01.</p></div></div><form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="upload-form"><div class="form-field form-field-grow"><label for="saftFile">Selecionar ficheiro</label><div class="file-control"><input id="saftFile" name="saftFile" type="file" accept=".xml,text/xml,application/xml" /></div><span class="field-help">XML · tamanho máximo 100 MB · validação XSD obrigatória</span></div><div class="form-actions"><button type="submit" class="btn btn-primary">Validar e importar</button></div><div asp-validation-summary="All" class="validation-summary"></div></form></section>
-@if (Model is not null) { <section class="result-card"><div class="card-header"><div><p class="section-kicker">Ficheiro importado</p><h2>@Model.CompanyName · @Model.FiscalYear</h2><p>@Model.StartDate — @Model.EndDate · SAF-T (PT) @Model.SaftVersion</p><p class="status-message status-success">@(TempData["SaftImportValidation"] ?? "Ficheiro válido segundo o XSD oficial SAF-T (PT) 1.04_01.")</p></div><span class="status-pill status-pill-success">XSD válido · Importado</span></div></section> }
+@{
+    ViewData["Title"] = "Importar SAF-T (PT)";
+}
+
+<section class="import-page" aria-labelledby="import-title">
+    <div class="import-card">
+        <div class="import-card-main">
+            <div class="import-icon" aria-hidden="true">XML</div>
+            <div class="import-copy">
+                <p class="eyebrow">Nova fonte contabilística</p>
+                <h1 id="import-title">Importar SAF-T (PT)</h1>
+                <p class="lead">Selecione o ficheiro SAF-T (PT) que pretende adicionar. A entidade, o exercício e o período são identificados automaticamente a partir do conteúdo.</p>
+
+                <form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="import-form">
+                    <label class="import-file-picker" for="saftFile">
+                        <span class="import-file-picker-icon" aria-hidden="true">+</span>
+                        <span class="import-file-picker-copy">
+                            <strong>Selecionar ficheiro SAF-T (PT)</strong>
+                            <span>Ficheiro XML até 100 MB</span>
+                        </span>
+                        <input id="saftFile" name="saftFile" type="file" accept=".xml,text/xml,application/xml" />
+                    </label>
+
+                    <div asp-validation-summary="All" class="validation-summary"></div>
+
+                    <div class="import-actions">
+                        <button type="submit" class="btn btn-primary">Validar e importar</button>
+                        <a class="btn btn-secondary" asp-controller="Dossier" asp-action="Entities">Ver entidades e exercícios</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <aside class="import-reference" aria-label="Processo de importação">
+            <span class="import-reference-label">Antes de importar</span>
+            <h2>Validação automática</h2>
+            <p>O ficheiro é verificado antes de qualquer informação ser adicionada ao dossier.</p>
+
+            <div class="import-checks">
+                <div><span>1</span><p><strong>Ficheiro XML</strong><small>Verificação do formato e estrutura.</small></p></div>
+                <div><span>2</span><p><strong>SAF-T (PT) 1.04_01</strong><small>Validação segundo as regras suportadas do schema oficial.</small></p></div>
+                <div><span>3</span><p><strong>Duplicados</strong><small>O mesmo ficheiro não é importado duas vezes.</small></p></div>
+                <div><span>4</span><p><strong>Importação</strong><small>Os dados só são guardados depois das validações.</small></p></div>
+            </div>
+
+            <div class="import-reference-note">
+                <strong>Dados contabilísticos</strong>
+                <span>Confirme que selecionou o ficheiro correto antes de iniciar a importação.</span>
+            </div>
+        </aside>
+    </div>
+</section>
+
+@if (Model is not null)
+{
+    <section class="result-card import-result">
+        <div class="card-header">
+            <div>
+                <p class="section-kicker">Importação concluída</p>
+                <h2>@Model.CompanyName · @Model.FiscalYear</h2>
+                <p>@Model.StartDate — @Model.EndDate · SAF-T (PT) @Model.SaftVersion</p>
+                <p class="status-message status-success">@(TempData["SaftImportValidation"] ?? "Ficheiro validado e importado com sucesso.")</p>
+            </div>
+            <span class="status-pill status-pill-success">Validado · Importado</span>
+        </div>
+    </section>
+}
