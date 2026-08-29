@@ -3,56 +3,82 @@
     ViewData["Title"] = "Início";
 }
 
-<section class="hero">
-    <p class="eyebrow">Análise SAF-T (PT)</p>
-    <h1>Tabularius AI</h1>
-    <p class="lead">Importe um ficheiro SAF-T (PT) para validar o documento e consultar os principais dados e a sua estrutura.</p>
+<section class="page-header">
+    <div>
+        <p class="eyebrow">Análise SAF-T (PT)</p>
+        <h1>Importar SAF-T (PT)</h1>
+        <p class="lead">Valide o ficheiro contabilístico, identifique a entidade e prepare os dados para análise num único fluxo.</p>
+    </div>
+    <div class="page-header-badge" aria-label="Processamento local">
+        <span class="status-dot"></span>
+        Processamento local
+    </div>
+</section>
 
-    <form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="upload-card">
-        <div class="upload-field">
-            <label for="saftFile">Ficheiro SAF-T (PT)</label>
-            <input id="saftFile" name="saftFile" type="file" accept=".xml,text/xml,application/xml" />
-            <span>Formato XML, até 100 MB.</span>
+<section class="form-card" aria-labelledby="upload-title">
+    <div class="card-header">
+        <div>
+            <p class="section-kicker">Nova importação</p>
+            <h2 id="upload-title">Ficheiro SAF-T (PT)</h2>
+            <p>Selecione um ficheiro XML SAF-T (PT). O conteúdo é validado antes de ser persistido.</p>
         </div>
-        <button type="submit">Analisar ficheiro</button>
+    </div>
+
+    <form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="upload-form">
+        <div class="form-field form-field-grow">
+            <label for="saftFile">Selecionar ficheiro</label>
+            <div class="file-control">
+                <input id="saftFile" name="saftFile" type="file" accept=".xml,text/xml,application/xml" />
+            </div>
+            <span class="field-help">XML · tamanho máximo 100 MB</span>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Analisar ficheiro</button>
+        </div>
         <div asp-validation-summary="All" class="validation-summary"></div>
     </form>
-
-    @if (Model is not null)
-    {
-        <section class="result-card" aria-labelledby="saft-summary-title">
-            <div class="result-heading">
-                <p class="eyebrow">Ficheiro validado</p>
-                <h2 id="saft-summary-title">Cabeçalho SAF-T (PT)</h2>
-            </div>
-            <dl class="summary-grid">
-                <div><dt>Empresa</dt><dd>@Model.CompanyName</dd></div>
-                <div><dt>NIF</dt><dd>@Model.TaxRegistrationNumber</dd></div>
-                <div><dt>Ano fiscal</dt><dd>@Model.FiscalYear</dd></div>
-                <div><dt>Data inicial</dt><dd>@Model.StartDate</dd></div>
-                <div><dt>Data final</dt><dd>@Model.EndDate</dd></div>
-                <div><dt>Software</dt><dd>@Model.ProductId</dd></div>
-                <div><dt>Versão do software</dt><dd>@Model.ProductVersion</dd></div>
-                <div class="summary-wide"><dt>Versão SAF-T (PT)</dt><dd>@Model.SaftVersion</dd></div>
-            </dl>
-        </section>
-
-        <section class="result-card" aria-labelledby="structure-summary-title">
-            <div class="result-heading">
-                <p class="eyebrow">Conteúdo detetado</p>
-                <h2 id="structure-summary-title">Resumo do ficheiro</h2>
-            </div>
-            <div class="metric-grid">
-                <div class="metric-card"><span>Contas contabilísticas</span><strong>@Model.AccountCount</strong></div>
-                <div class="metric-card"><span>Clientes</span><strong>@Model.CustomerCount</strong></div>
-                <div class="metric-card"><span>Fornecedores</span><strong>@Model.SupplierCount</strong></div>
-                <div class="metric-card"><span>Produtos / serviços</span><strong>@Model.ProductCount</strong></div>
-                <div class="metric-card"><span>Movimentos contabilísticos</span><strong>@Model.TransactionCount</strong></div>
-                <div class="metric-card"><span>Documentos de venda</span><strong>@Model.SalesInvoiceCount</strong></div>
-                <div class="metric-card"><span>Documentos de transporte</span><strong>@Model.MovementOfGoodsCount</strong></div>
-                <div class="metric-card"><span>Documentos de conferência</span><strong>@Model.WorkingDocumentCount</strong></div>
-                <div class="metric-card"><span>Recibos</span><strong>@Model.PaymentCount</strong></div>
-            </div>
-        </section>
-    }
 </section>
+
+@if (Model is not null)
+{
+    <section class="result-card" aria-labelledby="saft-summary-title">
+        <div class="card-header card-header-success">
+            <div>
+                <p class="section-kicker">Ficheiro validado</p>
+                <h2 id="saft-summary-title">Cabeçalho SAF-T (PT)</h2>
+                <p>Informação principal identificada no documento importado.</p>
+            </div>
+            <span class="status-pill status-pill-success">Validado</span>
+        </div>
+        <dl class="summary-grid">
+            <div><dt>Empresa</dt><dd>@Model.CompanyName</dd></div>
+            <div><dt>NIF</dt><dd>@Model.TaxRegistrationNumber</dd></div>
+            <div><dt>Ano fiscal</dt><dd>@Model.FiscalYear</dd></div>
+            <div><dt>Período</dt><dd>@Model.StartDate – @Model.EndDate</dd></div>
+            <div><dt>Software</dt><dd>@Model.ProductId</dd></div>
+            <div><dt>Versão do software</dt><dd>@Model.ProductVersion</dd></div>
+            <div class="summary-wide"><dt>Versão SAF-T (PT)</dt><dd>@Model.SaftVersion</dd></div>
+        </dl>
+    </section>
+
+    <section class="result-card" aria-labelledby="structure-summary-title">
+        <div class="card-header">
+            <div>
+                <p class="section-kicker">Conteúdo detetado</p>
+                <h2 id="structure-summary-title">Resumo do ficheiro</h2>
+                <p>Principais conjuntos de dados identificados na estrutura SAF-T (PT).</p>
+            </div>
+        </div>
+        <div class="metric-grid">
+            <div class="metric-card"><span>Contas contabilísticas</span><strong>@Model.AccountCount</strong></div>
+            <div class="metric-card"><span>Clientes</span><strong>@Model.CustomerCount</strong></div>
+            <div class="metric-card"><span>Fornecedores</span><strong>@Model.SupplierCount</strong></div>
+            <div class="metric-card"><span>Produtos / serviços</span><strong>@Model.ProductCount</strong></div>
+            <div class="metric-card"><span>Movimentos contabilísticos</span><strong>@Model.TransactionCount</strong></div>
+            <div class="metric-card"><span>Documentos de venda</span><strong>@Model.SalesInvoiceCount</strong></div>
+            <div class="metric-card"><span>Documentos de transporte</span><strong>@Model.MovementOfGoodsCount</strong></div>
+            <div class="metric-card"><span>Documentos de conferência</span><strong>@Model.WorkingDocumentCount</strong></div>
+            <div class="metric-card"><span>Recibos</span><strong>@Model.PaymentCount</strong></div>
+        </div>
+    </section>
+}
