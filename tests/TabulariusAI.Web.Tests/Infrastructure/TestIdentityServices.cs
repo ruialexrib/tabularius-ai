@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Data.Identity;
+using Xunit;
 
 namespace TabulariusAI.Web.Tests.Infrastructure;
 
