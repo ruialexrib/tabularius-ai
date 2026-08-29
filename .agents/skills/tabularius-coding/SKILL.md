@@ -29,6 +29,8 @@ Use this skill whenever creating, modifying or reviewing C# code in Tabularius A
 - Use `decimal` for monetary calculations.
 - Prefer immutable DTOs/records when mutation is not required.
 - Validate arguments and external data at system boundaries.
+- Do not suppress nullable or analyzer warnings without a justified reason.
+- Do not expose secrets, connection strings, API keys, personal data or uploaded accounting data in logs.
 
 ## Architecture
 
