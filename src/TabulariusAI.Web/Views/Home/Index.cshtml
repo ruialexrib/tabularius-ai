@@ -6,7 +6,7 @@
 <section class="hero">
     <p class="eyebrow">Análise SAF-T (PT)</p>
     <h1>Tabularius AI</h1>
-    <p class="lead">Importe um ficheiro SAF-T (PT) para validar o documento e consultar os principais dados do cabeçalho.</p>
+    <p class="lead">Importe um ficheiro SAF-T (PT) para validar o documento e consultar os principais dados e a sua estrutura.</p>
 
     <form asp-controller="Home" asp-action="UploadSaft" method="post" enctype="multipart/form-data" class="upload-card">
         <div class="upload-field">
@@ -35,6 +35,24 @@
                 <div><dt>Versão do software</dt><dd>@Model.ProductVersion</dd></div>
                 <div class="summary-wide"><dt>Versão SAF-T (PT)</dt><dd>@Model.SaftVersion</dd></div>
             </dl>
+        </section>
+
+        <section class="result-card" aria-labelledby="structure-summary-title">
+            <div class="result-heading">
+                <p class="eyebrow">Conteúdo detetado</p>
+                <h2 id="structure-summary-title">Resumo do ficheiro</h2>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card"><span>Contas contabilísticas</span><strong>@Model.AccountCount</strong></div>
+                <div class="metric-card"><span>Clientes</span><strong>@Model.CustomerCount</strong></div>
+                <div class="metric-card"><span>Fornecedores</span><strong>@Model.SupplierCount</strong></div>
+                <div class="metric-card"><span>Produtos / serviços</span><strong>@Model.ProductCount</strong></div>
+                <div class="metric-card"><span>Movimentos contabilísticos</span><strong>@Model.TransactionCount</strong></div>
+                <div class="metric-card"><span>Documentos de venda</span><strong>@Model.SalesInvoiceCount</strong></div>
+                <div class="metric-card"><span>Documentos de transporte</span><strong>@Model.MovementOfGoodsCount</strong></div>
+                <div class="metric-card"><span>Documentos de conferência</span><strong>@Model.WorkingDocumentCount</strong></div>
+                <div class="metric-card"><span>Recibos</span><strong>@Model.PaymentCount</strong></div>
+            </div>
         </section>
     }
 </section>
