@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-PT">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,11 +7,42 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <header class="app-header">
-        <a class="brand" asp-controller="Home" asp-action="Index">Tabularius AI</a>
-    </header>
-    <main class="app-content">
-        @RenderBody()
-    </main>
+    <div class="app-shell">
+        <header class="app-header">
+            <a class="brand" asp-controller="Home" asp-action="Index"><span class="brand-mark">T</span><span>Tabularius AI</span></a>
+            <span class="brand-description">Análise e controlo contabilístico</span>
+        </header>
+        <aside class="sidebar" aria-label="Navegação principal">
+            <nav>
+                <a class="nav-item active" asp-controller="Home" asp-action="Index">Dashboard</a>
+                <p class="nav-heading">Dossier</p>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Entidades</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Dossiers</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Importações</a>
+                <p class="nav-heading">SAF-T (PT)</p>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Resumo</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Contas</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Clientes</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Fornecedores</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Movimentos</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Documentos</a>
+                <p class="nav-heading">Contabilidade</p>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Análise contabilística</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Reconciliação</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Testes e auditoria</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Analytics</a>
+                <p class="nav-heading">Inteligência</p>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Assistente AI</a>
+                <a class="nav-item disabled" href="#" aria-disabled="true">Relatórios</a>
+            </nav>
+        </aside>
+        <main class="app-content">
+            @RenderBody()
+        </main>
+        <footer class="contextbar">
+            <span>Tabularius AI</span>
+            <span>SAF-T (PT)</span>
+        </footer>
+    </div>
 </body>
 </html>
