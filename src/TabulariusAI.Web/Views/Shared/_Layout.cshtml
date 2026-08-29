@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/version.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/import.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/lists.css" asp-append-version="true" />
 </head>
 <body>
     <div class="app-shell">
@@ -16,19 +17,7 @@
             <a class="brand" asp-controller="Home" asp-action="Index"><span class="brand-mark">T</span><span>Tabularius AI</span><small class="version-badge">v@(AppInfo.Version)</small></a>
             <span class="brand-description">@AppInfo.Description</span>
         </header>
-        <aside class="sidebar" aria-label="Navegação principal">
-            <nav>
-                <p class="nav-heading">Aplicação</p>
-                <a class="nav-item" asp-controller="Home" asp-action="Index">Início</a>
-                <p class="nav-heading">Dossiers contabilísticos</p>
-                <a class="nav-item" asp-controller="Dossier" asp-action="Entities">Entidades e exercícios</a>
-                <a class="nav-item" asp-controller="Home" asp-action="Import">Importar SAF-T (PT)</a>
-                <div class="nav-context-note">
-                    <strong>Área de trabalho</strong>
-                    <span>Selecione uma entidade e um exercício para aceder aos dados SAF-T (PT), análises e restantes operações do dossier.</span>
-                </div>
-            </nav>
-        </aside>
+        <aside class="sidebar" aria-label="Navegação principal"><nav><p class="nav-heading">Aplicação</p><a class="nav-item" asp-controller="Home" asp-action="Index">Início</a><p class="nav-heading">Dossiers contabilísticos</p><a class="nav-item" asp-controller="Dossier" asp-action="Entities">Entidades e exercícios</a><a class="nav-item" asp-controller="Home" asp-action="Import">Importar SAF-T (PT)</a><div class="nav-context-note"><strong>Área de trabalho</strong><span>Selecione uma entidade e um exercício para aceder aos dados SAF-T (PT), análises e restantes operações do dossier.</span></div></nav></aside>
         <main class="app-content">@RenderBody()</main>
         <footer class="contextbar"><span>Tabularius AI</span><span>SAF-T (PT)</span><span class="footer-version-badge">v@(AppInfo.Version)</span></footer>
     </div>
