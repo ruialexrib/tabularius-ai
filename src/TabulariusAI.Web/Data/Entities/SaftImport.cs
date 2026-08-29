@@ -18,4 +18,5 @@ public sealed class SaftImport
     public ICollection<SaftProduct> Products { get; } = new List<SaftProduct>();
     public ICollection<SaftTransaction> Transactions { get; } = new List<SaftTransaction>();
     public ICollection<SaftSalesInvoice> SalesInvoices { get; } = new List<SaftSalesInvoice>();
+    public ICollection<SaftStockMovement> StockMovements { get; } = new List<SaftStockMovement>();
 }
