@@ -1,6 +1,6 @@
 # Tabularius AI Product Roadmap
 
-Use this skill whenever continuing product design or implementation work on Tabularius AI. It records the intended functional structure, domain model, implementation sequence, UX principles and AI boundary so work can be resumed without reconstructing the plan.
+Use this skill whenever continuing product design or implementation work on Tabularius AI. It records the intended functional structure, domain model, implementation sequence, UX principles, current delivery priorities and AI boundary so work can be resumed without reconstructing the plan.
 
 ## Product purpose
 
@@ -33,7 +33,7 @@ Navigation follows the accounting hierarchy rather than exposing every future fe
 
 ### Home
 
-The application home page is a presentation and orientation page. It must not be the SAF-T upload form. It explains what Tabularius AI does, the major capability areas and the workflow from entity to analysis. It may provide clear entry actions to entities and SAF-T import.
+The application home page is a presentation and orientation page. It must not be the SAF-T upload form. It explains what Tabularius AI does and the major capability areas without duplicating detailed dossier workflow guidance. It may provide clear entry actions to entities and SAF-T import.
 
 ### Global sidebar
 
@@ -87,19 +87,164 @@ A dossier can contain multiple SAF-T (PT) imports. Source-specific pages must ex
 
 Continue using namespace-aware, secure streaming parsing. Avoid loading large XML files into a full in-memory DOM solely for convenience. Parse elements only in their correct structural path. Important areas include `Header`, `MasterFiles/GeneralLedgerAccounts/Account`, `MasterFiles/Customer`, `MasterFiles/Supplier`, `MasterFiles/Product`, `GeneralLedgerEntries/Journal/Transaction`, and the relevant `SourceDocuments` sections. Support legitimate SAF-T (PT) versions deliberately.
 
-## Implementation sequence
+## Current implementation baseline
 
-Continue from the established entity/dossier/import model and persisted accounts/customers/suppliers. Next priorities are products, then accounting movements with a parser/service architecture suitable for larger datasets, followed by documents and taxes. Build deterministic accounting views after the underlying records are reliable, then reconciliation, audit rules, analytics, AI and reports.
+The application already has the entity/dossier/import structure, persisted accounts, customers, suppliers and products, accounting transactions, sales documents and movement of goods exploration. Deterministic accounting views already include a trial balance, income statement and a synthetic balance-sheet view.
 
-Before expanding source data, keep the entity -> dossier -> source navigation coherent and preserve provenance. New dossier-specific functionality must be integrated into the contextual workspace rather than added automatically to the global sidebar.
+Treat these capabilities as an implementation baseline rather than as completed areas. Existing functionality must remain source-aware, traceable and covered progressively by regression tests as the product evolves.
+
+## Immediate technical completion
+
+Before adding the next SAF-T functional area, close technical debt introduced by the latest persistence changes:
+
+1. Complete cookie-consent persistence by keeping the Entity Framework model snapshot synchronized with the `CookieConsentAcceptedAt` user property and validating the migration path.
+2. Complete movement-of-goods persistence by ensuring the Entity Framework migration and model snapshot accurately represent `SaftStockMovement` and `SaftStockMovementLine`.
+3. Validate pending migrations against both the SQLite development path and SQL Server deployment path.
+4. Add focused parser, persistence and controller tests for movement-of-goods data, including source/import isolation and line detail.
+5. Confirm that existing imported SAF-T data requiring newly persisted sections has an explicit re-import or backfill strategy; never silently present incomplete persisted data as complete.
+6. Keep GitHub Actions green before starting a new coherent feature set. Investigate and correct CI failures before continuing.
+
+## Functional delivery sequence
+
+After the immediate technical completion work, continue SAF-T coverage in this order.
+
+### 1. Working and conference documents
+
+Implement the SAF-T `WorkingDocuments` area with:
+
+- secure structural parsing;
+- persistence associated with `SaftImport`;
+- document list and line-level drill-down;
+- date, type, number and relevant party/source information;
+- search, filtering and pagination consistent with existing dossier lists;
+- shared source selection preserving `importId`;
+- synthetic parser/persistence tests and source-isolation tests.
+
+### 2. Payments and receipts
+
+Implement the SAF-T `Payments` area with:
+
+- payment/receipt document metadata;
+- customer/supplier and source identifiers where supplied by SAF-T;
+- payment dates, settlement values and document totals;
+- line-level detail and references to settled source documents when available;
+- source-aware list/detail views, search and filtering;
+- parser, persistence and deterministic total tests.
+
+### 3. Taxes
+
+Expose and persist the SAF-T tax table and tax information required for deterministic analysis:
+
+- tax type, code, description, country/region and rates where applicable;
+- traceability between document lines and tax codes;
+- VAT-focused exploration;
+- validation of unknown or inconsistent tax codes without inventing classifications;
+- tests for tax-table parsing and document/tax relationships.
+
+### 4. Complete deterministic accounting analysis
+
+Once source records are reliable, expand accounting analysis beyond the current views:
+
+- general ledger account drill-down;
+- journal exploration;
+- monthly debit/credit/balance evolution;
+- account evolution and comparative periods where valid;
+- customer and supplier analysis;
+- VAT analysis based on persisted tax/document data;
+- accounting indicators with transparent formulas;
+- formalize the balance sheet only when a reliable taxonomy/classification mapping is available; until then keep synthetic views explicitly labelled as such.
+
+### 5. Reconciliation
+
+Reconciliation becomes the next major product capability after deterministic source and accounting coverage is stable.
+
+Introduce explicit reconciliation models for runs, evidence and items. Reconciliations should support deterministic comparisons between accounting/SAF-T data and independent evidence, initially prioritising high-value cases such as:
+
+- accounting entries versus sales documents;
+- customer/supplier balances versus document evidence;
+- VAT/tax data versus document totals;
+- later, bank statements and tax declarations as external evidence.
+
+Every reconciliation item uses explicit states:
+
+`Matched | Difference | Not found | Requires review`
+
+A difference must retain both sides of the comparison and enough provenance for an accountant to reproduce the result.
+
+### 6. Audit rules and findings
+
+Build a transparent deterministic rule engine after reconciliation models are stable. Initial rules may detect:
+
+- unbalanced or structurally inconsistent accounting entries;
+- duplicate or suspicious document identifiers;
+- unexpected gaps or sequence anomalies where the SAF-T semantics support the check;
+- document/accounting total differences;
+- inconsistent tax usage;
+- unusual dates, values or counterparties using explicit deterministic criteria.
+
+Rules produce traceable findings, severity, status and evidence. Findings must be reviewable and must not be generated solely from LLM output.
+
+### 7. Analytics
+
+Add focused analytics over stable persisted data and findings:
+
+- period trends;
+- account concentration and evolution;
+- customer/supplier concentration;
+- tax/VAT patterns;
+- document and transaction distributions;
+- anomaly/finding summaries.
+
+Analytics should support investigation and should not attempt to reproduce a full BI platform.
+
+### 8. AI assistant
+
+Introduce the AI assistant only after deterministic analyses, reconciliations and findings provide a reliable structured context.
+
+The assistant should:
+
+- explain deterministic results rather than recalculate accounting truth;
+- summarise findings and help prioritise investigation;
+- answer questions over selected dossier/source context;
+- cite or identify application evidence used whenever possible;
+- remain behind a provider abstraction;
+- require an explicit product decision before confidential accounting data can leave the local environment.
+
+### 9. Reports
+
+Build reports last, over stable analysis and finding models. Reports should support accountant-controlled selection of content, provenance and review status. Generated narrative may be AI-assisted, but reported figures and findings must come from deterministic application data.
+
+## Cross-cutting requirements
+
+Apply these requirements throughout the roadmap:
+
+- Preserve `AccountingEntity -> AnalysisDossier -> SaftImport` provenance for every source-derived record.
+- Never silently merge multiple SAF-T imports.
+- Use the shared source selector consistently on source-dependent pages.
+- Reuse the established list/detail UX, compact table actions, filtering and pagination patterns.
+- Keep user-facing language in Portuguese (Portugal).
+- Keep code, identifiers, commits, technical documentation and XML documentation in English.
+- Add English XML documentation to C# classes, interfaces, records, enums, methods and functions.
+- Keep Entity Framework migrations and `TabulariusDbContextModelSnapshot` synchronized for every schema change.
+- Consider SQLite and SQL Server for every persistence change.
+- Use synthetic or anonymised SAF-T data in automated tests and documentation.
+- Treat SAF-T/XML, imported text and future external evidence as untrusted input.
+- Do not expose secrets or confidential accounting information in logs, fixtures, screenshots or AI prompts.
+- Keep CI green and add regression tests as each functional area becomes stable.
 
 ## Testing expectations
 
 Use synthetic SAF-T fixtures by default. The repository reference SAF-T may be used according to the SAF-T skill for structural confirmation and appropriate regression/integration checks. Tests should progressively cover encodings, malformed XML, DTD rejection, namespace/version handling, header extraction, structural paths, entity/dossier matching, repeated imports, source selection, deterministic accounting calculations, reconciliation and audit rules.
 
+For each new persisted SAF-T section, test at minimum: successful parsing, empty/missing optional sections, malformed relevant values, persistence, source isolation between multiple imports, list/detail retrieval and deterministic totals where applicable.
+
+For every database model change, validate that the migration and Entity Framework snapshot describe the same model and that application startup does not trigger pending-model-change failures.
+
 ## Development/versioning reminder
 
-Before each coherent modification set, inspect the repository's development-versioning skill and current project version. Increment the development suffix without reusing or decrementing a previous development version. Follow the repository skills for SAF-T, coding, data, UI, Git and quality. If the user has explicitly instructed work to continue directly on `main`, follow that instruction until changed.
+Before each coherent modification set, inspect the repository's development-versioning skill and current project version. Increment the development suffix without reusing or decrementing a previous development version. Follow the repository skills for SAF-T, coding, data, UI, Git and quality.
+
+Normal contributions should use a dedicated branch and pull request according to `CONTRIBUTING.md`. Only continue directly on `main` when the user has explicitly instructed that workflow for the relevant work.
 
 ## Definition of product success
 
