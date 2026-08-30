@@ -9,6 +9,63 @@
   const token = form.querySelector('input[name="__RequestVerificationToken"]')?.value;
   const history = [];
 
+  const escapeHtml = value => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+  const inlineMarkdown = value => escapeHtml(value)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+
+  const renderMarkdown = value => {
+    const lines = String(value || '').replace(/\r\n/g, '\n').split('\n');
+    const html = [];
+    let list = null;
+    let paragraph = [];
+    let code = false;
+    let codeLines = [];
+
+    const flushParagraph = () => {
+      if (!paragraph.length) return;
+      html.push(`<p>${paragraph.map(inlineMarkdown).join('<br>')}</p>`);
+      paragraph = [];
+    };
+    const closeList = () => {
+      if (!list) return;
+      html.push(`</${list}>`);
+      list = null;
+    };
+
+    for (const line of lines) {
+      if (line.trim().startsWith('```')) {
+        flushParagraph(); closeList();
+        if (code) { html.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`); codeLines = []; }
+        code = !code;
+        continue;
+      }
+      if (code) { codeLines.push(line); continue; }
+      if (!line.trim()) { flushParagraph(); closeList(); continue; }
+
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      if (heading) { flushParagraph(); closeList(); const level = heading[1].length + 2; html.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`); continue; }
+
+      const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
+      const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+      if (unordered || ordered) {
+        flushParagraph();
+        const type = unordered ? 'ul' : 'ol';
+        if (list !== type) { closeList(); html.push(`<${type}>`); list = type; }
+        html.push(`<li>${inlineMarkdown((unordered || ordered)[1])}</li>`);
+        continue;
+      }
+
+      closeList();
+      paragraph.push(line);
+    }
+    if (codeLines.length) html.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+    flushParagraph(); closeList();
+    return html.join('');
+  };
+
   const resize = () => {
     input.style.height = 'auto';
     input.style.height = `${Math.min(input.scrollHeight, 150)}px`;
@@ -24,8 +81,10 @@
     avatar.textContent = role === 'assistant' ? '✦' : 'EU';
     const body = document.createElement('div');
     body.className = 'chat-body';
-    const text = document.createElement('p');
-    text.textContent = content;
+    const text = document.createElement('div');
+    text.className = 'chat-content';
+    if (role === 'assistant') text.innerHTML = renderMarkdown(content);
+    else text.textContent = content;
     body.appendChild(text);
     if (meta) {
       const small = document.createElement('small');
