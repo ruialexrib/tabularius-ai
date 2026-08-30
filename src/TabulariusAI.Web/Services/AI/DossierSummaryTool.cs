@@ -7,7 +7,7 @@ namespace TabulariusAI.Web.Services.AI;
 /// <summary>Returns deterministic persisted counts and totals for the selected dossier.</summary>
 public sealed class DossierSummaryTool(TabulariusDbContext dbContext) : IAiTool
 {
-    public AiToolDefinition Definition { get; } = new("get_dossier_summary", "Obtém um resumo determinístico dos dados SAF-T persistidos no dossier selecionado.", new { type="object", properties=new { } });
+    public AiToolDefinition Definition { get; } = new("get_dossier_summary", "Obtém um resumo determinístico dos dados SAF-T persistidos no dossier selecionado.", new { type="object", properties=new Dictionary<string,object>(), required=Array.Empty<string>(), additionalProperties=false });
 
     public async Task<object> ExecuteAsync(int dossierId, JsonElement arguments, CancellationToken cancellationToken)
     {
