@@ -1,0 +1,84 @@
+name: Repair EF migration snapshot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: repair-ef-migration-main
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    name: Regenerate latest EF migration and snapshot
+    runs-on: windows-latest
+
+    env:
+      Database__Provider: SqlServer
+      ConnectionStrings__Tabularius: Server=(localdb)\MSSQLLocalDB;Database=TabulariusAI_EFRepair;Trusted_Connection=True;TrustServerCertificate=True
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore TabulariusAI.sln
+
+      - name: Remove latest migration
+        run: >-
+          dotnet ef migrations remove
+          --project src/TabulariusAI.Web
+          --startup-project src/TabulariusAI.Web
+          --configuration Release
+          --force
+
+      - name: Regenerate VAT analysis migration and snapshot
+        run: >-
+          dotnet ef migrations add AddVatAnalysisPrompt
+          --project src/TabulariusAI.Web
+          --startup-project src/TabulariusAI.Web
+          --configuration Release
+
+      - name: Verify EF Core migration consistency
+        run: >-
+          dotnet ef migrations has-pending-model-changes
+          --project src/TabulariusAI.Web
+          --startup-project src/TabulariusAI.Web
+          --configuration Release
+
+      - name: Build
+        run: dotnet build TabulariusAI.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test TabulariusAI.sln --configuration Release --no-build
+
+      - name: Show generated changes
+        shell: pwsh
+        run: git status --short
+
+      - name: Commit repaired migration snapshot
+        shell: pwsh
+        run: |
+          if (-not (git status --porcelain)) {
+            Write-Host "No EF migration changes were generated."
+            exit 0
+          }
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/TabulariusAI.Web/Migrations
+          git commit -m "fix: synchronize EF migration snapshot"
+          git push origin HEAD:main
