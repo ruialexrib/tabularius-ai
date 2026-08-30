@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   repair:
-    name: Regenerate latest EF migration and snapshot
+    name: Synchronize EF migration snapshot
     runs-on: windows-latest
 
     env:
@@ -37,26 +37,18 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore TabulariusAI.sln
 
-      - name: Remove latest migration
+      - name: Generate temporary snapshot synchronization migration
         run: >-
-          dotnet ef migrations remove
+          dotnet ef migrations add SyncVatAnalysisSnapshot
           --project src/TabulariusAI.Web
           --startup-project src/TabulariusAI.Web
           --configuration Release
-          --force
 
-      - name: Remove remaining manual VAT migration files
+      - name: Keep snapshot and discard temporary migration
         shell: pwsh
         run: |
-          Get-ChildItem "src/TabulariusAI.Web/Migrations" -Filter "*AddVatAnalysisPrompt*.cs" -ErrorAction SilentlyContinue |
+          Get-ChildItem "src/TabulariusAI.Web/Migrations" -Filter "*SyncVatAnalysisSnapshot*.cs" -ErrorAction Stop |
             Remove-Item -Force
-
-      - name: Regenerate VAT analysis migration and snapshot
-        run: >-
-          dotnet ef migrations add AddVatAnalysisPrompt
-          --project src/TabulariusAI.Web
-          --startup-project src/TabulariusAI.Web
-          --configuration Release
 
       - name: Verify EF Core migration consistency
         run: >-
@@ -78,13 +70,14 @@ jobs:
       - name: Commit repaired migration snapshot
         shell: pwsh
         run: |
-          if (-not (git status --porcelain)) {
-            Write-Host "No EF migration changes were generated."
+          $snapshot = "src/TabulariusAI.Web/Migrations/TabulariusDbContextModelSnapshot.cs"
+          if (-not (git status --porcelain -- $snapshot)) {
+            Write-Host "No EF snapshot changes were generated."
             exit 0
           }
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/TabulariusAI.Web/Migrations
+          git add -- $snapshot
           git commit -m "fix: synchronize EF migration snapshot"
           git push origin HEAD:main
