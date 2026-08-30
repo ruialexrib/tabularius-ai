@@ -9,7 +9,6 @@
         <div class="preferences-hero-copy"><span class="preferences-eyebrow">Definições pessoais</span><h1>Preferências</h1><p>Personalize a sua conta e controle as opções de segurança do Tabularius AI.</p></div>
         <div class="preferences-user-chip"><span class="preferences-avatar">@initial</span><div><strong>@displayName</strong><small>@(Model.Email ?? Model.UserName)</small></div></div>
     </section>
-    @if (TempData["SuccessMessage"] is string success){<div class="preferences-alert preferences-alert-success"><span>✓</span><div><strong>Alteração guardada</strong><small>@success</small></div></div>}
     <div class="preferences-workspace">
         <nav class="preferences-nav" aria-label="Preferências"><span class="preferences-nav-label">Preferências</span><a href="#account" class="preferences-nav-item active"><span class="preferences-nav-icon">◎</span><span><strong>Conta</strong><small>Informação pessoal</small></span></a><a href="#security" class="preferences-nav-item"><span class="preferences-nav-icon">◇</span><span><strong>Segurança</strong><small>Acesso e palavra-passe</small></span></a><div class="preferences-nav-footer"><span>Tabularius AI</span><small>As preferências aplicam-se apenas à sua conta.</small></div></nav>
         <main class="preferences-content">
