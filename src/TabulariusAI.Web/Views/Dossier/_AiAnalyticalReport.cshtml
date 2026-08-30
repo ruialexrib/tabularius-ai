@@ -1,14 +1,4 @@
 @model TabulariusAI.Web.Services.AI.AiAnalyticalReportRequest
 @inject TabulariusAI.Web.Services.AI.IAiAnalyticalReportService AiReportService
-@{
-    var report = await AiReportService.GenerateAsync(Model, Context.RequestAborted);
-}
-@if(report.IsAvailable)
-{
-<section class="ai-analytical-report">
-    <header><div class="ai-analytical-mark">AI</div><div><span>Interpretação assistida</span><h2>Relatório de AI</h2><p>Leitura do modelo sobre os indicadores determinísticos apresentados nesta área.</p></div><small>@report.Provider · @report.Model</small></header>
-    <div class="ai-analytical-content" data-markdown-source>@report.Content</div>
-    <footer><span>i</span><p>Este relatório é uma interpretação gerada por AI. Os valores e indicadores contabilísticos apresentados na página são calculados deterministicamente pelo Tabularius AI e prevalecem sobre qualquer formulação do modelo.</p></footer>
-</section>
-<script src="~/js/ai-markdown.js" asp-append-version="true"></script>
-}
+@{var report=await AiReportService.GenerateAsync(Model,Context.RequestAborted);}
+@if(report.IsAvailable){<link rel="stylesheet" href="~/css/ai-analytical-report.css" asp-append-version="true"/><section class="ai-analytical-report"><header><div class="ai-analytical-mark">AI</div><div><span>Interpretação assistida</span><h2>Relatório de AI</h2><p>Leitura do modelo sobre os indicadores determinísticos apresentados nesta área.</p></div><small>@report.Provider · @report.Model</small></header><div class="ai-analytical-content" data-markdown-source>@report.Content</div><footer><span>i</span><p>Este relatório é uma interpretação gerada por AI. Os valores e indicadores contabilísticos apresentados na página são calculados deterministicamente pelo Tabularius AI e prevalecem sobre qualquer formulação do modelo.</p></footer></section><script src="~/js/ai-markdown.js" asp-append-version="true"></script>}
