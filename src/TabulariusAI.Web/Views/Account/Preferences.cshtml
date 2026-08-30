@@ -1,0 +1,25 @@
+@model TabulariusAI.Web.Data.Identity.ApplicationUser
+@{
+    ViewData["Title"] = "Preferências";
+}
+<section class="page-title"><div><span class="page-kicker">Conta</span><h1>Preferências</h1><p>Gerir as definições pessoais e a segurança da sua conta.</p></div></section>
+@if (TempData["SuccessMessage"] is string success)
+{
+    <div class="preferences-alert preferences-alert-success">@success</div>
+}
+<div class="preferences-grid">
+    <section class="preferences-card">
+        <header><span class="preferences-icon">◎</span><div><small>Perfil</small><h2>Conta de utilizador</h2></div></header>
+        <dl class="preferences-details">
+            <div><dt>Nome</dt><dd>@(Model.DisplayName ?? Model.UserName)</dd></div>
+            <div><dt>Utilizador</dt><dd>@Model.UserName</dd></div>
+            <div><dt>Email</dt><dd>@(Model.Email ?? "—")</dd></div>
+        </dl>
+    </section>
+    <section class="preferences-card preferences-security">
+        <header><span class="preferences-icon">◇</span><div><small>Segurança</small><h2>Palavra-passe</h2></div></header>
+        <p>Altere regularmente a palavra-passe utilizada para autenticação local no Tabularius AI.</p>
+        <div class="preferences-security-note"><strong>Requisitos de segurança</strong><span>Mínimo de 12 caracteres, com maiúscula, minúscula, algarismo e carácter especial.</span></div>
+        <a class="preferences-primary" asp-controller="Account" asp-action="ChangePassword">Alterar palavra-passe <span>→</span></a>
+    </section>
+</div>
