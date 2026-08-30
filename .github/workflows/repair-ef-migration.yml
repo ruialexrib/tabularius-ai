@@ -45,6 +45,12 @@ jobs:
           --configuration Release
           --force
 
+      - name: Remove remaining manual VAT migration files
+        shell: pwsh
+        run: |
+          Get-ChildItem "src/TabulariusAI.Web/Migrations" -Filter "*AddVatAnalysisPrompt*.cs" -ErrorAction SilentlyContinue |
+            Remove-Item -Force
+
       - name: Regenerate VAT analysis migration and snapshot
         run: >-
           dotnet ef migrations add AddVatAnalysisPrompt
