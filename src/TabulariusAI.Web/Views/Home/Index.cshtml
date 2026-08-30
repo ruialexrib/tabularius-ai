@@ -1,75 +1,22 @@
-@{
-    ViewData["Title"] = "Início";
-}
+@using System.Globalization
+@using TabulariusAI.Web.Services
+@inject IHomeDashboardService DashboardService
+@{ViewData["Title"]="Início";var dashboard=await DashboardService.GetAsync(Context.RequestAborted);var maxTransactions=Math.Max(1,dashboard.Evolution.Select(x=>x.Transactions).DefaultIfEmpty(0).Max());var maxSales=Math.Max(1m,dashboard.Evolution.Select(x=>x.GrossSales).DefaultIfEmpty(0m).Max());}
 
-<section class="home-hero">
-    <div class="home-hero-copy">
-        <p class="eyebrow">Workspace contabilístico</p>
-        <h1>Dos dados contabilísticos<br /><span>à análise.</span></h1>
-        <p class="lead">Explore SAF-T (PT), organize dossiers e transforme informação contabilística em análises claras, rastreáveis e prontas para apoiar o trabalho diário.</p>
-        <div class="home-actions">
-            <a class="btn btn-primary" asp-controller="Dossier" asp-action="Entities">Abrir entidades</a>
-            <a class="btn btn-secondary" asp-controller="Home" asp-action="Import">Importar SAF-T (PT)</a>
-        </div>
-        <div class="home-principles" aria-label="Princípios da aplicação">
-            <span>Local-first</span>
-            <span>Cálculo determinístico</span>
-            <span>IA assistida</span>
-        </div>
-    </div>
+<section class="dashboard-head"><div><p class="eyebrow">Visão geral</p><h1>O seu workspace contabilístico.</h1><p>Indicadores consolidados dos dados SAF-T (PT) disponíveis no Tabularius AI.</p></div><div class="dashboard-actions"><a class="btn btn-primary" asp-controller="Dossier" asp-action="Entities">Abrir dossiers</a><a class="btn btn-secondary" asp-controller="Home" asp-action="Import">Importar SAF-T</a></div></section>
 
-    <aside class="home-hero-visual" aria-label="Fluxo de análise contabilística">
-        <div class="home-visual-topline">
-            <span class="home-live-dot"></span>
-            <span>Workspace</span>
-            <small>SAF-T (PT)</small>
-        </div>
-        <div class="home-visual-company">
-            <span class="home-company-mark">T</span>
-            <div><strong>Entidade contabilística</strong><small>Exercício e dados SAF-T (PT)</small></div>
-        </div>
-        <div class="home-visual-grid">
-            <div><small>Balancete</small><strong>Contas</strong><span>Débito · Crédito · Saldo</span></div>
-            <div><small>Razão</small><strong>Movimentos</strong><span>Lançamentos e detalhe</span></div>
-            <div><small>Resultados</small><strong>Análise</strong><span>Rendimentos e gastos</span></div>
-            <div class="home-visual-accent"><small>Assistente</small><strong>AI</strong><span>Interpretação contextual</span></div>
-        </div>
-        <div class="home-visual-footer"><span>SAF-T (PT) selecionado</span><strong>Período contabilístico ativo</strong></div>
-    </aside>
+<section class="dashboard-kpis" aria-label="Indicadores da aplicação">
+<article><span class="kpi-icon">EN</span><div><small>Entidades</small><strong>@dashboard.Entities</strong><p>entidades contabilísticas</p></div></article>
+<article><span class="kpi-icon">DS</span><div><small>Dossiers</small><strong>@dashboard.Dossiers</strong><p>exercícios disponíveis</p></div></article>
+<article><span class="kpi-icon">IM</span><div><small>Importações</small><strong>@dashboard.Imports</strong><p>ficheiros SAF-T persistidos</p></div></article>
+<article><span class="kpi-icon">CT</span><div><small>Contas</small><strong>@dashboard.Accounts.ToString("N0",CultureInfo.GetCultureInfo("pt-PT"))</strong><p>registos contabilísticos</p></div></article>
+<article><span class="kpi-icon">MV</span><div><small>Transações</small><strong>@dashboard.Transactions.ToString("N0",CultureInfo.GetCultureInfo("pt-PT"))</strong><p>movimentos disponíveis</p></div></article>
+<article><span class="kpi-icon">€</span><div><small>Vendas</small><strong>@dashboard.GrossSales.ToString("N2",CultureInfo.GetCultureInfo("pt-PT")) €</strong><p>@dashboard.SalesDocuments documentos</p></div></article>
 </section>
 
-<section class="home-section-heading">
-    <div><p class="section-kicker">Explorar</p><h2>Um espaço de trabalho, várias perspetivas</h2></div>
-    <p>Comece pela entidade e mantenha sempre o contexto do exercício e dos dados SAF-T (PT) que está a analisar.</p>
-</section>
+@if(dashboard.AiEnabled){<section class="dashboard-ai"><div class="dashboard-ai-mark">✦</div><div class="dashboard-ai-copy"><div class="dashboard-ai-meta"><span>Assistente AI ativo</span><i></i><span>@dashboard.AiProvider · @dashboard.AiModel</span></div><h2>Bem-vindo. Há @dashboard.Dossiers dossier@(dashboard.Dossiers==1?"":"s") disponível@(dashboard.Dossiers==1?"":"eis") para análise.</h2>@if(dashboard.DossierSummaries.Count>0){<div class="dashboard-dossiers">@foreach(var dossier in dashboard.DossierSummaries){<a asp-controller="Dossier" asp-action="Details" asp-route-id="@dossier.Id"><span><strong>@dossier.Entity</strong><small>@dossier.Name · @dossier.FiscalYear</small></span><span class="dossier-mini"><b>@dossier.Transactions</b> movimentos · <b>@dossier.SalesDocuments</b> vendas</span><i>›</i></a>}</div>}<p class="dashboard-ai-next"><span>Próximo passo</span>@dashboard.AiWelcomePrompt</p></div></section>}
 
-<section class="home-capabilities home-capabilities-modern" aria-label="Áreas da aplicação">
-    <article>
-        <span class="home-feature-number">01</span>
-        <div class="home-feature-icon">EN</div>
-        <h2>Entidades e dossiers</h2>
-        <p>Organize empresas, exercícios e importações numa estrutura simples e rastreável.</p>
-        <a asp-controller="Dossier" asp-action="Entities">Explorar entidades <b>→</b></a>
-    </article>
-    <article>
-        <span class="home-feature-number">02</span>
-        <div class="home-feature-icon">ST</div>
-        <h2>SAF-T (PT)</h2>
-        <p>Consulte contas, clientes, fornecedores, produtos, documentos e movimentos contabilísticos.</p>
-        <a asp-controller="Home" asp-action="Import">Importar ficheiro <b>→</b></a>
-    </article>
-    <article>
-        <span class="home-feature-number">03</span>
-        <div class="home-feature-icon">AN</div>
-        <h2>Análise contabilística</h2>
-        <p>Trabalhe com balancetes, razão, resultados e outras análises sobre dados persistidos.</p>
-        <a asp-controller="Dossier" asp-action="Entities">Abrir workspace <b>→</b></a>
-    </article>
-    <article>
-        <span class="home-feature-number">04</span>
-        <div class="home-feature-icon">AI</div>
-        <h2>Inteligência assistida</h2>
-        <p>Acrescente interpretação por IA mantendo os cálculos contabilísticos fora do modelo generativo.</p>
-        <span class="home-feature-status">Evolução do produto</span>
-    </article>
+<section class="dashboard-chart-grid">
+<article class="dashboard-chart"><header><div><p class="section-kicker">Evolução</p><h2>Transações por exercício</h2></div><strong>@dashboard.Transactions.ToString("N0",CultureInfo.GetCultureInfo("pt-PT")) <small>total</small></strong></header><div class="bar-chart">@if(dashboard.Evolution.Count==0){<p class="chart-empty">Ainda não existem dados suficientes.</p>}else{@foreach(var point in dashboard.Evolution){var height=Math.Max(4,(double)point.Transactions/maxTransactions*100);<div class="bar-item"><div class="bar-value">@point.Transactions.ToString("N0",CultureInfo.GetCultureInfo("pt-PT"))</div><div class="bar-track"><span style="height:@height.ToString("0.##",CultureInfo.InvariantCulture)%"></span></div><small>@point.FiscalYear</small></div>}}</div></article>
+<article class="dashboard-chart"><header><div><p class="section-kicker">Evolução</p><h2>Vendas brutas por exercício</h2></div><strong>@dashboard.GrossSales.ToString("N2",CultureInfo.GetCultureInfo("pt-PT")) € <small>total</small></strong></header><div class="bar-chart">@if(dashboard.Evolution.Count==0){<p class="chart-empty">Ainda não existem dados suficientes.</p>}else{@foreach(var point in dashboard.Evolution){var height=Math.Max(4,(double)(point.GrossSales/maxSales)*100);<div class="bar-item"><div class="bar-value">@point.GrossSales.ToString("N0",CultureInfo.GetCultureInfo("pt-PT")) €</div><div class="bar-track"><span style="height:@height.ToString("0.##",CultureInfo.InvariantCulture)%"></span></div><small>@point.FiscalYear</small></div>}}</div></article>
 </section>
