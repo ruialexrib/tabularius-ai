@@ -71,7 +71,7 @@ public sealed class AccountingAnomalyServiceTests
 
         var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
 
-        var finding = Assert.Single(findings.Where(x => x.RuleId == "ACC-007" && x.Reference == "D5"));
+        var finding = Assert.Single(findings, x => x.RuleId == "ACC-007" && x.Reference == "D5");
         Assert.Equal("Média", finding.Severity);
         Assert.Contains("Q3 + 3×IQR", finding.Description);
         Assert.True(finding.Difference > 0);
