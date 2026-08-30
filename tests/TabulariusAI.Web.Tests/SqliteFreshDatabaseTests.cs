@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Models;
+using Xunit;
 
 namespace TabulariusAI.Web.Tests;
 
