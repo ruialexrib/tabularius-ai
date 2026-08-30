@@ -1,6 +1,6 @@
 ---
 name: tabularius-development-versioning
-description: Require a sequential NuGet-compatible development version based on the current Tabularius AI release for every repository modification.
+description: Require a sequential NuGet-compatible development version based on the current Tabularius AI release for every repository modification and define release progression.
 ---
 
 # Tabularius AI development versioning
@@ -28,6 +28,11 @@ A development version change does not by itself authorize a tag, stable release,
 
 ## Release transition
 
-When publishing a release, choose the final semantic version consistently and remove the `-dev.N` suffix. Build and test the release configuration and verify that the application reports the final stable version.
+Choose the next stable release according to the scope accumulated since the current release:
 
-After a stable release, reset the development sequence for that new release base: the first subsequent development version is `MAJOR.MINOR.PATCH-dev.1`.
+- Corrections, maintenance and a small number of incremental functionalities: increment PATCH. Example: `0.2.2` becomes `0.2.3`.
+- Large functional additions, substantial product evolution or broad changes: increment MINOR and reset PATCH. Example: `0.2.2` becomes `0.3.0`.
+- Do not decide the release number solely from the development sequence; assess the actual scope of the changes included in the release.
+- Remove the `-dev.N` suffix for the stable release, build and test the release configuration, and verify that the application reports the final stable version.
+
+After a stable release, reset the development sequence for that new release base. For example, after releasing `0.2.3`, the first subsequent development version is `0.2.3-dev.1`; after releasing `0.3.0`, it is `0.3.0-dev.1`.
