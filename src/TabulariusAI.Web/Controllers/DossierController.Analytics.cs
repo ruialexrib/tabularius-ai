@@ -29,7 +29,17 @@ public sealed partial class DossierController
         var source = await LoadSourceAsync(id, importId, ct); if (source is null) return NotFound();
         var service = new AccountingAnomalyService(dbContext);
         var findings = await service.EvaluateAsync(source.SelectedImport.Id, source.SelectedImport.StartDate, source.SelectedImport.EndDate, ct);
-        return View(new AnomaliesViewModel { Source = source, Findings = findings });
+        var checks = new[]
+        {
+            new AccountingAnomalyRuleCheck("ACC-001", "Equilíbrio do lançamento", "Verifica se o total de débitos coincide com o total de créditos em cada lançamento, com tolerância inferior a um cêntimo.", "Alta", findings.Count(x => x.RuleId == "ACC-001")),
+            new AccountingAnomalyRuleCheck("ACC-002", "Montantes negativos", "Verifica se existem linhas contabilísticas com montante negativo.", "Média", findings.Count(x => x.RuleId == "ACC-002")),
+            new AccountingAnomalyRuleCheck("ACC-003", "Natureza débito/crédito", "Verifica se cada linha está identificada com uma natureza válida: débito (D) ou crédito (C).", "Alta", findings.Count(x => x.RuleId == "ACC-003")),
+            new AccountingAnomalyRuleCheck("ACC-004", "Identificadores duplicados", "Verifica se o mesmo identificador de lançamento ocorre mais do que uma vez na fonte SAF-T (PT).", "Média", findings.Count(x => x.RuleId == "ACC-004")),
+            new AccountingAnomalyRuleCheck("ACC-005", "Datas dentro do período", "Verifica se as datas dos lançamentos se encontram dentro do período declarado no SAF-T (PT).", "Alta", findings.Count(x => x.RuleId == "ACC-005")),
+            new AccountingAnomalyRuleCheck("ACC-006", "Contas existentes no plano", "Verifica se todas as contas referenciadas nas linhas contabilísticas existem no plano de contas da mesma fonte SAF-T (PT).", "Alta", findings.Count(x => x.RuleId == "ACC-006")),
+            new AccountingAnomalyRuleCheck("ACC-007", "Montantes invulgares", "Verifica, em contas com histórico suficiente, montantes acima de Q3 + 3×IQR relativamente à distribuição dos movimentos da própria conta.", "Média", findings.Count(x => x.RuleId == "ACC-007"))
+        };
+        return View(new AnomaliesViewModel { Source = source, Findings = findings, Checks = checks });
     }
 
     public async Task<IActionResult> AccountAnalysis(int id, int? importId, string? search, CancellationToken ct = default)
