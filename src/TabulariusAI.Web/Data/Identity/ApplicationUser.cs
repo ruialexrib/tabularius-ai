@@ -10,4 +10,7 @@ public sealed class ApplicationUser : IdentityUser
 
     /// <summary>Gets or sets the UTC instant when the account was created.</summary>
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>Gets or sets the UTC instant when the user accepted the application's cookie notice.</summary>
+    public DateTimeOffset? CookieConsentAcceptedAt { get; set; }
 }
