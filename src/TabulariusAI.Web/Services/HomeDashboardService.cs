@@ -43,12 +43,12 @@ public sealed class HomeDashboardService(TabulariusDbContext db,IEnumerable<IAiP
         if(provider is null)return FallbackWelcome(summaries);
         var context=JsonSerializer.Serialize(new{CurrencyCode="EUR",Dossiers=summaries.Take(10).Select(x=>new{x.Entity,x.Name,x.FiscalYear,x.Imports,x.Transactions,x.SalesDocuments,x.GrossSales})});
         var instruction=string.IsNullOrWhiteSpace(ai.HomePrompt)?"Gera uma breve mensagem de boas-vindas contextual e sugere ao utilizador uma análise útil que possa fazer de seguida.":ai.HomePrompt.Trim();
-        var systemPrompt=$"És o assistente do painel inicial do Tabularius AI. Responde em português europeu. Recebes apenas um resumo determinístico dos dossiers disponíveis. Não inventes dados, não faças cálculos adicionais nem afirmes factos ausentes do contexto. Os valores monetários estão em EUR. Produz apenas uma mensagem curta, natural e profissional, com no máximo 3 frases. A última frase deve indicar claramente uma ação ou análise que o utilizador pode fazer de seguida. Instrução configurada pelo administrador: {instruction}";
+        var systemPrompt=$"És o assistente do painel inicial do Tabularius AI. Responde em português europeu. Recebes apenas um resumo determinístico dos dossiers disponíveis. Não inventes dados nem afirmes factos ausentes do contexto. Os valores monetários estão em EUR. Produz uma mensagem curta, natural e profissional, com no máximo 3 frases. Evita repetir sempre a mesma estrutura ou introdução. Varia a formulação entre pedidos equivalentes, mantendo os factos intactos. A última frase deve indicar claramente uma ação ou análise que o utilizador pode fazer de seguida. Instrução configurada pelo administrador: {instruction}";
         try
         {
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(Math.Clamp(ai.TimeoutSeconds,10,30)));
             using var linked=CancellationTokenSource.CreateLinkedTokenSource(ct,timeout.Token);
-            var result=await provider.CompleteAsync(ai.Endpoint,ai.Model,ai.ApiKey,Math.Min(ai.Temperature,0.4m),systemPrompt,[new AiMessage("user",$"Resumo dos dossiers disponíveis:\n{context}")],[],linked.Token);
+            var result=await provider.CompleteAsync(ai.Endpoint,ai.Model,ai.ApiKey,ai.Temperature,systemPrompt,[new AiMessage("user",$"Gera agora a mensagem contextual para este acesso ao dashboard. Resumo dos dossiers disponíveis:\n{context}")],[],linked.Token);
             return string.IsNullOrWhiteSpace(result.Content)?FallbackWelcome(summaries):result.Content.Trim();
         }
         catch(Exception exception) when(exception is HttpRequestException or InvalidOperationException or TaskCanceledException)
