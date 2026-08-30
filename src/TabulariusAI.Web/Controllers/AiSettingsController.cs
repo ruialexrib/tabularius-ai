@@ -31,14 +31,24 @@ public sealed class AiSettingsController(TabulariusDbContext dbContext,IEnumerab
         {
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(Math.Clamp(settings.TimeoutSeconds,10,600)));
             using var linked=CancellationTokenSource.CreateLinkedTokenSource(cancellationToken,timeout.Token);
-            var result=await provider.CompleteAsync(settings.Endpoint,settings.Model,settings.ApiKey,0,"Responde apenas com OK.",[new AiMessage("user","Responde apenas com OK para confirmar que o modelo está disponível.")],[],linked.Token);
-            if(string.IsNullOrWhiteSpace(result.Content)) throw new InvalidOperationException("O modelo não devolveu conteúdo.");
-            TempData["AiSettingsTest"]=$"Ligação confirmada · {settings.Provider} · {settings.Model}";
+            var compatibilityTool=new AiToolDefinition("tabularius_compatibility_check","Tool de diagnóstico usada para confirmar que o modelo suporta tool calling.",new { type="object",properties=new { },required=Array.Empty<string>(),additionalProperties=false });
+            var result=await provider.CompleteAsync(settings.Endpoint,settings.Model,settings.ApiKey,0,"Estás a executar um teste técnico de compatibilidade. Tens de chamar obrigatoriamente a tool tabularius_compatibility_check. Não respondas diretamente ao utilizador.",[new AiMessage("user","Chama agora a tool tabularius_compatibility_check para validar a compatibilidade com o Tabularius AI.")],[compatibilityTool],linked.Token);
+            if(!result.ToolCalls.Any(call=>string.Equals(call.Name,"tabularius_compatibility_check",StringComparison.Ordinal)))
+            {
+                TempData["AiSettingsError"]=$"O modelo {settings.Model} responde através de {settings.Provider}, mas não confirmou suporte a tool calling. Esta funcionalidade é necessária para consultar os dados do dossier.";
+                return RedirectToAction(nameof(Index));
+            }
+            TempData["AiSettingsTest"]=$"Compatibilidade confirmada · {settings.Provider} · {settings.Model} · tool calling disponível";
+        }
+        catch(HttpRequestException exception) when(exception.Message.Contains("does not support tools",StringComparison.OrdinalIgnoreCase)||exception.Message.Contains("tool",StringComparison.OrdinalIgnoreCase)&&exception.StatusCode==System.Net.HttpStatusCode.BadRequest)
+        {
+            logger.LogWarning(exception,"AI model {Model} on provider {Provider} does not support required tool calling.",settings.Model,settings.Provider);
+            TempData["AiSettingsError"]=$"O modelo {settings.Model} responde através de {settings.Provider}, mas não suporta tool calling. Esta funcionalidade é necessária para consultar os dados do dossier.";
         }
         catch(Exception exception) when(exception is HttpRequestException or InvalidOperationException or TaskCanceledException)
         {
-            logger.LogWarning(exception,"AI connection test failed for provider {Provider} and model {Model}.",settings.Provider,settings.Model);
-            TempData["AiSettingsError"]=$"Não foi possível confirmar a ligação a {settings.Provider} com o modelo {settings.Model}.";
+            logger.LogWarning(exception,"AI compatibility test failed for provider {Provider} and model {Model}.",settings.Provider,settings.Model);
+            TempData["AiSettingsError"]=$"Não foi possível confirmar a compatibilidade de {settings.Provider} com o modelo {settings.Model}. Verifique o endpoint, autenticação e disponibilidade do modelo.";
         }
         return RedirectToAction(nameof(Index));
     }
