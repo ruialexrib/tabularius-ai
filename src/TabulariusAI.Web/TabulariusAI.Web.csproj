@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RootNamespace>TabulariusAI.Web</RootNamespace>
     <AssemblyName>TabulariusAI.Web</AssemblyName>
-    <Version>0.2.2-dev.001</Version>
+    <Version>0.2.2-dev.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
