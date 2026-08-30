@@ -6,7 +6,7 @@ on:
       - '.github/workflows/sync-ef-snapshot.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   sync:
@@ -52,10 +52,17 @@ jobs:
           --project src/TabulariusAI.Web
           --startup-project src/TabulariusAI.Web
 
-      - name: Upload synchronized snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: synchronized-ef-snapshot
-          path: src/TabulariusAI.Web/Migrations/TabulariusDbContextModelSnapshot.cs
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit synchronized snapshot
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/TabulariusAI.Web/Migrations/TabulariusDbContextModelSnapshot.cs
+          if (git diff --cached --quiet) {
+            Write-Host 'Model snapshot is already synchronized.'
+            exit 0
+          }
+          git commit -m "fix: synchronize EF model snapshot"
+          git pull --rebase origin main
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:main
