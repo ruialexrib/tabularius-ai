@@ -3,13 +3,13 @@
     var import = Model.SelectedImport;
     var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "SaftSummary";
     var selectorAction = action switch { "AccountingEntry" => "AccountingEntries", "SalesInvoice" => "SalesInvoices", "StockMovement" => "StockMovements", "WorkingDocument" => "WorkingDocuments", "Payment" => "Payments", "AccountInvestigation" => "AccountAnalysis", _ => action };
-    var isAnalytics = action is "Analytics" or "Anomalies" or "AccountAnalysis" or "AccountInvestigation";
+    var isAnalytics = action is "Analytics" or "Anomalies" or "AccountAnalysis" or "AccountInvestigation" or "VatAnalysis";
     var isAccountingAnalysis = action is "TrialBalance" or "IncomeStatement" or "BalanceSheet";
 }
 <div class="saft-source-bar"><div class="saft-source-context"><span class="saft-source-label">Fonte SAF-T (PT)</span><strong>@import.OriginalFileName</strong><small>@(import.StartDate?.ToString("dd/MM/yyyy") ?? "—") — @(import.EndDate?.ToString("dd/MM/yyyy") ?? "—") · versão @import.SaftVersion</small></div><form method="get" asp-action="@selectorAction" class="filterbar saft-source-filter"><input type="hidden" name="id" value="@import.DossierId" /><label>Período / ficheiro<select name="importId" onchange="this.form.submit()">@foreach (var source in Model.AvailableImports){<option value="@source.Id" selected="@(source.Id == import.Id)">@(source.StartDate?.ToString("dd/MM/yyyy") ?? "—") — @(source.EndDate?.ToString("dd/MM/yyyy") ?? "—") · @source.OriginalFileName</option>}</select></label><noscript><button class="btn btn-secondary" type="submit">Aplicar</button></noscript></form></div>
 @if (isAnalytics)
 {
-<nav class="saft-area-nav" aria-label="Área analítica"><a class="@(action == "Analytics" ? "active" : null)" asp-action="Analytics" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Visão geral</a><a class="@(action == "Anomalies" ? "active" : null)" asp-action="Anomalies" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Anomalias</a><a class="@(action is "AccountAnalysis" or "AccountInvestigation" ? "active" : null)" asp-action="AccountAnalysis" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Análise de contas</a></nav>
+<nav class="saft-area-nav" aria-label="Área analítica"><a class="@(action == "Analytics" ? "active" : null)" asp-action="Analytics" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Visão geral</a><a class="@(action == "Anomalies" ? "active" : null)" asp-action="Anomalies" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Anomalias</a><a class="@(action is "AccountAnalysis" or "AccountInvestigation" ? "active" : null)" asp-action="AccountAnalysis" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Análise de contas</a><a class="@(action == "VatAnalysis" ? "active" : null)" asp-action="VatAnalysis" asp-route-id="@import.DossierId" asp-route-importId="@import.Id">Análise de IVA</a></nav>
 }
 else if (isAccountingAnalysis)
 {
