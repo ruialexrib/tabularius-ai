@@ -10,7 +10,7 @@ namespace TabulariusAI.Web.Tests;
 public sealed class SqliteFreshDatabaseTests
 {
     [Fact]
-    public async Task FreshSqliteDatabase_GeneratesIdentityKeysForCoreEntities()
+    public async Task FreshSqliteDatabase_GeneratesIdentityKeysAcrossSaftSchema()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
@@ -23,36 +23,35 @@ public sealed class SqliteFreshDatabaseTests
         await using var db = new TabulariusDbContext(options);
         await db.Database.MigrateAsync();
 
-        var entity = new AccountingEntity
-        {
-            Name = "Test Entity",
-            TaxRegistrationNumber = "999999990",
-            CreatedAtUtc = DateTime.UtcNow
-        };
+        var entity = new AccountingEntity { Name = "Test Entity", TaxRegistrationNumber = "999999990", CreatedAtUtc = DateTime.UtcNow };
         db.AccountingEntities.Add(entity);
         await db.SaveChangesAsync();
         Assert.True(entity.Id > 0);
 
-        var dossier = new AnalysisDossier
-        {
-            AccountingEntityId = entity.Id,
-            Name = "Test Dossier",
-            FiscalYear = 2026,
-            CreatedAtUtc = DateTime.UtcNow
-        };
+        var dossier = new AnalysisDossier { AccountingEntityId = entity.Id, Name = "Test Dossier", FiscalYear = 2026, CreatedAtUtc = DateTime.UtcNow };
         db.AnalysisDossiers.Add(dossier);
         await db.SaveChangesAsync();
         Assert.True(dossier.Id > 0);
 
-        var import = new SaftImport
-        {
-            DossierId = dossier.Id,
-            OriginalFileName = "test.xml",
-            SaftVersion = "1.04_01",
-            ImportedAtUtc = DateTime.UtcNow
-        };
+        var import = new SaftImport { DossierId = dossier.Id, OriginalFileName = "test.xml", SaftVersion = "1.04_01", ImportedAtUtc = DateTime.UtcNow };
         db.SaftImports.Add(import);
         await db.SaveChangesAsync();
         Assert.True(import.Id > 0);
+
+        string[] generatedKeyTables =
+        [
+            "AccountingEntities", "AnalysisDossiers", "SaftImports", "SaftAccounts", "SaftCustomers", "SaftSuppliers",
+            "SaftProducts", "SaftTransactions", "SaftTransactionLines", "SaftSalesInvoices", "SaftSalesInvoiceLines",
+            "SaftStockMovements", "SaftStockMovementLines"
+        ];
+
+        foreach (var tableName in generatedKeyTables)
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = $name";
+            command.Parameters.AddWithValue("$name", tableName);
+            var createSql = Assert.IsType<string>(await command.ExecuteScalarAsync());
+            Assert.Contains("AUTOINCREMENT", createSql, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
