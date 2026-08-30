@@ -13,9 +13,6 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     private const string BootstrapUserName = "admin";
     private const string BootstrapPassword = "LetMeIn";
 
-    /// <summary>Displays the login page.</summary>
-    /// <param name="returnUrl">The local URL to return to after authentication.</param>
-    /// <returns>The login view or the application home page when already authenticated.</returns>
     [AllowAnonymous, HttpGet]
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
@@ -23,9 +20,6 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         return View(await CreateLoginModelAsync(returnUrl));
     }
 
-    /// <summary>Authenticates an existing local account.</summary>
-    /// <param name="model">The submitted credentials.</param>
-    /// <returns>A redirect on success or the login view with validation errors.</returns>
     [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
@@ -44,27 +38,39 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         return RedirectAfterLogin(model.ReturnUrl);
     }
 
-    /// <summary>Displays the mandatory password replacement page.</summary>
-    /// <returns>The password replacement view.</returns>
+    /// <summary>Displays the current user's preferences.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Preferences()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null) return RedirectToAction(nameof(Login));
+        return View(user);
+    }
+
+    /// <summary>Displays the password change page.</summary>
     [HttpGet]
     public async Task<IActionResult> ChangePassword()
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null) return RedirectToAction(nameof(Login));
-        if (!await MustReplaceBootstrapPasswordAsync(user)) return RedirectToAction("Index", "Home");
+        ViewData["MandatoryPasswordChange"] = await MustReplaceBootstrapPasswordAsync(user);
         return View(new ChangePasswordViewModel());
     }
 
-    /// <summary>Replaces the temporary bootstrap administrator password.</summary>
-    /// <param name="model">The submitted password change request.</param>
-    /// <returns>A redirect to the application on success or the form with validation errors.</returns>
+    /// <summary>Changes the authenticated user's local password.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null) return RedirectToAction(nameof(Login));
-        if (!await MustReplaceBootstrapPasswordAsync(user)) return RedirectToAction("Index", "Home");
+        var mandatory = await MustReplaceBootstrapPasswordAsync(user);
+        ViewData["MandatoryPasswordChange"] = mandatory;
         if (!ModelState.IsValid) return View(model);
+        if (!await userManager.HasPasswordAsync(user))
+        {
+            ModelState.AddModelError(string.Empty, "Esta conta não tem uma palavra-passe local configurada.");
+            return View(model);
+        }
         var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
         if (!result.Succeeded)
         {
@@ -73,13 +79,9 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         }
         await signInManager.RefreshSignInAsync(user);
         TempData["SuccessMessage"] = "Palavra-passe alterada com sucesso.";
-        return RedirectToAction("Index", "Home");
+        return mandatory ? RedirectToAction("Index", "Home") : RedirectToAction(nameof(Preferences));
     }
 
-    /// <summary>Starts authentication with the configured Google provider.</summary>
-    /// <param name="provider">The external authentication provider.</param>
-    /// <param name="returnUrl">The local URL to return to after authentication.</param>
-    /// <returns>An external authentication challenge.</returns>
     [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
     public IActionResult ExternalLogin(string provider, string? returnUrl = null)
     {
@@ -88,10 +90,6 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         return Challenge(signInManager.ConfigureExternalAuthenticationProperties(provider, callbackUrl), provider);
     }
 
-    /// <summary>Signs in an existing account whose email matches the verified Google identity.</summary>
-    /// <param name="returnUrl">The local URL to return to after authentication.</param>
-    /// <param name="remoteError">An optional error returned by the external provider.</param>
-    /// <returns>A redirect on success or the login view with an error.</returns>
     [AllowAnonymous, HttpGet]
     public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
     {
@@ -108,19 +106,12 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         return RedirectAfterLogin(returnUrl);
     }
 
-    /// <summary>Signs out the current user.</summary>
-    /// <returns>A redirect to the login page.</returns>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout() { await signInManager.SignOutAsync(); return RedirectToAction(nameof(Login)); }
 
-    /// <summary>Displays the access denied page.</summary>
-    /// <returns>The access denied view.</returns>
     [AllowAnonymous, HttpGet]
     public IActionResult AccessDenied() => View();
 
-    /// <summary>Records the current user's acceptance of the essential-cookie notice.</summary>
-    /// <param name="returnUrl">The local URL to return to after consent is recorded.</param>
-    /// <returns>A redirect to the originating page or the application home page.</returns>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> AcceptCookieConsent(string? returnUrl = null)
     {
@@ -132,71 +123,13 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
     }
 
-    /// <summary>Determines whether the bootstrap administrator is still using the temporary password.</summary>
-    /// <param name="user">The application user to inspect.</param>
-    /// <returns>True when the temporary password must be replaced; otherwise false.</returns>
-    private async Task<bool> MustReplaceBootstrapPasswordAsync(ApplicationUser user) =>
-        string.Equals(user.UserName, BootstrapUserName, StringComparison.OrdinalIgnoreCase) && await userManager.CheckPasswordAsync(user, BootstrapPassword);
-
-    /// <summary>Determines whether the login page should reveal the local bootstrap credentials.</summary>
-    /// <returns>True while the bootstrap administrator still uses the default password; otherwise false.</returns>
-    private async Task<bool> ShouldShowBootstrapCredentialsAsync()
-    {
-        var user = await userManager.FindByNameAsync(BootstrapUserName);
-        return user is not null && await MustReplaceBootstrapPasswordAsync(user);
-    }
-
-    /// <summary>Populates dynamic state required by the login page.</summary>
-    /// <param name="model">The login model to populate.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    private async Task PopulateLoginStateAsync(LoginViewModel model)
-    {
-        model.GoogleEnabled = IsGoogleConfigured;
-        model.ShowBootstrapCredentials = await ShouldShowBootstrapCredentialsAsync();
-    }
-
-    /// <summary>Returns the login page with a generic invalid-credentials error.</summary>
-    /// <param name="model">The submitted login model.</param>
-    /// <returns>The login view.</returns>
-    private IActionResult InvalidCredentials(LoginViewModel model) { ModelState.AddModelError(string.Empty, "Utilizador ou palavra-passe inválidos."); return View(model); }
-
-    /// <summary>Translates common Identity password validation errors for the user interface.</summary>
-    /// <param name="error">The Identity error to translate.</param>
-    /// <returns>A Portuguese validation message.</returns>
-    private static string TranslatePasswordError(IdentityError error) => error.Code switch
-    {
-        "PasswordTooShort" => "A nova palavra-passe deve ter pelo menos 12 caracteres.",
-        "PasswordRequiresDigit" => "A nova palavra-passe deve incluir pelo menos um algarismo.",
-        "PasswordRequiresLower" => "A nova palavra-passe deve incluir pelo menos uma letra minúscula.",
-        "PasswordRequiresUpper" => "A nova palavra-passe deve incluir pelo menos uma letra maiúscula.",
-        "PasswordRequiresNonAlphanumeric" => "A nova palavra-passe deve incluir pelo menos um carácter especial.",
-        "PasswordMismatch" => "A palavra-passe atual está incorreta.",
-        _ => "Não foi possível alterar a palavra-passe. Verifique os dados introduzidos."
-    };
-
-    /// <summary>Creates the login view model for the current configuration.</summary>
-    /// <param name="returnUrl">The local URL to return to after authentication.</param>
-    /// <returns>The populated login view model.</returns>
-    private async Task<LoginViewModel> CreateLoginModelAsync(string? returnUrl)
-    {
-        var model = new LoginViewModel { ReturnUrl = returnUrl };
-        await PopulateLoginStateAsync(model);
-        return model;
-    }
-
-    /// <summary>Gets whether Google authentication credentials are configured.</summary>
-    private bool IsGoogleConfigured => !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientId"]) && !string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientSecret"]);
-
-    /// <summary>Returns a safe post-authentication redirect.</summary>
-    private IActionResult RedirectAfterLogin(string? returnUrl) => Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
-
-    /// <summary>Returns the login page with an external authentication error.</summary>
-    /// <param name="returnUrl">The local URL to return to after authentication.</param>
-    /// <param name="message">The user-facing authentication error.</param>
-    /// <returns>The login view with the supplied error.</returns>
-    private async Task<IActionResult> ExternalLoginErrorAsync(string? returnUrl, string message)
-    {
-        ModelState.AddModelError(string.Empty, message);
-        return View(nameof(Login), await CreateLoginModelAsync(returnUrl));
-    }
+    private async Task<bool> MustReplaceBootstrapPasswordAsync(ApplicationUser user) => string.Equals(user.UserName, BootstrapUserName, StringComparison.OrdinalIgnoreCase) && await userManager.CheckPasswordAsync(user, BootstrapPassword);
+    private async Task<bool> ShouldShowBootstrapCredentialsAsync(){var user=await userManager.FindByNameAsync(BootstrapUserName);return user is not null&&await MustReplaceBootstrapPasswordAsync(user);}
+    private async Task PopulateLoginStateAsync(LoginViewModel model){model.GoogleEnabled=IsGoogleConfigured;model.ShowBootstrapCredentials=await ShouldShowBootstrapCredentialsAsync();}
+    private IActionResult InvalidCredentials(LoginViewModel model){ModelState.AddModelError(string.Empty,"Utilizador ou palavra-passe inválidos.");return View(model);}
+    private static string TranslatePasswordError(IdentityError error)=>error.Code switch{"PasswordTooShort"=>"A nova palavra-passe deve ter pelo menos 12 caracteres.","PasswordRequiresDigit"=>"A nova palavra-passe deve incluir pelo menos um algarismo.","PasswordRequiresLower"=>"A nova palavra-passe deve incluir pelo menos uma letra minúscula.","PasswordRequiresUpper"=>"A nova palavra-passe deve incluir pelo menos uma letra maiúscula.","PasswordRequiresNonAlphanumeric"=>"A nova palavra-passe deve incluir pelo menos um carácter especial.","PasswordMismatch"=>"A palavra-passe atual está incorreta.",_=>"Não foi possível alterar a palavra-passe. Verifique os dados introduzidos."};
+    private async Task<LoginViewModel> CreateLoginModelAsync(string? returnUrl){var model=new LoginViewModel{ReturnUrl=returnUrl};await PopulateLoginStateAsync(model);return model;}
+    private bool IsGoogleConfigured=>!string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientId"])&&!string.IsNullOrWhiteSpace(configuration["Authentication:Google:ClientSecret"]);
+    private IActionResult RedirectAfterLogin(string? returnUrl)=>Url.IsLocalUrl(returnUrl)?LocalRedirect(returnUrl):RedirectToAction("Index","Home");
+    private async Task<IActionResult> ExternalLoginErrorAsync(string? returnUrl,string message){ModelState.AddModelError(string.Empty,message);return View(nameof(Login),await CreateLoginModelAsync(returnUrl));}
 }
