@@ -51,7 +51,7 @@ public sealed class AccountInvestigationViewModel
 }
 
 /// <summary>Represents a deterministic anomaly detected in accounting data.</summary>
-public sealed record AccountingAnomaly(string Severity, string Type, string Reference, string Description, decimal? Difference, int? TransactionId);
+public sealed record AccountingAnomaly(string RuleId, string Severity, string Type, string Reference, string Description, decimal? Difference, int? TransactionId);
 
 /// <summary>Represents the anomaly-analysis workspace.</summary>
 public sealed class AnomaliesViewModel
