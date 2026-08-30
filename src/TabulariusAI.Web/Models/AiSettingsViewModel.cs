@@ -14,5 +14,11 @@ public sealed class AiSettingsViewModel
     [Required] public string SystemPrompt { get; set; } = string.Empty;
     [Required, StringLength(500)] public string HomePrompt { get; set; } = string.Empty;
     [Range(1,10080)] public int HomeCacheMinutes { get; set; } = 60;
+    [Required, StringLength(2000)] public string AnalyticsOverviewPrompt { get; set; } = string.Empty;
+    [Required, StringLength(2000)] public string AnomaliesPrompt { get; set; } = string.Empty;
+    [Required, StringLength(2000)] public string AccountAnalysisPrompt { get; set; } = string.Empty;
+    [Required, StringLength(2000)] public string TrialBalancePrompt { get; set; } = string.Empty;
+    [Required, StringLength(2000)] public string IncomeStatementPrompt { get; set; } = string.Empty;
+    [Required, StringLength(2000)] public string BalanceSheetPrompt { get; set; } = string.Empty;
     public bool HasApiKey { get; set; }
 }
