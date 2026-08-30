@@ -3,21 +3,13 @@ namespace TabulariusAI.Web.Models;
 /// <summary>Represents the deterministic overview for one selected SAF-T source.</summary>
 public sealed class AnalyticsOverviewViewModel
 {
-    /// <summary>Gets or sets the selected SAF-T source context.</summary>
     public SaftImportSelectionViewModel Source { get; set; } = null!;
-    /// <summary>Gets or sets the number of accounting transactions.</summary>
     public int TransactionCount { get; set; }
-    /// <summary>Gets or sets total debit movements.</summary>
     public decimal TotalDebit { get; set; }
-    /// <summary>Gets or sets total credit movements.</summary>
     public decimal TotalCredit { get; set; }
-    /// <summary>Gets or sets the number of accounts with movements.</summary>
     public int ActiveAccountCount { get; set; }
-    /// <summary>Gets or sets the number of detected deterministic anomalies.</summary>
     public int AnomalyCount { get; set; }
-    /// <summary>Gets or sets monthly accounting activity.</summary>
     public IReadOnlyList<AnalyticsMonthlyRow> Monthly { get; set; } = [];
-    /// <summary>Gets or sets the accounts with the largest movement volume.</summary>
     public IReadOnlyList<AccountAnalysisRow> TopAccounts { get; set; } = [];
 }
 
@@ -30,12 +22,32 @@ public sealed record AccountAnalysisRow(string AccountId, string Description, de
 /// <summary>Represents the account-analysis workspace.</summary>
 public sealed class AccountAnalysisViewModel
 {
-    /// <summary>Gets or sets the selected SAF-T source context.</summary>
     public SaftImportSelectionViewModel Source { get; set; } = null!;
-    /// <summary>Gets or sets the optional search term.</summary>
     public string? Search { get; set; }
-    /// <summary>Gets or sets the analysed accounts.</summary>
     public IReadOnlyList<AccountAnalysisRow> Rows { get; set; } = [];
+}
+
+/// <summary>Represents one accounting movement in an account investigation.</summary>
+public sealed record AccountMovementRow(int TransactionLocalId, string TransactionId, DateOnly Date, string JournalId, string Description, string Side, decimal Amount, string? SourceDocumentId);
+
+/// <summary>Represents a counterpart account observed in transactions containing the investigated account.</summary>
+public sealed record CounterpartAccountRow(string AccountId, string Description, int TransactionCount, decimal MovementVolume);
+
+/// <summary>Represents the deterministic account investigation workspace.</summary>
+public sealed class AccountInvestigationViewModel
+{
+    public SaftImportSelectionViewModel Source { get; set; } = null!;
+    public string AccountId { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal OpeningDebit { get; set; }
+    public decimal OpeningCredit { get; set; }
+    public decimal ClosingDebit { get; set; }
+    public decimal ClosingCredit { get; set; }
+    public decimal Debit { get; set; }
+    public decimal Credit { get; set; }
+    public IReadOnlyList<AnalyticsMonthlyRow> Monthly { get; set; } = [];
+    public IReadOnlyList<AccountMovementRow> Movements { get; set; } = [];
+    public IReadOnlyList<CounterpartAccountRow> Counterparts { get; set; } = [];
 }
 
 /// <summary>Represents a deterministic anomaly detected in accounting data.</summary>
@@ -44,8 +56,6 @@ public sealed record AccountingAnomaly(string Severity, string Type, string Refe
 /// <summary>Represents the anomaly-analysis workspace.</summary>
 public sealed class AnomaliesViewModel
 {
-    /// <summary>Gets or sets the selected SAF-T source context.</summary>
     public SaftImportSelectionViewModel Source { get; set; } = null!;
-    /// <summary>Gets or sets the deterministic findings.</summary>
     public IReadOnlyList<AccountingAnomaly> Findings { get; set; } = [];
 }
