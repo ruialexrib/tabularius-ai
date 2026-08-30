@@ -18,60 +18,51 @@ Every analytical result must preserve the selected dossier and SAF-T import prov
 
 ## Current product baseline
 
-The application provides entity/dossier/import management, SAF-T master data, general-ledger transactions, sales documents, stock movements, working documents, payments and tax-table exploration. Deterministic accounting views include trial balance, income statement and balance-sheet analysis. Optional provider-neutral AI workflows are already available over bounded accounting tools.
+The application provides entity/dossier/import management, SAF-T master data, general-ledger transactions, sales documents, stock movements, working documents, payments and tax-table exploration. Deterministic accounting views include trial balance, income statement and balance-sheet analysis. The analytical workspace includes `Visão geral`, `Anomalias` and `Análise de contas`. Optional provider-neutral AI reports are available in every accounting-analysis and analytical subarea, using dedicated administrator-configurable prompts and bounded deterministic context.
 
-## Current priority — accountant analytical workspace
+## Current priority — deepen the accountant analytical workspace
 
-The next major product capability is a focused analytical area designed for day-to-day accounting review. Delivery starts with three connected views:
+The first analytical workspace is established. The next delivery cycle must turn it from summary views into an investigation workflow for day-to-day accounting review.
 
-### 1. Analytical overview
+### 1. Account investigation — next functional priority
 
-Provide a source-aware overview with deterministic KPIs and trends, initially:
+Extend `Análise de contas` with:
 
-- accounting transaction count;
-- total debit and credit movement;
-- active accounts;
-- deterministic anomaly count;
-- monthly debit/credit evolution;
-- accounts with the highest movement volume.
+- account detail/drill-down page;
+- monthly debit and credit evolution;
+- opening, period movement and closing position where deterministic source semantics support them;
+- links to the underlying accounting entries;
+- largest movements and concentration indicators;
+- counterpart-account relationships derived from traceable accounting entries;
+- optional AI action to explain the selected account using only the deterministic metrics and bounded evidence shown by the application.
 
-Later extend this overview with sales, customer, payment and tax indicators as their deterministic semantics are hardened. AI, when enabled, may provide an interpretation or period briefing based only on the calculated indicators.
+### 2. Anomalies and controls — hardening
 
-### 2. Anomalies and controls
+Move anomaly detection out of controllers into dedicated deterministic services/rules. Add explicit rule identifiers and tests. Expand progressively beyond the initial rules to document sequence gaps and duplicates where reliable, dates outside the selected accounting period, unusual/extreme values using transparent criteria, tax-code/rate inconsistencies and accounting/document reconciliation differences when the required relationships are available.
 
-Build a transparent deterministic control centre. Initial rules cover:
+Every finding must expose severity, rule, reference, explanation and traceable evidence. AI may explain and prioritise findings but cannot create an accounting finding without deterministic evidence.
 
-- unbalanced accounting entries;
-- negative line amounts where structurally unexpected;
-- invalid debit/credit side values;
-- duplicate accounting transaction identifiers.
+### 3. Analytical overview — richer accountant indicators
 
-Expand progressively to document sequences, tax consistency, unusual dates/values, reconciliation differences and other explicit accounting rules. Every finding must expose severity, rule, reference and traceable evidence. AI may explain or prioritise findings but cannot create an accounting finding without deterministic evidence.
+Extend the current transaction/account KPIs with deterministic indicators from the already-persisted SAF-T areas: sales and document activity, customer concentration, receipts/payments, tax distribution and period comparisons where comparable source periods are explicitly selected. The overview AI report remains an interpretation of calculated indicators, never their source.
 
-### 3. Account analysis
+## Accounting analysis + AI reports
 
-Provide account-level investigation with:
+`Balancete`, `Demonstração de Resultados` and `Balanço` remain deterministic accounting reports. When AI is enabled, each page may display a separate interpretative AI report based on the already-calculated report context. Each subarea has its own configurable prompt in AI Settings. The UI must clearly distinguish deterministic accounting results from AI interpretation.
 
-- debit movement;
-- credit movement;
-- net movement;
-- movement-line count;
-- search by account or description;
-- ranking/concentration views;
-- future monthly evolution and drill-down to transactions;
-- future counterparty/account relationship analysis where evidence supports it.
+## Analytical area + AI reports
 
-AI actions such as “Explain this variation” or “Investigate this account” should consume deterministic account metrics and bounded source evidence.
+`Visão geral`, `Anomalias` and `Análise de contas` provide deterministic investigation and control. When AI is enabled, each page may display a separate interpretative AI report based on bounded deterministic context. Each subarea has its own configurable prompt in AI Settings. AI output must never overwrite, alter or silently supplement deterministic findings.
 
 ## Subsequent analytical expansion
 
-After the first analytical workspace is stable and tested, continue with:
+After account investigation and anomaly hardening are stable and tested, continue with:
 
 1. Customer and receivables analysis — concentration, activity, receipts and deterministic open-item indicators where source relationships permit them.
 2. Fiscal/VAT analysis — tax-code usage, rates, exemptions where available, document/tax consistency and period trends.
 3. Sales and document analytics — turnover, document distributions, customer/product concentration and period comparisons.
 4. Dossier health indicators — transparent composite dimensions based only on deterministic controls, with drill-down to the evidence behind every score component.
-5. AI analytical briefing — optional summaries, explanations and investigation prompts over the deterministic analytical context.
+5. Cross-area AI briefing — optional dossier-level summary composing already-calculated results from individual analytical areas without replacing their dedicated reports.
 
 ## Reconciliation
 
@@ -85,7 +76,7 @@ A difference must retain both sides and enough provenance for an accountant to r
 
 ## AI boundary
 
-The assistant should explain deterministic results rather than recalculate accounting truth, summarise findings, help prioritise investigation, answer questions over the selected dossier/source context and identify application evidence used whenever possible. Provider-specific behavior remains behind `IAIService`. Confidential accounting data must not leave the local environment without explicit product/user control.
+The assistant and analytical reports should explain deterministic results rather than recalculate accounting truth, summarise findings, help prioritise investigation, answer questions over the selected dossier/source context and identify application evidence used whenever possible. Provider-specific behavior remains behind `IAIService`. Confidential accounting data must not leave the local environment without explicit product/user control.
 
 ## Reports
 
@@ -93,7 +84,7 @@ Reports are built over stable analysis and finding models. Accountant-controlled
 
 ## UX and navigation
 
-Keep global navigation small. Dossier-specific data, accounting analysis, analytics, AI and future reconciliation/reporting belong to the selected dossier workspace. Analytical pages use a shared internal navigation for `Visão geral | Anomalias | Análise de contas` and preserve `importId` consistently.
+Keep global navigation small. Dossier-specific navigation is grouped by functional area. `Dados SAF-T (PT)` only shows source-data exploration pages; `Análise contabilística` only shows `Balancete | Demonstração de Resultados | Balanço`; `Área analítica` only shows `Visão geral | Anomalias | Análise de contas`. Preserve `importId` consistently when navigating within an area.
 
 User-facing language is Portuguese (Portugal). Code, identifiers, developer documentation, commit messages and XML documentation are English. Use the application purple/violet identity and established modern list/detail/edit patterns.
 
@@ -105,6 +96,8 @@ User-facing language is Portuguese (Portugal). Code, identifiers, developer docu
 - Use `decimal` for monetary calculations.
 - Treat SAF-T/XML and future external evidence as untrusted input.
 - Keep deterministic calculations independent from generative AI.
+- Keep AI prompts for each analytical/accounting-analysis subarea configurable in AI Settings.
+- Render AI Markdown safely and tolerate common model wrappers such as Markdown code fences.
 - Add English XML documentation to C# classes, records, methods and public domain/API properties where appropriate.
 - Keep EF migrations and model snapshot synchronized for schema changes.
 - Support SQLite and SQL Server deployment paths.
@@ -113,12 +106,14 @@ User-facing language is Portuguese (Portugal). Code, identifiers, developer docu
 
 ## Immediate next engineering steps
 
-1. Stabilise and test the first `Visão geral + Anomalias + Análise de contas` implementation.
-2. Add account drill-down with monthly evolution and links to underlying transactions.
-3. Move anomaly calculations into dedicated deterministic services/rules with unit tests.
-4. Add source-isolation and empty-source controller tests for analytics.
-5. Add optional AI interpretation actions only after deterministic analytical contracts are tested.
-6. Continue SAF-T 1.04_01 field-level hardening and full XSD validation strategy in parallel with analytics.
+1. Stabilise the current AI analytical-report implementation, migration/model snapshot and regression tests.
+2. Add account drill-down with monthly evolution and links to underlying accounting entries.
+3. Add largest-movement and counterpart-account analysis to the account detail.
+4. Move anomaly calculations into dedicated deterministic services/rules with unit tests.
+5. Add source-isolation and empty-source controller tests for analytics.
+6. Expand deterministic anomaly rules with accounting/document/tax controls whose semantics can be demonstrated from SAF-T evidence.
+7. Enrich the analytical overview with sales, customer, payment and tax indicators.
+8. Continue SAF-T 1.04_01 field-level hardening and full XSD validation strategy in parallel with analytics.
 
 ## Definition of product success
 
