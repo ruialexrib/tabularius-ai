@@ -57,6 +57,45 @@ public sealed class AccountingAnomalyServiceTests
     }
 
     [Fact]
+    public async Task EvaluateAsync_DetectsUnusualAmountAgainstOwnAccountDistribution()
+    {
+        await using var fixture = await TestFixture.CreateAsync();
+        var amounts = new[] { 100m, 105m, 110m, 115m, 120m, 1000m };
+        for (var i = 0; i < amounts.Length; i++)
+        {
+            var transaction = fixture.AddTransaction($"TX-OUTLIER-{i}", new DateOnly(2026, 9, i + 1));
+            fixture.AddLine(transaction, $"D{i}", "1111", "D", amounts[i]);
+            fixture.AddLine(transaction, $"C{i}", "1211", "C", amounts[i]);
+        }
+        await fixture.Db.SaveChangesAsync();
+
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
+
+        var finding = Assert.Single(findings.Where(x => x.RuleId == "ACC-007" && x.Reference == "D5"));
+        Assert.Equal("Média", finding.Severity);
+        Assert.Contains("Q3 + 3×IQR", finding.Description);
+        Assert.True(finding.Difference > 0);
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_DoesNotFlagUnusualAmountWithInsufficientAccountHistory()
+    {
+        await using var fixture = await TestFixture.CreateAsync();
+        var amounts = new[] { 10m, 11m, 12m, 1000m };
+        for (var i = 0; i < amounts.Length; i++)
+        {
+            var transaction = fixture.AddTransaction($"TX-SMALL-{i}", new DateOnly(2026, 10, i + 1));
+            fixture.AddLine(transaction, $"D{i}", "1111", "D", amounts[i]);
+            fixture.AddLine(transaction, $"C{i}", "1211", "C", amounts[i]);
+        }
+        await fixture.Db.SaveChangesAsync();
+
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
+
+        Assert.DoesNotContain(findings, x => x.RuleId == "ACC-007");
+    }
+
+    [Fact]
     public async Task EvaluateAsync_DoesNotMixDifferentSaftImports()
     {
         await using var fixture = await TestFixture.CreateAsync();
