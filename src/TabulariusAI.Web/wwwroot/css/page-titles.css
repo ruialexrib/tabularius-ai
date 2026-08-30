@@ -5,6 +5,28 @@
     margin-bottom: 20px;
 }
 
+.page-header {
+    position: relative;
+    padding: 20px 22px;
+    border: 1px solid color-mix(in srgb, var(--border, #d8dee8) 78%, transparent);
+    border-radius: 18px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--surface, #fff) 96%, #6d5dfc 4%), var(--surface, #fff));
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.045);
+    overflow: hidden;
+}
+
+.page-header::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, #6d5dfc, #8b7cf6);
+}
+
+.page-header > div {
+    min-width: 0;
+}
+
 .page-header h1,
 .hero h1 {
     font-size: clamp(1.65rem, 2.2vw, 2.15rem);
@@ -16,9 +38,24 @@
 
 .page-header .eyebrow,
 .hero .eyebrow {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-size: 0.625rem;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.08em;
+}
+
+.page-header .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    width: fit-content;
+    padding: 5px 9px;
+    border: 1px solid color-mix(in srgb, #6d5dfc 18%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, #6d5dfc 7%, transparent);
+    color: color-mix(in srgb, currentColor 78%, #6d5dfc 22%);
+    font-weight: 700;
+    line-height: 1;
+    text-transform: none;
 }
 
 .page-header .lead,
@@ -27,6 +64,15 @@
     margin-top: 9px;
     font-size: 0.9rem;
     line-height: 1.5;
+}
+
+.page-header .lead {
+    opacity: 0.78;
+}
+
+.page-header > .btn {
+    flex: 0 0 auto;
+    align-self: center;
 }
 
 /* The home page uses its own hero sizing in site.css; keep it distinctive, but no longer oversized. */
@@ -58,9 +104,18 @@
         margin-bottom: 18px;
     }
 
+    .page-header {
+        padding: 17px 18px;
+        border-radius: 15px;
+    }
+
     .page-header h1,
     .hero h1 {
         font-size: clamp(1.5rem, 7vw, 1.85rem);
+    }
+
+    .page-header > .btn {
+        align-self: stretch;
     }
 
     .home-intro h1 {
