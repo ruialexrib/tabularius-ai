@@ -1,4 +1,5 @@
 @model TabulariusAI.Web.Models.LoginViewModel
+@inject TabulariusAI.Web.Models.ApplicationInfo AppInfo
 @{
     ViewData["Title"] = "Iniciar sessão";
     Layout = null;
@@ -30,7 +31,7 @@
         <section class="auth-brand-panel">
             <div class="auth-brand"><span class="brand-mark">T</span><span>Tabularius AI</span></div>
             <div><p class="auth-kicker">Análise e controlo contabilístico</p><h1>Tabularius AI</h1><p>Um espaço de trabalho local para explorar SAF-T (PT), estruturar dossiers contabilísticos e evoluir da consulta de dados para análise, reconciliação, testes e inteligência assistida.</p></div>
-            <small>© @DateTime.Today.Year Tabularius AI · Rui Ribeiro · MIT</small>
+            <small>Tabularius AI v@(AppInfo.Version) · © @DateTime.Today.Year Rui Ribeiro · Licença MIT</small>
         </section>
         <section class="auth-form-panel">
             <form asp-action="Login" method="post" class="auth-card">
