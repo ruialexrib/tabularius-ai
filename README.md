@@ -4,8 +4,6 @@
 
 ### Accounting data. Analysis with context.
 
-![Tabularius AI](assets/tabularius-ai-hero.jpg)
-
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-MVC-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/aspnet/core/)
 [![SQLite](https://img.shields.io/badge/SQLite-Local-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
@@ -18,6 +16,18 @@
 Tabularius AI is an application for importing, exploring, and analysing accounting data from Portuguese **SAF-T (PT)** files. It organises the workspace around **Entity → Dossier / fiscal year → SAF-T import**, preserving the source of the data used in each analysis.
 
 Accounting calculations are deterministic. Artificial Intelligence is optional and adds interpretation and context to the results without replacing values calculated by the application.
+
+![Tabularius AI](assets/tabularius-ai-hero.jpg)
+
+<div align="center">
+
+### Get Tabularius AI for Windows
+
+For normal desktop use, download the latest Windows installer. No .NET SDK, SQL Server, or Docker setup is required.
+
+[**Download Windows Installer (.exe)**](https://github.com/ruialexrib/tabularius-ai/releases/latest/download/TabulariusAI-Setup-0.2.2.exe) · [View all releases](https://github.com/ruialexrib/tabularius-ai/releases)
+
+</div>
 
 ## Key features
 
@@ -44,9 +54,9 @@ Tabularius AI can run locally for individual use or on a server for shared multi
 
 ### Local mode — single user
 
-Local mode is the simplest option for individual use. The application runs directly on the computer and uses **SQLite**, with no SQL Server or Docker infrastructure required.
+For most Windows users, the recommended option is the installer available from the [latest release](https://github.com/ruialexrib/tabularius-ai/releases/latest). It provides a self-contained application and uses **SQLite** locally, with no SQL Server or Docker infrastructure required.
 
-Development requirement: **.NET 9 SDK**.
+Developers can run the application directly from source with the **.NET 9 SDK**:
 
 ```powershell
 git clone https://github.com/ruialexrib/tabularius-ai.git
@@ -55,9 +65,9 @@ dotnet restore
 dotnet run --project src/TabulariusAI.Web
 ```
 
-The application runs locally and stores its data in the SQLite database at `data/tabularius.db`.
+The application stores local data in the SQLite database at `data/tabularius.db`.
 
-On Windows, a self-contained build can also be created with:
+A self-contained Windows build can also be created with:
 
 ```bat
 publish-local.bat
