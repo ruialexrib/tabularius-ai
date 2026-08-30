@@ -1,5 +1,8 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace TabulariusAI.Web.Data.Entities;
 
+[Table("SaftPayments")]
 public sealed class SaftPayment
 {
     public int Id { get; set; }
@@ -19,6 +22,7 @@ public sealed class SaftPayment
     public ICollection<SaftPaymentLine> Lines { get; } = new List<SaftPaymentLine>();
 }
 
+[Table("SaftPaymentLines")]
 public sealed class SaftPaymentLine
 {
     public int Id { get; set; }
