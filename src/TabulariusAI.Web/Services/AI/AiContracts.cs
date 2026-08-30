@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace TabulariusAI.Web.Services.AI;
 
-public sealed record AiMessage(string Role, string Content, string? ToolCallId = null, string? Name = null);
+public sealed record AiMessage(string Role, string Content, string? ToolCallId = null, string? Name = null, IReadOnlyList<AiToolCall>? ToolCalls = null);
 public sealed record AiToolCall(string Id, string Name, JsonElement Arguments);
 public sealed record AiProviderResponse(string? Content, IReadOnlyList<AiToolCall> ToolCalls);
 public sealed record AiToolDefinition(string Name, string Description, object Parameters);
