@@ -32,6 +32,14 @@ Use this skill whenever creating, modifying or reviewing C# code in Tabularius A
 - Do not suppress nullable or analyzer warnings without a justified reason.
 - Do not expose secrets, connection strings, API keys, personal data or uploaded accounting data in logs.
 
+## Entity Framework Core changes
+
+- Treat changes to persisted entities, `DbContext` configuration, relationships, indexes, constraints and persisted properties as potential database-schema changes.
+- For any such change, follow the `tabularius-data` skill and keep the EF Core model, model snapshot and committed migrations synchronized in the same change set.
+- Do not finish model-related coding work while `dotnet ef migrations has-pending-model-changes` reports differences.
+- Do not manually edit `TabulariusDbContextModelSnapshot.cs` during normal development; migration generation must maintain it.
+- Never rewrite a migration that has already been published or may have been applied to a user database. Create a forward migration instead.
+
 ## Architecture
 
 - Keep SAF-T parsing, persistence, analytics, presentation and AI integration separated.
@@ -43,3 +51,5 @@ Use this skill whenever creating, modifying or reviewing C# code in Tabularius A
 ## Review
 
 Before considering C# work complete, verify that every new or modified class and method satisfies the XML documentation requirement and that the solution builds without warnings.
+
+If the work touched the EF Core persistence model, also verify that the appropriate migration is committed, the model snapshot is synchronized, `dotnet ef migrations has-pending-model-changes` succeeds and the relevant tests pass.
