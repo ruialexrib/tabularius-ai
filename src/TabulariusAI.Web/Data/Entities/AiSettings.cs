@@ -1,24 +1,15 @@
 namespace TabulariusAI.Web.Data.Entities;
-
-/// <summary>Stores administrator-managed AI provider and assistant configuration.</summary>
 public sealed class AiSettings
 {
-    public int Id { get; set; }
-    public bool IsEnabled { get; set; }
-    public string Provider { get; set; } = "Ollama";
-    public string Endpoint { get; set; } = "http://localhost:11434";
-    public string Model { get; set; } = "mistral";
-    public string? ApiKey { get; set; }
-    public decimal Temperature { get; set; } = 0.1m;
-    public int TimeoutSeconds { get; set; } = 120;
-    public string SystemPrompt { get; set; } = "És o assistente de análise contabilística do Tabularius AI. Responde sempre em português europeu e utiliza terminologia contabilística e fiscal portuguesa. Para qualquer afirmação sobre dados do dossier utiliza exclusivamente as tools disponibilizadas. Nunca inventes valores, documentos, contas, clientes, fornecedores, moedas ou factos ausentes dos resultados das tools. Respeita sempre a moeda indicada pela tool; quando CurrencyCode for EUR, apresenta os valores em euros (€) e nunca uses R$, $, reais ou outra moeda. Usa as designações fornecidas pelas tools para documentos contabilísticos e fiscais; não traduzas SalesInvoices como 'notas de venda'. Quando não existirem dados suficientes, indica claramente essa limitação.";
-    public string HomePrompt { get; set; } = "Gera uma breve mensagem de boas-vindas contextual e sugere ao utilizador uma análise útil que possa fazer de seguida.";
-    public int HomeCacheMinutes { get; set; } = 60;
-    public string AnalyticsOverviewPrompt { get; set; } = "Analisa os indicadores globais apresentados, destaca os factos mais relevantes, eventuais desequilíbrios e prioridades de revisão. Não recalcules nem inventes valores.";
-    public string AnomaliesPrompt { get; set; } = "Interpreta as anomalias determinísticas detetadas, prioriza as situações com maior impacto potencial e sugere verificações contabilísticas concretas. Não declares erro contabilístico sem evidência suficiente.";
-    public string AccountAnalysisPrompt { get; set; } = "Analisa a distribuição dos movimentos por conta, identifica concentrações e contas que mereçam revisão e explica os padrões apenas com base nos dados fornecidos.";
-    public string TrialBalancePrompt { get; set; } = "Produz uma leitura profissional do balancete, destacando equilíbrio, movimentos materialmente relevantes e contas que justifiquem revisão. Usa exclusivamente os valores determinísticos fornecidos.";
-    public string IncomeStatementPrompt { get; set; } = "Interpreta a demonstração de resultados, destacando composição de rendimentos e gastos, resultado do período e rubricas materialmente relevantes. Não extrapoles para períodos não fornecidos.";
-    public string BalanceSheetPrompt { get; set; } = "Interpreta o balanço sintético, destacando estrutura do ativo, capital próprio e passivo, equilíbrio e situações que mereçam revisão. Respeita as limitações da classificação apresentada.";
-    public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    public int Id{get;set;}public bool IsEnabled{get;set;}public string Provider{get;set;}="Ollama";public string Endpoint{get;set;}="http://localhost:11434";public string Model{get;set;}="mistral";public string? ApiKey{get;set;}public decimal Temperature{get;set;}=0.1m;public int TimeoutSeconds{get;set;}=120;
+    public string SystemPrompt{get;set;}="És o assistente de análise contabilística do Tabularius AI. Responde sempre em português europeu e utiliza terminologia contabilística e fiscal portuguesa. Para qualquer afirmação sobre dados do dossier utiliza exclusivamente as tools disponibilizadas. Nunca inventes valores, documentos, contas, clientes, fornecedores, moedas ou factos ausentes dos resultados das tools. Respeita sempre a moeda indicada pela tool; quando CurrencyCode for EUR, apresenta os valores em euros (€) e nunca uses R$, $, reais ou outra moeda. Usa as designações fornecidas pelas tools para documentos contabilísticos e fiscais; não traduzas SalesInvoices como 'notas de venda'. Quando não existirem dados suficientes, indica claramente essa limitação.";
+    public string HomePrompt{get;set;}="Gera uma breve mensagem de boas-vindas contextual e sugere ao utilizador uma análise útil que possa fazer de seguida.";public int HomeCacheMinutes{get;set;}=60;
+    public string AnalyticsOverviewPrompt{get;set;}="Analisa os indicadores globais apresentados, destaca os factos mais relevantes, eventuais desequilíbrios e prioridades de revisão. Não recalcules nem inventes valores.";
+    public string AnomaliesPrompt{get;set;}="Interpreta as anomalias determinísticas detetadas, prioriza as situações com maior impacto potencial e sugere verificações contabilísticas concretas. Não declares erro contabilístico sem evidência suficiente.";
+    public string AccountAnalysisPrompt{get;set;}="Analisa a distribuição dos movimentos por conta, identifica concentrações e contas que mereçam revisão e explica os padrões apenas com base nos dados fornecidos.";
+    public string VatAnalysisPrompt{get;set;}="Interpreta o resumo de IVA por taxa e documento, destacando o efeito líquido dos documentos, taxas materialmente relevantes e situações de anulação ou compensação. Usa exclusivamente os valores fornecidos e não recalcules o imposto.";
+    public string TrialBalancePrompt{get;set;}="Produz uma leitura profissional do balancete, destacando equilíbrio, movimentos materialmente relevantes e contas que justifiquem revisão. Usa exclusivamente os valores determinísticos fornecidos.";
+    public string IncomeStatementPrompt{get;set;}="Interpreta a demonstração de resultados, destacando composição de rendimentos e gastos, resultado do período e rubricas materialmente relevantes. Não extrapoles para períodos não fornecidos.";
+    public string BalanceSheetPrompt{get;set;}="Interpreta o balanço sintético, destacando estrutura do ativo, capital próprio e passivo, equilíbrio e situações que mereçam revisão. Respeita as limitações da classificação apresentada.";
+    public DateTime UpdatedAtUtc{get;set;}=DateTime.UtcNow;
 }
