@@ -12,158 +12,93 @@ public sealed class AccountingAnomalyServiceTests
     [Fact]
     public async Task EvaluateAsync_ReturnsNoFindings_ForBalancedValidTransaction()
     {
-        await using var fixture = await TestFixture.CreateAsync();
-        var transaction = fixture.AddTransaction("TX-1", new DateOnly(2026, 6, 15));
-        fixture.AddLine(transaction, "1", "1111", "D", 100m);
-        fixture.AddLine(transaction, "2", "1211", "C", 100m);
-        await fixture.Db.SaveChangesAsync();
-
-        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
-
-        Assert.Empty(findings);
+        await using var fixture = await TestFixture.CreateAsync(); var transaction = fixture.AddTransaction("TX-1", new DateOnly(2026, 6, 15)); fixture.AddLine(transaction, "1", "1111", "D", 100m); fixture.AddLine(transaction, "2", "1211", "C", 100m); await fixture.Db.SaveChangesAsync();
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate); Assert.Empty(findings);
     }
 
     [Fact]
-    public async Task EvaluateAsync_DetectsAllSixAccountingRules()
+    public async Task EvaluateAsync_DetectsCoreAccountingRules()
     {
         await using var fixture = await TestFixture.CreateAsync();
-        var unbalanced = fixture.AddTransaction("TX-DUP", new DateOnly(2026, 5, 10));
-        fixture.AddLine(unbalanced, "1", "1111", "D", 100m);
-        fixture.AddLine(unbalanced, "2", "1211", "C", 90m);
-        var duplicate = fixture.AddTransaction("tx-dup", new DateOnly(2026, 5, 11));
-        fixture.AddLine(duplicate, "3", "1111", "D", 50m);
-        fixture.AddLine(duplicate, "4", "1211", "C", 50m);
-        var invalid = fixture.AddTransaction("TX-INVALID", new DateOnly(2026, 7, 1));
-        fixture.AddLine(invalid, "5", "1111", "X", -25m);
-        var outside = fixture.AddTransaction("TX-OUTSIDE", new DateOnly(2027, 1, 1));
-        fixture.AddLine(outside, "6", "1111", "D", 20m);
-        fixture.AddLine(outside, "7", "1211", "C", 20m);
-        var unknownAccount = fixture.AddTransaction("TX-UNKNOWN", new DateOnly(2026, 8, 1));
-        fixture.AddLine(unknownAccount, "8", "9999", "D", 30m);
-        fixture.AddLine(unknownAccount, "9", "1211", "C", 30m);
-        await fixture.Db.SaveChangesAsync();
-
-        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
-        var rules = findings.Select(x => x.RuleId).ToHashSet();
-
-        Assert.Contains("ACC-001", rules);
-        Assert.Contains("ACC-002", rules);
-        Assert.Contains("ACC-003", rules);
-        Assert.Contains("ACC-004", rules);
-        Assert.Contains("ACC-005", rules);
-        Assert.Contains("ACC-006", rules);
-        Assert.Contains(findings, x => x.RuleId == "ACC-006" && x.Reference == "8" && x.TransactionId == unknownAccount.Id);
-        Assert.All(findings, finding => Assert.False(string.IsNullOrWhiteSpace(finding.Reference)));
+        var unbalanced = fixture.AddTransaction("TX-DUP", new DateOnly(2026, 5, 10)); fixture.AddLine(unbalanced, "1", "1111", "D", 100m); fixture.AddLine(unbalanced, "2", "1211", "C", 90m);
+        var duplicate = fixture.AddTransaction("tx-dup", new DateOnly(2026, 5, 11)); fixture.AddLine(duplicate, "3", "1111", "D", 50m); fixture.AddLine(duplicate, "4", "1211", "C", 50m);
+        var invalid = fixture.AddTransaction("TX-INVALID", new DateOnly(2026, 7, 1)); fixture.AddLine(invalid, "5", "1111", "X", -25m);
+        var outside = fixture.AddTransaction("TX-OUTSIDE", new DateOnly(2027, 1, 1)); fixture.AddLine(outside, "6", "1111", "D", 20m); fixture.AddLine(outside, "7", "1211", "C", 20m);
+        var unknownAccount = fixture.AddTransaction("TX-UNKNOWN", new DateOnly(2026, 8, 1)); fixture.AddLine(unknownAccount, "8", "9999", "D", 30m); fixture.AddLine(unknownAccount, "9", "1211", "C", 30m); await fixture.Db.SaveChangesAsync();
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate); var rules = findings.Select(x => x.RuleId).ToHashSet();
+        Assert.Contains("ACC-001", rules); Assert.Contains("ACC-002", rules); Assert.Contains("ACC-003", rules); Assert.Contains("ACC-004", rules); Assert.Contains("ACC-005", rules); Assert.Contains("ACC-006", rules); Assert.Contains(findings, x => x.RuleId == "ACC-006" && x.Reference == "8" && x.TransactionId == unknownAccount.Id); Assert.All(findings, finding => Assert.False(string.IsNullOrWhiteSpace(finding.Reference)));
     }
 
     [Fact]
     public async Task EvaluateAsync_DetectsUnusualAmountAgainstOwnAccountDistribution()
     {
-        await using var fixture = await TestFixture.CreateAsync();
-        var amounts = new[] { 100m, 105m, 110m, 115m, 120m, 1000m };
-        for (var i = 0; i < amounts.Length; i++)
-        {
-            var transaction = fixture.AddTransaction($"TX-OUTLIER-{i}", new DateOnly(2026, 9, i + 1));
-            fixture.AddLine(transaction, $"D{i}", "1111", "D", amounts[i]);
-            fixture.AddLine(transaction, $"C{i}", "1211", "C", amounts[i]);
-        }
-        await fixture.Db.SaveChangesAsync();
-
-        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
-
-        var finding = Assert.Single(findings, x => x.RuleId == "ACC-007" && x.Reference == "D5");
-        Assert.Equal("Média", finding.Severity);
-        Assert.Contains("Q3 + 3×IQR", finding.Description);
-        Assert.True(finding.Difference > 0);
+        await using var fixture = await TestFixture.CreateAsync(); var amounts = new[] { 100m, 105m, 110m, 115m, 120m, 1000m };
+        for (var i = 0; i < amounts.Length; i++) { var transaction = fixture.AddTransaction($"TX-OUTLIER-{i}", new DateOnly(2026, 9, i + 1)); fixture.AddLine(transaction, $"D{i}", "1111", "D", amounts[i]); fixture.AddLine(transaction, $"C{i}", "1211", "C", amounts[i]); }
+        await fixture.Db.SaveChangesAsync(); var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
+        var finding = Assert.Single(findings, x => x.RuleId == "ACC-007" && x.Reference == "D5"); Assert.Equal("Média", finding.Severity); Assert.Contains("Q3 + 3×IQR", finding.Description); Assert.True(finding.Difference > 0);
     }
 
     [Fact]
     public async Task EvaluateAsync_DoesNotFlagUnusualAmountWithInsufficientAccountHistory()
     {
-        await using var fixture = await TestFixture.CreateAsync();
-        var amounts = new[] { 10m, 11m, 12m, 1000m };
-        for (var i = 0; i < amounts.Length; i++)
-        {
-            var transaction = fixture.AddTransaction($"TX-SMALL-{i}", new DateOnly(2026, 10, i + 1));
-            fixture.AddLine(transaction, $"D{i}", "1111", "D", amounts[i]);
-            fixture.AddLine(transaction, $"C{i}", "1211", "C", amounts[i]);
-        }
-        await fixture.Db.SaveChangesAsync();
+        await using var fixture = await TestFixture.CreateAsync(); var amounts = new[] { 10m, 11m, 12m, 1000m };
+        for (var i = 0; i < amounts.Length; i++) { var transaction = fixture.AddTransaction($"TX-SMALL-{i}", new DateOnly(2026, 10, i + 1)); fixture.AddLine(transaction, $"D{i}", "1111", "D", amounts[i]); fixture.AddLine(transaction, $"C{i}", "1211", "C", amounts[i]); }
+        await fixture.Db.SaveChangesAsync(); var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate); Assert.DoesNotContain(findings, x => x.RuleId == "ACC-007");
+    }
 
+    [Fact]
+    public async Task EvaluateAsync_DetectsTaxCodeMissingFromTaxTable()
+    {
+        await using var fixture = await TestFixture.CreateAsync(); fixture.AddTaxEntry("IVA", "NOR", 23m); fixture.AddInvoiceTaxLine("FT 1/1", "1", "IVA", "RED", 6m); await fixture.Db.SaveChangesAsync();
         var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
+        Assert.Contains(findings, x => x.RuleId == "ACC-008" && x.Reference.Contains("FT 1/1") && x.Type == "Código fiscal não definido");
+    }
 
-        Assert.DoesNotContain(findings, x => x.RuleId == "ACC-007");
+    [Fact]
+    public async Task EvaluateAsync_DetectsTaxPercentageDifferentFromTaxTable()
+    {
+        await using var fixture = await TestFixture.CreateAsync(); fixture.AddTaxEntry("IVA", "NOR", 23m); fixture.AddInvoiceTaxLine("FT 1/2", "1", "IVA", "NOR", 13m); await fixture.Db.SaveChangesAsync();
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
+        Assert.Contains(findings, x => x.RuleId == "ACC-008" && x.Type == "Taxa fiscal inconsistente" && x.Description.Contains("23%"));
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_AcceptsTaxCodeAndPercentageDefinedInTaxTable()
+    {
+        await using var fixture = await TestFixture.CreateAsync(); fixture.AddTaxEntry("IVA", "NOR", 23m); fixture.AddInvoiceTaxLine("FT 1/3", "1", "IVA", "NOR", 23m); await fixture.Db.SaveChangesAsync();
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate); Assert.DoesNotContain(findings, x => x.RuleId == "ACC-008");
     }
 
     [Fact]
     public async Task EvaluateAsync_DoesNotMixDifferentSaftImports()
     {
-        await using var fixture = await TestFixture.CreateAsync();
-        var valid = fixture.AddTransaction("TX-VALID", new DateOnly(2026, 4, 1));
-        fixture.AddLine(valid, "1", "1111", "D", 10m);
-        fixture.AddLine(valid, "2", "1211", "C", 10m);
-        var otherImport = new SaftImport { DossierId = fixture.Import.DossierId, OriginalFileName = "other.xml", SaftVersion = "1.04_01", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31), ImportedAtUtc = DateTime.UtcNow };
-        fixture.Db.SaftImports.Add(otherImport);
-        await fixture.Db.SaveChangesAsync();
-        var invalidOther = new SaftTransaction { SaftImportId = otherImport.Id, JournalId = "G", TransactionId = "OTHER", Period = 1, TransactionDate = new DateOnly(2026, 4, 1), SourceId = "test", Description = "Other import", TransactionType = "N", GlPostingDate = new DateOnly(2026, 4, 1) };
-        fixture.Db.SaftTransactions.Add(invalidOther);
-        await fixture.Db.SaveChangesAsync();
-        fixture.Db.SaftTransactionLines.Add(new SaftTransactionLine { SaftTransactionId = invalidOther.Id, RecordId = "O1", AccountId = "9999", Description = "Invalid", Side = "X", Amount = -99m });
-        await fixture.Db.SaveChangesAsync();
-
-        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
-
-        Assert.Empty(findings);
+        await using var fixture = await TestFixture.CreateAsync(); var valid = fixture.AddTransaction("TX-VALID", new DateOnly(2026, 4, 1)); fixture.AddLine(valid, "1", "1111", "D", 10m); fixture.AddLine(valid, "2", "1211", "C", 10m);
+        var otherImport = new SaftImport { DossierId = fixture.Import.DossierId, OriginalFileName = "other.xml", SaftVersion = "1.04_01", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31), ImportedAtUtc = DateTime.UtcNow }; fixture.Db.SaftImports.Add(otherImport); await fixture.Db.SaveChangesAsync();
+        var invalidOther = new SaftTransaction { SaftImportId = otherImport.Id, JournalId = "G", TransactionId = "OTHER", Period = 1, TransactionDate = new DateOnly(2026, 4, 1), SourceId = "test", Description = "Other import", TransactionType = "N", GlPostingDate = new DateOnly(2026, 4, 1) }; fixture.Db.SaftTransactions.Add(invalidOther); await fixture.Db.SaveChangesAsync(); fixture.Db.SaftTransactionLines.Add(new SaftTransactionLine { SaftTransactionId = invalidOther.Id, RecordId = "O1", AccountId = "9999", Description = "Invalid", Side = "X", Amount = -99m }); await fixture.Db.SaveChangesAsync();
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate); Assert.Empty(findings);
     }
 
     [Fact]
     public async Task EvaluateAsync_IgnoresSubCentBalancingDifference()
     {
-        await using var fixture = await TestFixture.CreateAsync();
-        var transaction = fixture.AddTransaction("TX-TOL", new DateOnly(2026, 3, 1));
-        fixture.AddLine(transaction, "1", "1111", "D", 100m);
-        fixture.AddLine(transaction, "2", "1211", "C", 99.995m);
-        await fixture.Db.SaveChangesAsync();
-
-        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
-
-        Assert.DoesNotContain(findings, x => x.RuleId == "ACC-001");
+        await using var fixture = await TestFixture.CreateAsync(); var transaction = fixture.AddTransaction("TX-TOL", new DateOnly(2026, 3, 1)); fixture.AddLine(transaction, "1", "1111", "D", 100m); fixture.AddLine(transaction, "2", "1211", "C", 99.995m); await fixture.Db.SaveChangesAsync();
+        var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate); Assert.DoesNotContain(findings, x => x.RuleId == "ACC-001");
     }
 
     private sealed class TestFixture : IAsyncDisposable
     {
-        private readonly SqliteConnection connection;
-        private TestFixture(SqliteConnection connection, TabulariusDbContext db, SaftImport import) { this.connection = connection; Db = db; Import = import; }
-        public TabulariusDbContext Db { get; }
-        public SaftImport Import { get; }
-
+        private readonly SqliteConnection connection; private TestFixture(SqliteConnection connection, TabulariusDbContext db, SaftImport import) { this.connection = connection; Db = db; Import = import; }
+        public TabulariusDbContext Db { get; } public SaftImport Import { get; }
         public static async Task<TestFixture> CreateAsync()
         {
-            var connection = new SqliteConnection("Data Source=:memory:");
-            await connection.OpenAsync();
-            var options = new DbContextOptionsBuilder<TabulariusDbContext>().UseSqlite(connection).Options;
-            var db = new TabulariusDbContext(options);
-            await db.Database.EnsureCreatedAsync();
-            var entity = new AccountingEntity { Name = "Synthetic Entity", TaxRegistrationNumber = "999999990", CreatedAtUtc = DateTime.UtcNow };
-            db.AccountingEntities.Add(entity); await db.SaveChangesAsync();
-            var dossier = new AnalysisDossier { AccountingEntityId = entity.Id, Name = "Synthetic 2026", FiscalYear = 2026, CreatedAtUtc = DateTime.UtcNow };
-            db.AnalysisDossiers.Add(dossier); await db.SaveChangesAsync();
-            var import = new SaftImport { DossierId = dossier.Id, OriginalFileName = "synthetic.xml", SaftVersion = "1.04_01", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31), ImportedAtUtc = DateTime.UtcNow };
-            db.SaftImports.Add(import); await db.SaveChangesAsync();
-            db.SaftAccounts.AddRange(
-                new SaftAccount { SaftImportId = import.Id, AccountId = "1111", Description = "Cash" },
-                new SaftAccount { SaftImportId = import.Id, AccountId = "1211", Description = "Bank" });
-            await db.SaveChangesAsync();
-            return new TestFixture(connection, db, import);
+            var connection = new SqliteConnection("Data Source=:memory:"); await connection.OpenAsync(); var options = new DbContextOptionsBuilder<TabulariusDbContext>().UseSqlite(connection).Options; var db = new TabulariusDbContext(options); await db.Database.EnsureCreatedAsync();
+            var entity = new AccountingEntity { Name = "Synthetic Entity", TaxRegistrationNumber = "999999990", CreatedAtUtc = DateTime.UtcNow }; db.AccountingEntities.Add(entity); await db.SaveChangesAsync(); var dossier = new AnalysisDossier { AccountingEntityId = entity.Id, Name = "Synthetic 2026", FiscalYear = 2026, CreatedAtUtc = DateTime.UtcNow }; db.AnalysisDossiers.Add(dossier); await db.SaveChangesAsync();
+            var import = new SaftImport { DossierId = dossier.Id, OriginalFileName = "synthetic.xml", SaftVersion = "1.04_01", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31), ImportedAtUtc = DateTime.UtcNow }; db.SaftImports.Add(import); await db.SaveChangesAsync(); db.SaftAccounts.AddRange(new SaftAccount { SaftImportId = import.Id, AccountId = "1111", Description = "Cash" }, new SaftAccount { SaftImportId = import.Id, AccountId = "1211", Description = "Bank" }); await db.SaveChangesAsync(); return new TestFixture(connection, db, import);
         }
-
-        public SaftTransaction AddTransaction(string transactionId, DateOnly date)
-        {
-            var transaction = new SaftTransaction { SaftImportId = Import.Id, JournalId = "G", JournalDescription = "General", TransactionId = transactionId, Period = date.Month, TransactionDate = date, SourceId = "test", Description = "Synthetic transaction", TransactionType = "N", GlPostingDate = date };
-            Db.SaftTransactions.Add(transaction); Db.SaveChanges(); return transaction;
-        }
-
+        public SaftTransaction AddTransaction(string transactionId, DateOnly date) { var transaction = new SaftTransaction { SaftImportId = Import.Id, JournalId = "G", JournalDescription = "General", TransactionId = transactionId, Period = date.Month, TransactionDate = date, SourceId = "test", Description = "Synthetic transaction", TransactionType = "N", GlPostingDate = date }; Db.SaftTransactions.Add(transaction); Db.SaveChanges(); return transaction; }
         public void AddLine(SaftTransaction transaction, string recordId, string accountId, string side, decimal amount) => Db.SaftTransactionLines.Add(new SaftTransactionLine { SaftTransactionId = transaction.Id, RecordId = recordId, AccountId = accountId, Description = "Synthetic line", Side = side, Amount = amount });
+        public void AddTaxEntry(string taxType, string taxCode, decimal percentage) => Db.SaftTaxEntries.Add(new SaftTaxEntry { SaftImportId = Import.Id, TaxType = taxType, TaxCountryRegion = "PT", TaxCode = taxCode, Description = $"{taxType} {taxCode}", TaxPercentage = percentage });
+        public void AddInvoiceTaxLine(string invoiceNo, string lineNumber, string taxType, string taxCode, decimal percentage) { var invoice = new SaftSalesInvoice { SaftImportId = Import.Id, InvoiceNo = invoiceNo, InvoiceStatus = "N", InvoiceDate = new DateOnly(2026, 6, 1), InvoiceType = "FT", SourceId = "test", NetTotal = 100m, TaxPayable = percentage, GrossTotal = 100m + percentage }; Db.SaftSalesInvoices.Add(invoice); Db.SaveChanges(); Db.SaftSalesInvoiceLines.Add(new SaftSalesInvoiceLine { SaftSalesInvoiceId = invoice.Id, LineNumber = lineNumber, ProductCode = "P1", ProductDescription = "Product", Quantity = 1m, UnitOfMeasure = "UN", UnitPrice = 100m, TaxType = taxType, TaxCode = taxCode, TaxPercentage = percentage, CreditAmount = 100m }); }
         public async ValueTask DisposeAsync() { await Db.DisposeAsync(); await connection.DisposeAsync(); }
     }
 }
