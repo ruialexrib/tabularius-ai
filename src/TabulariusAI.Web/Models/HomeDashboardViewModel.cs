@@ -12,7 +12,7 @@ public sealed class HomeDashboardViewModel
     public bool AiEnabled { get; init; }
     public string AiProvider { get; init; } = string.Empty;
     public string AiModel { get; init; } = string.Empty;
-    public string AiWelcomePrompt { get; init; } = string.Empty;
+    public string AiWelcomeMessage { get; init; } = string.Empty;
     public IReadOnlyList<HomeDossierSummary> DossierSummaries { get; init; } = [];
     public IReadOnlyList<HomeEvolutionPoint> Evolution { get; init; } = [];
 }
