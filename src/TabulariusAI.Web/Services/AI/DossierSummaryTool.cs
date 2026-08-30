@@ -13,6 +13,7 @@ public sealed class DossierSummaryTool(TabulariusDbContext dbContext) : IAiTool
     {
         var dossier = await dbContext.AnalysisDossiers.AsNoTracking().Include(item=>item.AccountingEntity).SingleAsync(item=>item.Id==dossierId,cancellationToken);
         var importIds = dbContext.SaftImports.Where(item=>item.DossierId==dossierId).Select(item=>item.Id);
+        var payments = dbContext.SaftPayments.AsNoTracking().Where(item=>importIds.Contains(item.SaftImportId));
         return new
         {
             dossier.Id,
@@ -32,6 +33,12 @@ public sealed class DossierSummaryTool(TabulariusDbContext dbContext) : IAiTool
             GrossSales=await dbContext.SaftSalesInvoices.Where(item=>importIds.Contains(item.SaftImportId)).SumAsync(item=>(decimal?)item.GrossTotal,cancellationToken) ?? 0m,
             TaxPayable=await dbContext.SaftSalesInvoices.Where(item=>importIds.Contains(item.SaftImportId)).SumAsync(item=>(decimal?)item.TaxPayable,cancellationToken) ?? 0m,
             StockMovements=await dbContext.SaftStockMovements.CountAsync(item=>importIds.Contains(item.SaftImportId),cancellationToken),
+            WorkingDocuments=await dbContext.SaftWorkingDocuments.CountAsync(item=>importIds.Contains(item.SaftImportId),cancellationToken),
+            Payments=await payments.CountAsync(cancellationToken),
+            PaymentsLabel="Recibos/pagamentos",
+            PaymentsNetTotal=await payments.SumAsync(item=>(decimal?)item.NetTotal,cancellationToken) ?? 0m,
+            PaymentsTaxPayable=await payments.SumAsync(item=>(decimal?)item.TaxPayable,cancellationToken) ?? 0m,
+            PaymentsGrossTotal=await payments.SumAsync(item=>(decimal?)item.GrossTotal,cancellationToken) ?? 0m,
             TaxEntries=await dbContext.SaftTaxEntries.CountAsync(item=>importIds.Contains(item.SaftImportId),cancellationToken)
         };
     }
