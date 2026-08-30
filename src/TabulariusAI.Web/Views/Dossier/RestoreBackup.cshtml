@@ -1,4 +1,106 @@
 @model TabulariusAI.Web.Models.DossierRestoreViewModel
-@{ ViewData["Title"] = "Restaurar dossier"; }
-<section class="page-header"><div><p class="eyebrow">Dossiers contabilísticos</p><h1>Restaurar dossier</h1><p class="lead">Importe um backup JSON criado pelo Tabularius AI. O dossier, as importações SAF-T (PT) e os respetivos dados serão recriados.</p></div><a class="btn btn-secondary" asp-action="Entities">Cancelar</a></section>
-<section class="panel"><div class="card-header"><div><p class="section-kicker">Backup e restauro</p><h2>Selecionar backup</h2><p>O ficheiro é validado antes de qualquer alteração. Não são restaurados utilizadores, credenciais ou definições de AI.</p></div></div><form asp-action="RestoreBackup" method="post" enctype="multipart/form-data" class="form-stack"><div asp-validation-summary="ModelOnly" class="validation-summary"></div><div><label asp-for="BackupFile"></label><input asp-for="BackupFile" type="file" accept="application/json,.json" /><span asp-validation-for="BackupFile" class="field-error"></span><p class="form-help">Só são aceites backups de dossier JSON compatíveis com esta versão do Tabularius AI.</p></div><div class="form-actions"><button class="btn btn-primary" type="submit">Restaurar dossier</button><a class="btn btn-secondary" asp-action="Entities">Cancelar</a></div></form></section>
+@{
+    ViewData["Title"] = "Restaurar dossier";
+    var hasErrors = !ViewData.ModelState.IsValid;
+}
+
+<section class="import-page" aria-labelledby="restore-title">
+    <div class="import-card">
+        <div class="import-card-main">
+            <div class="import-icon" aria-hidden="true">JSON</div>
+            <div class="import-copy">
+                <p class="eyebrow">Backup e restauro</p>
+                <h1 id="restore-title">Restaurar dossier</h1>
+                <p class="lead">Selecione um backup JSON criado pelo Tabularius AI. O dossier, as importações SAF-T (PT) e os respetivos dados serão recriados.</p>
+
+                @if (hasErrors)
+                {
+                    <div class="import-alert import-alert-error" role="alert">
+                        <span class="import-alert-icon" aria-hidden="true">!</span>
+                        <div>
+                            <strong>Não foi possível restaurar o dossier</strong>
+                            <div asp-validation-summary="All" class="import-alert-details"></div>
+                        </div>
+                    </div>
+                }
+
+                <form asp-action="RestoreBackup" method="post" enctype="multipart/form-data" class="import-form" id="dossierRestoreForm">
+                    <label class="import-file-picker" for="BackupFile" id="backupFilePicker">
+                        <span class="import-file-picker-icon" aria-hidden="true">+</span>
+                        <span class="import-file-picker-copy">
+                            <strong id="backupFileTitle">Selecionar backup JSON</strong>
+                            <span id="backupFileMeta">Ficheiro JSON até 100 MB</span>
+                        </span>
+                        <span class="import-file-change" id="backupFileChange" hidden>Alterar</span>
+                        <input asp-for="BackupFile" type="file" accept="application/json,.json" />
+                    </label>
+
+                    <div class="import-actions">
+                        <button class="btn btn-primary" type="submit" id="restoreSubmitButton">Restaurar dossier</button>
+                        <a class="btn btn-secondary" asp-action="Entities">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <aside class="import-reference" aria-label="Processo de restauro">
+            <span class="import-reference-label">Processo de restauro</span>
+            <h2>Restauro controlado</h2>
+            <p>O backup é validado antes de serem efetuadas alterações aos dados da aplicação.</p>
+
+            <div class="import-checks">
+                <div><span>1</span><p><strong>Ficheiro JSON</strong><small>Verificação do formato e da versão do backup.</small></p></div>
+                <div><span>2</span><p><strong>Entidade e exercício</strong><small>Identificação do dossier contabilístico incluído no backup.</small></p></div>
+                <div><span>3</span><p><strong>Integridade</strong><small>Validação das relações entre o dossier, importações e dados SAF-T (PT).</small></p></div>
+                <div><span>4</span><p><strong>Restauro</strong><small>Os dados são recriados numa transação única.</small></p></div>
+            </div>
+
+            <div class="import-reference-note">
+                <strong>Dados da aplicação</strong>
+                <span>Utilizadores, credenciais e definições de AI não fazem parte do backup do dossier.</span>
+            </div>
+        </aside>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    (() => {
+        const input = document.getElementById('BackupFile');
+        const picker = document.getElementById('backupFilePicker');
+        const title = document.getElementById('backupFileTitle');
+        const meta = document.getElementById('backupFileMeta');
+        const change = document.getElementById('backupFileChange');
+        const form = document.getElementById('dossierRestoreForm');
+        const submit = document.getElementById('restoreSubmitButton');
+
+        input?.addEventListener('change', () => {
+            const file = input.files?.[0];
+            if (!file) {
+                picker?.classList.remove('has-file');
+                title.textContent = 'Selecionar backup JSON';
+                meta.textContent = 'Ficheiro JSON até 100 MB';
+                change.hidden = true;
+                return;
+            }
+
+            picker?.classList.add('has-file');
+            title.textContent = file.name;
+            meta.textContent = `${formatFileSize(file.size)} · JSON selecionado`;
+            change.hidden = false;
+        });
+
+        form?.addEventListener('submit', () => {
+            if (!input.files?.length) return;
+            submit.disabled = true;
+            submit.textContent = 'A restaurar…';
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+            return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+    })();
+</script>
+}
