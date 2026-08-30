@@ -1,25 +1,27 @@
 @model TabulariusAI.Web.Data.Identity.ApplicationUser
 @{
     ViewData["Title"] = "Preferências";
+    var displayName = Model.DisplayName ?? Model.UserName ?? "Utilizador";
+    var initial = displayName.Trim().FirstOrDefault().ToString().ToUpperInvariant();
 }
-<section class="page-title"><div><span class="page-kicker">Conta</span><h1>Preferências</h1><p>Gerir as definições pessoais e a segurança da sua conta.</p></div></section>
-@if (TempData["SuccessMessage"] is string success)
-{
-    <div class="preferences-alert preferences-alert-success">@success</div>
-}
-<div class="preferences-grid">
-    <section class="preferences-card">
-        <header><span class="preferences-icon">◎</span><div><small>Perfil</small><h2>Conta de utilizador</h2></div></header>
-        <dl class="preferences-details">
-            <div><dt>Nome</dt><dd>@(Model.DisplayName ?? Model.UserName)</dd></div>
-            <div><dt>Utilizador</dt><dd>@Model.UserName</dd></div>
-            <div><dt>Email</dt><dd>@(Model.Email ?? "—")</dd></div>
-        </dl>
+<div class="preferences-shell">
+    <section class="preferences-hero">
+        <div class="preferences-hero-copy"><span class="preferences-eyebrow">Definições pessoais</span><h1>Preferências</h1><p>Personalize a sua conta e controle as opções de segurança do Tabularius AI.</p></div>
+        <div class="preferences-user-chip"><span class="preferences-avatar">@initial</span><div><strong>@displayName</strong><small>@(Model.Email ?? Model.UserName)</small></div></div>
     </section>
-    <section class="preferences-card preferences-security">
-        <header><span class="preferences-icon">◇</span><div><small>Segurança</small><h2>Palavra-passe</h2></div></header>
-        <p>Altere regularmente a palavra-passe utilizada para autenticação local no Tabularius AI.</p>
-        <div class="preferences-security-note"><strong>Requisitos de segurança</strong><span>Mínimo de 12 caracteres, com maiúscula, minúscula, algarismo e carácter especial.</span></div>
-        <a class="preferences-primary" asp-controller="Account" asp-action="ChangePassword">Alterar palavra-passe <span>→</span></a>
-    </section>
+    @if (TempData["SuccessMessage"] is string success){<div class="preferences-alert preferences-alert-success"><span>✓</span><div><strong>Alteração guardada</strong><small>@success</small></div></div>}
+    <div class="preferences-workspace">
+        <nav class="preferences-nav" aria-label="Preferências"><span class="preferences-nav-label">Preferências</span><a href="#account" class="preferences-nav-item active"><span class="preferences-nav-icon">◎</span><span><strong>Conta</strong><small>Informação pessoal</small></span></a><a href="#security" class="preferences-nav-item"><span class="preferences-nav-icon">◇</span><span><strong>Segurança</strong><small>Acesso e palavra-passe</small></span></a><div class="preferences-nav-footer"><span>Tabularius AI</span><small>As preferências aplicam-se apenas à sua conta.</small></div></nav>
+        <main class="preferences-content">
+            <section id="account" class="preferences-section">
+                <div class="preferences-section-heading"><div><span class="preferences-section-kicker">Conta</span><h2>Informação pessoal</h2><p>Dados associados à sua conta na aplicação.</p></div><span class="preferences-section-badge">Perfil</span></div>
+                <div class="preferences-profile-card"><div class="preferences-profile-identity"><span class="preferences-profile-avatar">@initial</span><div><strong>@displayName</strong><small>@(Model.Email ?? "Sem endereço de email")</small></div></div><div class="preferences-profile-grid"><div><span>Nome apresentado</span><strong>@displayName</strong></div><div><span>Nome de utilizador</span><strong>@(Model.UserName ?? "—")</strong></div><div><span>Endereço de email</span><strong>@(Model.Email ?? "—")</strong></div><div><span>Estado da conta</span><strong class="preferences-status"><i></i> Ativa</strong></div></div></div>
+            </section>
+            <section id="security" class="preferences-section">
+                <div class="preferences-section-heading"><div><span class="preferences-section-kicker">Segurança</span><h2>Acesso à conta</h2><p>Controle as credenciais utilizadas na autenticação local.</p></div><span class="preferences-section-badge">Proteção</span></div>
+                <article class="preferences-setting-row"><div class="preferences-setting-icon">⌁</div><div class="preferences-setting-copy"><strong>Palavra-passe</strong><p>Atualize a palavra-passe da sua conta. Recomendamos uma palavra-passe exclusiva e difícil de reutilizar noutros serviços.</p><div class="preferences-password-rules"><span>12+ caracteres</span><span>Maiúscula e minúscula</span><span>Algarismo</span><span>Carácter especial</span></div></div><a class="preferences-action" asp-controller="Account" asp-action="ChangePassword">Alterar palavra-passe <span>→</span></a></article>
+                <article class="preferences-setting-row preferences-setting-muted"><div class="preferences-setting-icon">◈</div><div class="preferences-setting-copy"><strong>Sessão atual</strong><p>A sua sessão encontra-se autenticada. Pode terminar a sessão através do menu de utilizador no topo da aplicação.</p></div><span class="preferences-session-state"><i></i> Ativa</span></article>
+            </section>
+        </main>
+    </div>
 </div>
