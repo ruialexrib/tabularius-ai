@@ -30,7 +30,7 @@ public sealed class AccountingAnomalyServiceTests
         var unbalanced = fixture.AddTransaction("TX-DUP", new DateOnly(2026, 5, 10));
         fixture.AddLine(unbalanced, "1", "1111", "D", 100m);
         fixture.AddLine(unbalanced, "2", "1211", "C", 90m);
-        var duplicate = fixture.AddTransaction("TX-DUP", new DateOnly(2026, 5, 11));
+        var duplicate = fixture.AddTransaction("tx-dup", new DateOnly(2026, 5, 11));
         fixture.AddLine(duplicate, "3", "1111", "D", 50m);
         fixture.AddLine(duplicate, "4", "1211", "C", 50m);
         var invalid = fixture.AddTransaction("TX-INVALID", new DateOnly(2026, 7, 1));
