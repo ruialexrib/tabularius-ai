@@ -45,8 +45,17 @@
       if (code) { codeLines.push(line); continue; }
       if (!line.trim()) { flushParagraph(); closeList(); continue; }
 
-      const heading = line.match(/^(#{1,3})\s+(.+)$/);
-      if (heading) { flushParagraph(); closeList(); const level = heading[1].length + 2; html.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`); continue; }
+      if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+        flushParagraph(); closeList(); html.push('<hr>'); continue;
+      }
+
+      const heading = line.match(/^\s{0,3}(#{1,6})\s+(.+)$/);
+      if (heading) {
+        flushParagraph(); closeList();
+        const level = Math.min(5, heading[1].length + 2);
+        html.push(`<h${level}>${inlineMarkdown(heading[2].replace(/\s+#+\s*$/, ''))}</h${level}>`);
+        continue;
+      }
 
       const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
       const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
