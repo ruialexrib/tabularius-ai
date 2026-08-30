@@ -34,5 +34,7 @@ jobs:
           git add src/TabulariusAI.Web/Migrations/TabulariusDbContextModelSnapshot.cs
           if (-not (git diff --cached --quiet)) {
             git commit -m "fix: synchronize EF Core model snapshot"
+            git fetch origin main
+            git rebase origin/main
             git push origin HEAD:main
           }
