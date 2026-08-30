@@ -7,6 +7,7 @@
 .context-with-tooltip:hover,.context-with-tooltip:focus-visible{background:#f2f7f5;color:var(--navy);outline:0}
 .context-icon{display:grid;min-width:18px;height:18px;place-items:center;border:1px solid #cfe4dc;border-radius:5px;background:#eff9f5;color:var(--green-text);font-size:8px;font-weight:900;line-height:1}
 .context-status-dot{width:7px;height:7px;border-radius:50%;background:var(--green-dark);box-shadow:0 0 0 3px rgba(21,154,112,.1)}
+.context-status-dot.context-status-off{background:#9ca3af;box-shadow:0 0 0 3px rgba(156,163,175,.12)}
 .context-tooltip{position:absolute;right:0;bottom:calc(100% + 8px);z-index:3000;display:flex;width:280px;flex-direction:column;gap:8px;padding:14px;border:1px solid #dce4e9;border-radius:11px;background:#fff;color:var(--ink);box-shadow:0 16px 42px rgba(16,27,46,.18);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(5px);transition:opacity .12s ease,transform .12s ease,visibility .12s ease;white-space:normal}
 .context-with-tooltip:hover>.context-tooltip,.context-with-tooltip:focus-visible>.context-tooltip,.context-with-tooltip:focus-within>.context-tooltip{opacity:1;visibility:visible;transform:translateY(0)}
 .context-tooltip-left{right:auto;left:0}
