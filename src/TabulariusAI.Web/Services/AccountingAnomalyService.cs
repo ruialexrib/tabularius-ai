@@ -8,6 +8,8 @@ namespace TabulariusAI.Web.Services;
 public sealed class AccountingAnomalyService(TabulariusDbContext dbContext)
 {
     private const decimal BalanceTolerance = 0.01m;
+    private const int UnusualAmountMinimumPopulation = 5;
+    private const decimal UnusualAmountIqrMultiplier = 3m;
 
     /// <summary>Evaluates all active accounting rules for the specified SAF-T import.</summary>
     public async Task<IReadOnlyList<AccountingAnomaly>> EvaluateAsync(int importId, DateOnly? startDate, DateOnly? endDate, CancellationToken ct = default)
@@ -33,6 +35,7 @@ public sealed class AccountingAnomalyService(TabulariusDbContext dbContext)
         AddDuplicateTransactionIds(findings, transactions);
         AddOutOfPeriodDates(findings, transactions, startDate, endDate);
         AddUnknownAccounts(findings, lines, accountIds);
+        AddUnusualAmounts(findings, lines, accountIds);
         return findings.OrderBy(x => SeverityRank(x.Severity)).ThenBy(x => x.RuleId).ThenBy(x => x.Reference).ToList();
     }
 
@@ -75,6 +78,45 @@ public sealed class AccountingAnomalyService(TabulariusDbContext dbContext)
         findings.AddRange(lines
             .Where(x => !string.IsNullOrWhiteSpace(x.AccountId) && !accountIds.Contains(x.AccountId))
             .Select(x => new AccountingAnomaly("ACC-006", "Alta", "Conta inexistente no plano", x.RecordId, $"A linha referencia a conta {x.AccountId}, que não existe no plano de contas desta fonte SAF-T (PT).", null, x.TransactionLocalId)));
+    }
+
+    private static void AddUnusualAmounts(List<AccountingAnomaly> findings, IEnumerable<LineData> lines, IReadOnlySet<string> accountIds)
+    {
+        foreach (var group in lines
+            .Where(x => accountIds.Contains(x.AccountId) && x.Amount >= 0 && x.Side is "D" or "C")
+            .GroupBy(x => x.AccountId, StringComparer.OrdinalIgnoreCase))
+        {
+            var ordered = group.Select(x => x.Amount).OrderBy(x => x).ToArray();
+            if (ordered.Length < UnusualAmountMinimumPopulation) continue;
+
+            var q1 = Percentile(ordered, 0.25m);
+            var q3 = Percentile(ordered, 0.75m);
+            var iqr = q3 - q1;
+            if (iqr <= 0) continue;
+
+            var upperFence = q3 + UnusualAmountIqrMultiplier * iqr;
+            findings.AddRange(group
+                .Where(x => x.Amount > upperFence)
+                .Select(x => new AccountingAnomaly(
+                    "ACC-007",
+                    "Média",
+                    "Montante invulgar na conta",
+                    x.RecordId,
+                    $"O montante {x.Amount:N2} € na conta {x.AccountId} excede o limite estatístico {upperFence:N2} € (Q3 + 3×IQR), calculado sobre {ordered.Length} movimentos da própria conta.",
+                    x.Amount - upperFence,
+                    x.TransactionLocalId)));
+        }
+    }
+
+    private static decimal Percentile(IReadOnlyList<decimal> ordered, decimal percentile)
+    {
+        if (ordered.Count == 1) return ordered[0];
+        var position = percentile * (ordered.Count - 1);
+        var lower = (int)Math.Floor(position);
+        var upper = (int)Math.Ceiling(position);
+        if (lower == upper) return ordered[lower];
+        var fraction = position - lower;
+        return ordered[lower] + (ordered[upper] - ordered[lower]) * fraction;
     }
 
     private static int SeverityRank(string severity) => severity == "Alta" ? 0 : severity == "Média" ? 1 : 2;
