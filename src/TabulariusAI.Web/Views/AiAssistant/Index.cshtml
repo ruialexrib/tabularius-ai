@@ -1,5 +1,17 @@
 @model TabulariusAI.Web.Models.AiChatViewModel
 @{ViewData["Title"]="Assistente AI";}
-<div class="page-title"><div><span class="eyebrow">@Model.DossierName</span><h1>Assistente AI</h1><p>Faça perguntas sobre os dados persistidos do dossier. O modelo utiliza tools controladas pelo Tabularius AI para consultar informação.</p></div></div>
-<div class="form-card"><form asp-action="Ask" method="post"><input asp-for="DossierId" type="hidden"/><div asp-validation-summary="ModelOnly" class="text-danger"></div><label asp-for="Question">Pergunta</label><textarea asp-for="Question" rows="4" placeholder="Ex.: Resume os dados disponíveis neste dossier."></textarea><span asp-validation-for="Question" class="text-danger"></span><div class="form-actions"><button class="btn btn-primary" type="submit">Perguntar ao assistente</button></div></form></div>
-@if(!string.IsNullOrWhiteSpace(Model.Answer)){<section class="form-card"><span class="eyebrow">Resposta</span><div style="white-space:pre-wrap">@Model.Answer</div></section>}
+<div class="ai-chat-page">
+  <header class="ai-chat-header"><div><span class="eyebrow">@Model.DossierName</span><h1>Falar com os dados</h1><p>Faça perguntas sobre o dossier. O modelo consulta exclusivamente os dados disponibilizados pelas tools do Tabularius AI.</p></div><a class="btn btn-secondary" asp-controller="Dossier" asp-action="Details" asp-route-id="@Model.DossierId">Voltar ao dossier</a></header>
+  <div class="ai-chat-shell">
+    <section class="ai-chat-conversation">
+      @if(string.IsNullOrWhiteSpace(Model.Answer)){
+        <div class="ai-chat-empty"><span class="ai-chat-mark">AI</span><h2>O que pretende saber?</h2><p>O assistente pode consultar os dados persistidos deste dossier através das tools disponíveis.</p><div class="ai-chat-suggestions"><button type="button" data-ai-question="Resume os dados disponíveis neste dossier.">Resumir o dossier</button><button type="button" data-ai-question="Que informação contabilística está disponível neste dossier?">Dados disponíveis</button><button type="button" data-ai-question="Apresenta uma visão geral deste exercício sem inventar valores.">Visão geral</button></div></div>
+      } else {
+        <div class="ai-message ai-message-user"><span>Eu</span><div>@Model.Question</div></div>
+        <div class="ai-message ai-message-assistant"><span>AI</span><div style="white-space:pre-wrap">@Model.Answer</div></div>
+      }
+    </section>
+    <form asp-action="Ask" method="post" class="ai-chat-composer"><input asp-for="DossierId" type="hidden"/><div asp-validation-summary="ModelOnly" class="ai-chat-error"></div><div class="ai-chat-input"><textarea asp-for="Question" rows="3" placeholder="Pergunte sobre os dados deste dossier..." autofocus></textarea><button class="btn btn-primary" type="submit">Enviar</button></div><div class="ai-chat-meta"><span asp-validation-for="Question" class="ai-chat-error"></span><small>As respostas dependem dos dados disponibilizados pelas tools.</small></div></form>
+  </div>
+</div>
+@section Scripts{<script>document.querySelectorAll('[data-ai-question]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('Question');if(input){input.value=button.dataset.aiQuestion;input.focus();}}));</script>}
