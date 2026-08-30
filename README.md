@@ -2,7 +2,7 @@
 
 # Tabularius AI
 
-### Dados contabilísticos. Análise com contexto.
+### Accounting data. Analysis with context.
 
 ![Tabularius AI](assets/tabularius-ai-hero.jpg)
 
@@ -15,37 +15,38 @@
 
 </div>
 
-Tabularius AI é uma aplicação para importar, explorar e analisar dados contabilísticos a partir de ficheiros **SAF-T (PT)**. Organiza o trabalho por **Entidade → Dossier / exercício → Importação SAF-T**, preservando sempre a origem dos dados utilizados em cada análise.
+Tabularius AI is an application for importing, exploring, and analysing accounting data from Portuguese **SAF-T (PT)** files. It organises the workspace around **Entity → Dossier / fiscal year → SAF-T import**, preserving the source of the data used in each analysis.
 
-Os cálculos contabilísticos são determinísticos. A Inteligência Artificial é opcional e acrescenta interpretação e contexto aos resultados, sem substituir os valores calculados pela aplicação.
+Accounting calculations are deterministic. Artificial Intelligence is optional and adds interpretation and context to the results without replacing values calculated by the application.
 
-## Principais funcionalidades
+## Key features
 
-- Gestão de entidades, dossiers e exercícios contabilísticos.
-- Importação e persistência estruturada de ficheiros SAF-T (PT).
-- Suporte para múltiplas importações por dossier, mantendo explícita a fonte selecionada.
-- Consulta de contas, clientes, fornecedores, produtos e tabela de impostos.
-- Exploração de lançamentos contabilísticos e respetivas linhas de débito e crédito.
-- Consulta de documentos de vendas, documentos de conferência, movimentação de mercadorias e recibos.
-- **Balancete**, **Demonstração de Resultados** e **Balanço** calculados deterministicamente.
-- Área analítica com visão geral, deteção de anomalias, análise de contas e análise de IVA.
-- Investigação detalhada de contas e movimentos.
-- Assistente AI e relatórios analíticos AI opcionais, com suporte para fornecedores configuráveis.
-- Backup e restauro de dossiers.
-- Autenticação, perfis e administração de utilizadores.
-- Modo local com SQLite e modo servidor multiutilizador com SQL Server e Docker.
+- Management of accounting entities, dossiers, and fiscal years.
+- Structured import and persistence of SAF-T (PT) files.
+- Multiple imports per dossier with explicit source selection and traceability.
+- Exploration of accounts, customers, suppliers, products, and tax data.
+- General ledger exploration with detailed debit and credit lines.
+- Sales invoices, working documents, stock movements, and payment documents.
+- Deterministic **Trial Balance**, **Income Statement**, and **Balance Sheet**.
+- Analytical workspace with overview, anomaly detection, account analysis, and VAT analysis.
+- Detailed account and transaction investigation.
+- Optional AI assistant and AI analytical reports with configurable providers.
+- Dossier backup and restore.
+- Authentication, user profiles, and role-based administration.
+- Local single-user mode with SQLite.
+- Multi-user server mode with SQL Server and Docker.
 
-> O suporte atual não constitui validação formal do ficheiro contra o XSD oficial do SAF-T (PT).
+> The current implementation does not claim formal validation of imported files against the official SAF-T (PT) XSD schema.
 
-## Utilização
+## Using Tabularius AI
 
-O Tabularius AI pode ser executado de duas formas: localmente para utilização individual ou num servidor para acesso partilhado por vários utilizadores.
+Tabularius AI can run locally for individual use or on a server for shared multi-user access.
 
-### Modo local — single user
+### Local mode — single user
 
-O modo local é a opção mais simples para utilização individual. A aplicação corre diretamente no computador e utiliza **SQLite**, sem necessidade de instalar ou administrar SQL Server.
+Local mode is the simplest option for individual use. The application runs directly on the computer and uses **SQLite**, with no SQL Server or Docker infrastructure required.
 
-Requisitos para desenvolvimento: **.NET 9 SDK**.
+Development requirement: **.NET 9 SDK**.
 
 ```powershell
 git clone https://github.com/ruialexrib/tabularius-ai.git
@@ -54,25 +55,25 @@ dotnet restore
 dotnet run --project src/TabulariusAI.Web
 ```
 
-A aplicação fica disponível apenas localmente e utiliza a base de dados SQLite em `data/tabularius.db`.
+The application runs locally and stores its data in the SQLite database at `data/tabularius.db`.
 
-Em Windows também pode ser criada uma publicação self-contained:
+On Windows, a self-contained build can also be created with:
 
 ```bat
 publish-local.bat
 ```
 
-O resultado é colocado em:
+The published application is created in:
 
 ```text
 artifacts\publish\win-x64\
 ```
 
-Execute `TabulariusAI.Web.exe`. A aplicação inicia o servidor local e abre o browser automaticamente.
+Run `TabulariusAI.Web.exe`. The application starts the local web server and opens the default browser automatically.
 
-### Modo servidor — multiuser com Docker
+### Server mode — multi-user with Docker
 
-Para utilização partilhada, o Tabularius AI pode ser executado com **Docker Compose**. Neste modo são utilizados dois containers principais:
+For shared use, Tabularius AI can run with **Docker Compose**. This deployment uses the ASP.NET Core application and SQL Server 2022 Express as separate containers.
 
 ```text
 Browser
@@ -86,7 +87,7 @@ ASP.NET Core
 SQL Server 2022 Express
 ```
 
-Clone o repositório e crie o ficheiro de configuração:
+Clone the repository and create the environment configuration:
 
 ```powershell
 git clone https://github.com/ruialexrib/tabularius-ai.git
@@ -94,82 +95,82 @@ cd tabularius-ai
 Copy-Item .env.example .env
 ```
 
-Defina uma password segura para o SQL Server em `.env`:
+Set a strong SQL Server password in `.env`:
 
 ```text
 TABULARIUS_DB_PASSWORD=replace-with-a-strong-private-password
 ```
 
-Inicie a aplicação:
+Start the application:
 
 ```powershell
 docker compose up -d --build
 docker compose ps
 ```
 
-Aceda a:
+Open:
 
 ```text
 http://localhost:8080
 ```
 
-Em Windows pode utilizar diretamente:
+On Windows, the stack can also be started with:
 
 ```bat
 start-docker.bat
 ```
 
-Os dados do SQL Server e os logs são mantidos em volumes Docker persistentes.
+SQL Server data and application logs are stored in persistent Docker volumes.
 
-### Dados de acesso por defeito
+### Default credentials
 
-Na primeira execução é criada automaticamente uma conta de administração:
+On first startup, Tabularius AI automatically creates an administrator account:
 
-| Campo | Valor |
+| Field | Value |
 | --- | --- |
-| Utilizador | `admin` |
+| Username | `admin` |
 | Email | `admin@tabularius.local` |
-| Password temporária | `LetMeIn` |
-| Perfil | Administrador |
+| Temporary password | `LetMeIn` |
+| Role | Administrator |
 
-A password inicial é temporária. A aplicação exige a sua alteração antes de permitir a utilização normal da conta.
+The initial password is temporary. The application requires it to be changed before normal use of the account.
 
-## Inteligência Artificial
+## Artificial Intelligence
 
-A utilização de AI é opcional. Quando configurada, pode ser utilizada para conversar com os dados do dossier e gerar interpretações dos indicadores apresentados nas áreas analíticas.
+AI functionality is optional. When configured, it can be used to interact with dossier data and generate contextual interpretations of indicators presented throughout the analytical areas.
 
-A arquitetura mantém uma separação explícita entre:
+The architecture keeps a clear separation between deterministic accounting calculations and generative AI:
 
 ```text
-Dados SAF-T → regras e cálculos determinísticos → resultados contabilísticos
-                                                ↓
-                                      interpretação opcional por AI
+SAF-T data → deterministic rules and calculations → accounting results
+                                                    ↓
+                                         optional AI interpretation
 ```
 
-O modelo não é a fonte dos totais contabilísticos. Os valores calculados deterministicamente pelo Tabularius AI prevalecem sobre qualquer formulação produzida pelo modelo.
+The language model is not the source of accounting totals. Values calculated deterministically by Tabularius AI take precedence over any interpretation generated by the model.
 
-## Contribuir
+## Contributing
 
-As contribuições devem ser efetuadas através de **pull requests** e manter-se focadas numa alteração claramente identificável.
+Contributions should be submitted through **pull requests** and remain focused on a clearly identifiable change.
 
-Antes de submeter uma contribuição:
+Before submitting a contribution:
 
-- crie uma branch a partir da versão mais recente de `main`;
-- mantenha a alteração pequena e focada;
-- preserve a rastreabilidade da importação SAF-T utilizada;
-- não agregue silenciosamente dados provenientes de importações diferentes;
-- mantenha os cálculos contabilísticos determinísticos separados da AI generativa;
-- inclua testes quando a alteração introduzir comportamento testável;
-- garanta que o projeto compila e que os testes existentes continuam a passar;
-- utilize PT-PT na interface e inglês no código, documentação técnica e mensagens de commit;
-- nunca inclua passwords, API keys, tokens, ficheiros `.env` ou dados contabilísticos reais no repositório.
+- create a branch from the latest `main`;
+- keep the change small and focused;
+- preserve traceability to the selected SAF-T import;
+- never silently aggregate data from different imports;
+- keep deterministic accounting calculations separate from generative AI;
+- add tests when introducing behaviour that can reasonably be tested;
+- ensure the project builds and existing tests continue to pass;
+- use Portuguese from Portugal for the application UI and English for code, technical documentation, and commit messages;
+- never commit passwords, API keys, tokens, `.env` files, or real confidential accounting data.
 
-Alterações significativas de arquitetura, base de dados, parsing SAF-T, segurança, deployment ou integrações AI devem ser discutidas antes da implementação.
+Significant changes involving architecture, database schema, SAF-T parsing, security, deployment, or AI integrations should be discussed before implementation.
 
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para as regras completas de contribuição.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete contribution guidelines.
 
-## Licença
+## License
 
-Distribuído sob a [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE).
 
 Copyright © 2026 [Rui Ribeiro](https://github.com/ruialexrib).
