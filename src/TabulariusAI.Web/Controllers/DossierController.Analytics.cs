@@ -37,7 +37,8 @@ public sealed partial class DossierController
             new AccountingAnomalyRuleCheck("ACC-004", "Identificadores duplicados", "Verifica se o mesmo identificador de lançamento ocorre mais do que uma vez na fonte SAF-T (PT).", "Média", findings.Count(x => x.RuleId == "ACC-004")),
             new AccountingAnomalyRuleCheck("ACC-005", "Datas dentro do período", "Verifica se as datas dos lançamentos se encontram dentro do período declarado no SAF-T (PT).", "Alta", findings.Count(x => x.RuleId == "ACC-005")),
             new AccountingAnomalyRuleCheck("ACC-006", "Contas existentes no plano", "Verifica se todas as contas referenciadas nas linhas contabilísticas existem no plano de contas da mesma fonte SAF-T (PT).", "Alta", findings.Count(x => x.RuleId == "ACC-006")),
-            new AccountingAnomalyRuleCheck("ACC-007", "Montantes invulgares", "Verifica, em contas com histórico suficiente, montantes acima de Q3 + 3×IQR relativamente à distribuição dos movimentos da própria conta.", "Média", findings.Count(x => x.RuleId == "ACC-007"))
+            new AccountingAnomalyRuleCheck("ACC-007", "Montantes invulgares", "Verifica, em contas com histórico suficiente, montantes acima de Q3 + 3×IQR relativamente à distribuição dos movimentos da própria conta.", "Média", findings.Count(x => x.RuleId == "ACC-007")),
+            new AccountingAnomalyRuleCheck("ACC-008", "Coerência fiscal das vendas", "Verifica se os códigos e taxas de imposto das linhas das faturas existem e são coerentes com a TaxTable da mesma fonte SAF-T (PT).", "Alta", findings.Count(x => x.RuleId == "ACC-008"))
         };
         return View(new AnomaliesViewModel { Source = source, Findings = findings, Checks = checks });
     }
