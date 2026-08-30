@@ -1,0 +1,64 @@
+:root {
+    --green: #a78bfa;
+    --green-dark: #6d28d9;
+    --green-text: #6d28d9;
+    --success-bg: #f5f3ff;
+}
+
+.app-header {
+    background: linear-gradient(110deg, #171126, #24163d 58%, #321b50);
+}
+
+.sidebar {
+    background: #241a35;
+}
+
+.brand-mark {
+    background: linear-gradient(135deg, #c4b5fd, #8b5cf6);
+    color: #2e1065;
+}
+
+.nav-item.active {
+    background: #4c2d73;
+    color: #f5f3ff;
+}
+
+.workspace-links a:hover,
+.workspace-tabs a:hover {
+    border-color: #c4b5fd;
+    background: #faf8ff;
+}
+
+.workspace-tab-icon {
+    border-color: #ddd6fe;
+    background: #f5f3ff;
+}
+
+.saft-source-filter select:focus {
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, .12);
+}
+
+.saft-area-nav a:hover {
+    background: #f5f3ff;
+}
+
+.saft-area-nav a.active {
+    background: #ede9fe;
+}
+
+.home-status-card {
+    border-color: #e4ddf5;
+    background: linear-gradient(145deg, #fff, #f7f3ff);
+}
+
+.error-reference {
+    background: linear-gradient(145deg, #faf8ff, #f2ecfb);
+}
+
+.error-reference code {
+    border-color: #ddd6fe;
+}
+
+.status-success {
+    border-color: #ddd6fe;
+}
