@@ -31,18 +31,15 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     {
         await PopulateLoginStateAsync(model);
         if (!ModelState.IsValid) return View(model);
-
         var identifier = model.Identifier.Trim();
         var user = await userManager.FindByNameAsync(identifier) ?? await userManager.FindByEmailAsync(identifier);
         if (user is null) return InvalidCredentials(model);
-
         var result = await signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: true);
         if (!result.Succeeded)
         {
             ModelState.AddModelError(string.Empty, result.IsLockedOut ? "Conta temporariamente bloqueada." : "Utilizador ou palavra-passe inválidos.");
             return View(model);
         }
-
         if (await MustReplaceBootstrapPasswordAsync(user)) return RedirectToAction(nameof(ChangePassword));
         return RedirectAfterLogin(model.ReturnUrl);
     }
@@ -68,14 +65,12 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
         if (user is null) return RedirectToAction(nameof(Login));
         if (!await MustReplaceBootstrapPasswordAsync(user)) return RedirectToAction("Index", "Home");
         if (!ModelState.IsValid) return View(model);
-
         var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
         if (!result.Succeeded)
         {
             foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, TranslatePasswordError(error));
             return View(model);
         }
-
         await signInManager.RefreshSignInAsync(user);
         TempData["SuccessMessage"] = "Palavra-passe alterada com sucesso.";
         return RedirectToAction("Index", "Home");
@@ -122,6 +117,20 @@ public sealed class AccountController(SignInManager<ApplicationUser> signInManag
     /// <returns>The access denied view.</returns>
     [AllowAnonymous, HttpGet]
     public IActionResult AccessDenied() => View();
+
+    /// <summary>Records the current user's acceptance of the essential-cookie notice.</summary>
+    /// <param name="returnUrl">The local URL to return to after consent is recorded.</param>
+    /// <returns>A redirect to the originating page or the application home page.</returns>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AcceptCookieConsent(string? returnUrl = null)
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+        user.CookieConsentAcceptedAt = DateTimeOffset.UtcNow;
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded) TempData["ErrorMessage"] = "Não foi possível guardar o consentimento de cookies.";
+        return Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Home");
+    }
 
     /// <summary>Determines whether the bootstrap administrator is still using the temporary password.</summary>
     /// <param name="user">The application user to inspect.</param>
