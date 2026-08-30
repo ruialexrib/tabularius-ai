@@ -1,9 +1,13 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using TabulariusAI.Web.Data;
 
 #nullable disable
 
 namespace TabulariusAI.Web.Migrations;
 
+[DbContext(typeof(TabulariusDbContext))]
+[Migration("20260831010000_AddAiHomeCacheMinutes")]
 public partial class AddAiHomeCacheMinutes : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
