@@ -13,5 +13,6 @@ public sealed class AiSettingsViewModel
     [Range(10,600)] public int TimeoutSeconds { get; set; } = 120;
     [Required] public string SystemPrompt { get; set; } = string.Empty;
     [Required, StringLength(500)] public string HomePrompt { get; set; } = string.Empty;
+    [Range(1,10080)] public int HomeCacheMinutes { get; set; } = 60;
     public bool HasApiKey { get; set; }
 }
