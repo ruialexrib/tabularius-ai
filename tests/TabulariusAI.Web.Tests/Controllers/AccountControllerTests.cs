@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -62,7 +62,7 @@ public sealed class AccountControllerTests
     [Fact] public async Task AccessDenied_ReturnsView(){await using var db=new TestDatabase();await using var id=new TestIdentityServices(db.Context);Assert.IsType<ViewResult>(CreateController(id).AccessDenied());}
 
     /// <summary>Creates an account controller sharing the Identity HTTP and MVC routing context.</summary>
-    private static AccountController CreateController(TestIdentityServices identity,ApplicationUser? currentUser=null,IConfiguration? configuration=null){var context=identity.HttpContext;context.User=currentUser is null?new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity()):new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]{new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier,currentUser.Id)},"Tests"));configuration??=new ConfigurationBuilder().AddInMemoryCollection().Build();var actionContext=new ActionContext(context,new RouteData(),new ActionDescriptor());var controller=new AccountController(identity.SignInManager,identity.UserManager,configuration){ControllerContext=new ControllerContext(actionContext)};controller.TempData=new TempDataDictionary(context,new TestTempDataProvider());return controller;}
+    private static AccountController CreateController(TestIdentityServices identity,ApplicationUser? currentUser=null,IConfiguration? configuration=null){var context=identity.HttpContext;context.User=currentUser is null?new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity()):new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]{new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier,currentUser.Id)},"Tests"));configuration??=new ConfigurationBuilder().AddInMemoryCollection().Build();var actionContext=new ActionContext(context,new RouteData(),new ControllerActionDescriptor());var controller=new AccountController(identity.SignInManager,identity.UserManager,configuration){ControllerContext=new ControllerContext(actionContext)};controller.TempData=new TempDataDictionary(context,new TestTempDataProvider());return controller;}
     /// <summary>Creates configuration with Google authentication enabled.</summary>
     private static IConfiguration GoogleConfiguration()=>new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>{{"Authentication:Google:ClientId","client"},{"Authentication:Google:ClientSecret","secret"}}).Build();
     /// <summary>Provides isolated TempData storage.</summary>
