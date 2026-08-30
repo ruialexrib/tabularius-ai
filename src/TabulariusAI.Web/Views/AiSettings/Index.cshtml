@@ -1,5 +1,50 @@
 @model TabulariusAI.Web.Models.AiSettingsViewModel
 @{ViewData["Title"]="Inteligência Artificial";}
-<div class="page-title"><div><span class="eyebrow">Administração</span><h1>Inteligência Artificial</h1><p>Configure o modelo utilizado pelo assistente e as instruções que regulam as respostas.</p></div></div>
-@if(TempData["AiSettingsSaved"] is string message){<div class="alert alert-success">@message</div>}
-<form method="post" class="form-card"><div asp-validation-summary="ModelOnly" class="text-danger"></div><label><input asp-for="IsEnabled"/> Ativar assistente AI</label><div class="form-grid"><div><label asp-for="Provider">Provider</label><select asp-for="Provider"><option>Ollama</option><option>Mistral</option></select></div><div><label asp-for="Model">Modelo</label><input asp-for="Model"/></div><div><label asp-for="Endpoint">Endpoint</label><input asp-for="Endpoint"/></div><div><label asp-for="TimeoutSeconds">Timeout (segundos)</label><input asp-for="TimeoutSeconds"/></div><div><label asp-for="Temperature">Temperatura</label><input asp-for="Temperature" step="0.1"/></div><div><label asp-for="ApiKey">API key</label><input asp-for="ApiKey" placeholder="@(Model.HasApiKey?"Configurada — deixe vazio para manter":"Necessária para Mistral")" autocomplete="new-password"/></div></div><div><label asp-for="SystemPrompt">System prompt</label><textarea asp-for="SystemPrompt" rows="12"></textarea><span asp-validation-for="SystemPrompt" class="text-danger"></span></div><div class="form-actions"><button class="btn btn-primary" type="submit">Guardar definições</button></div></form>
+<div class="ai-settings-page">
+  <div class="ai-settings-card">
+    <section class="ai-settings-main">
+      <div class="ai-settings-heading">
+        <div class="ai-settings-icon">AI</div>
+        <div>
+          <span class="eyebrow">Administração</span>
+          <h1>Inteligência Artificial</h1>
+          <p>Configure o modelo, o fornecedor e as instruções utilizadas pelo assistente do Tabularius AI.</p>
+        </div>
+      </div>
+      @if(TempData["AiSettingsSaved"] is string message){<div class="ai-settings-success"><span>✓</span><div><strong>Definições atualizadas</strong><small>@message</small></div></div>}
+      <form method="post" class="ai-settings-form">
+        <div asp-validation-summary="ModelOnly" class="ai-settings-errors"></div>
+        <section class="ai-settings-section">
+          <div class="ai-settings-section-title"><span>01</span><div><strong>Estado do assistente</strong><small>Controle se as funcionalidades de inteligência artificial estão disponíveis.</small></div></div>
+          <label class="ai-toggle"><input asp-for="IsEnabled"/><span class="ai-toggle-track"><span></span></span><span><strong>Ativar assistente AI</strong><small>Permitir consultas aos dados através do modelo configurado.</small></span></label>
+        </section>
+        <section class="ai-settings-section">
+          <div class="ai-settings-section-title"><span>02</span><div><strong>Modelo e fornecedor</strong><small>Escolha entre execução local com Ollama ou um modelo remoto através da Mistral.</small></div></div>
+          <div class="ai-settings-grid">
+            <div class="ai-field"><label asp-for="Provider">Fornecedor</label><select asp-for="Provider"><option>Ollama</option><option>Mistral</option></select><small>Infraestrutura utilizada para executar o modelo.</small></div>
+            <div class="ai-field"><label asp-for="Model">Modelo</label><input asp-for="Model" placeholder="Ex.: mistral-small ou qwen3:8b"/><small>Nome exato do modelo disponível no fornecedor.</small></div>
+            <div class="ai-field ai-field-wide"><label asp-for="Endpoint">Endpoint</label><input asp-for="Endpoint" placeholder="http://localhost:11434/v1"/><small>URL base da API compatível com o fornecedor selecionado.</small></div>
+            <div class="ai-field"><label asp-for="Temperature">Temperatura</label><input asp-for="Temperature" step="0.1" min="0" max="2"/><small>Valores baixos favorecem respostas mais determinísticas.</small></div>
+            <div class="ai-field"><label asp-for="TimeoutSeconds">Timeout</label><div class="ai-input-suffix"><input asp-for="TimeoutSeconds"/><span>seg.</span></div><small>Tempo máximo de espera por uma resposta do modelo.</small></div>
+          </div>
+        </section>
+        <section class="ai-settings-section">
+          <div class="ai-settings-section-title"><span>03</span><div><strong>Autenticação</strong><small>Credenciais necessárias apenas para fornecedores remotos.</small></div></div>
+          <div class="ai-field"><label asp-for="ApiKey">API key</label><input asp-for="ApiKey" type="password" placeholder="@(Model.HasApiKey?"Chave configurada — deixe vazio para manter":"Introduza a chave da API")" autocomplete="new-password"/><small>@(Model.HasApiKey?"Existe uma chave configurada. Só será substituída se introduzir uma nova.":"Ollama local não necessita normalmente de uma API key.")</small></div>
+        </section>
+        <section class="ai-settings-section">
+          <div class="ai-settings-section-title"><span>04</span><div><strong>System prompt</strong><small>Defina as regras permanentes de comportamento do assistente.</small></div></div>
+          <div class="ai-prompt-wrap"><div class="ai-prompt-toolbar"><span>Instruções do sistema</span><span>PT-PT</span></div><textarea asp-for="SystemPrompt" rows="13" spellcheck="true"></textarea></div>
+          <span asp-validation-for="SystemPrompt" class="field-validation-error"></span>
+          <div class="ai-prompt-note"><span>i</span><p><strong>O modelo não deve calcular nem inventar dados.</strong><small>Os valores contabilísticos são obtidos através das tools do Tabularius AI e entregues ao modelo como contexto controlado.</small></p></div>
+        </section>
+        <div class="ai-settings-actions"><button class="btn btn-primary" type="submit">Guardar definições</button></div>
+      </form>
+    </section>
+    <aside class="ai-settings-aside">
+      <span class="ai-aside-label">Configuração AI</span><h2>Modelo desacoplado dos dados.</h2><p>O assistente comunica com os dados persistidos exclusivamente através de tools controladas pela aplicação.</p>
+      <div class="ai-provider-flow"><div><span>1</span><p><strong>Utilizador</strong><small>Faz uma pergunta sobre o dossier.</small></p></div><i></i><div><span>2</span><p><strong>Modelo AI</strong><small>Seleciona a tool necessária.</small></p></div><i></i><div><span>3</span><p><strong>Tabularius</strong><small>Consulta e devolve dados reais.</small></p></div></div>
+      <div class="ai-aside-status"><span class="ai-status-dot"></span><div><strong>@(Model.IsEnabled?"Assistente ativo":"Assistente inativo")</strong><small>@Model.Provider · @Model.Model</small></div></div>
+    </aside>
+  </div>
+</div>
