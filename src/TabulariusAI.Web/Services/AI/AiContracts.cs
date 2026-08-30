@@ -21,5 +21,5 @@ public interface IAiTool
 
 public interface IAiAssistantService
 {
-    Task<string> AskAsync(int dossierId, string question, CancellationToken cancellationToken);
+    Task<string> AskAsync(int dossierId, string question, IReadOnlyList<AiMessage>? history, CancellationToken cancellationToken);
 }
