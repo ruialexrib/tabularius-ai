@@ -16,6 +16,7 @@ public sealed class SaftImport
     public ICollection<SaftCustomer> Customers { get; } = new List<SaftCustomer>();
     public ICollection<SaftSupplier> Suppliers { get; } = new List<SaftSupplier>();
     public ICollection<SaftProduct> Products { get; } = new List<SaftProduct>();
+    public ICollection<SaftTaxEntry> TaxEntries { get; } = new List<SaftTaxEntry>();
     public ICollection<SaftTransaction> Transactions { get; } = new List<SaftTransaction>();
     public ICollection<SaftSalesInvoice> SalesInvoices { get; } = new List<SaftSalesInvoice>();
     public ICollection<SaftStockMovement> StockMovements { get; } = new List<SaftStockMovement>();
