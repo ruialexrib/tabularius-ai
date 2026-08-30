@@ -3,30 +3,7 @@ namespace TabulariusAI.Web.Models;
 /// <summary>Represents the SAF-T (PT) header and structural summary displayed after a successful file analysis.</summary>
 public sealed class SaftHeaderViewModel
 {
-    public string SaftVersion { get; set; } = string.Empty;
-    public string TaxRegistrationNumber { get; set; } = string.Empty;
-    public string CompanyName { get; set; } = string.Empty;
-    public string FiscalYear { get; set; } = string.Empty;
-    public string StartDate { get; set; } = string.Empty;
-    public string EndDate { get; set; } = string.Empty;
-    public string ProductId { get; set; } = string.Empty;
-    public string ProductVersion { get; set; } = string.Empty;
-    public int AccountCount { get; set; }
-    public int CustomerCount { get; set; }
-    public int SupplierCount { get; set; }
-    public int ProductCount { get; set; }
-    public int TaxEntryCount { get; set; }
-    public int TransactionCount { get; set; }
-    public int SalesInvoiceCount { get; set; }
-    public int MovementOfGoodsCount { get; set; }
-    public int WorkingDocumentCount { get; set; }
-    public int PaymentCount { get; set; }
-    public IList<SaftAccountViewModel> Accounts { get; } = new List<SaftAccountViewModel>();
-    public IList<SaftPartyViewModel> Customers { get; } = new List<SaftPartyViewModel>();
-    public IList<SaftPartyViewModel> Suppliers { get; } = new List<SaftPartyViewModel>();
-    public IList<SaftProductViewModel> Products { get; } = new List<SaftProductViewModel>();
-    public IList<SaftTaxEntryViewModel> TaxEntries { get; } = new List<SaftTaxEntryViewModel>();
-    public IList<SaftTransactionViewModel> Transactions { get; } = new List<SaftTransactionViewModel>();
-    public IList<SaftSalesInvoiceViewModel> SalesInvoices { get; } = new List<SaftSalesInvoiceViewModel>();
-    public IList<SaftStockMovementViewModel> StockMovements { get; } = new List<SaftStockMovementViewModel>();
+    public string SaftVersion { get; set; } = string.Empty; public string TaxRegistrationNumber { get; set; } = string.Empty; public string CompanyName { get; set; } = string.Empty; public string FiscalYear { get; set; } = string.Empty; public string StartDate { get; set; } = string.Empty; public string EndDate { get; set; } = string.Empty; public string ProductId { get; set; } = string.Empty; public string ProductVersion { get; set; } = string.Empty;
+    public int AccountCount { get; set; } public int CustomerCount { get; set; } public int SupplierCount { get; set; } public int ProductCount { get; set; } public int TaxEntryCount { get; set; } public int TransactionCount { get; set; } public int SalesInvoiceCount { get; set; } public int MovementOfGoodsCount { get; set; } public int WorkingDocumentCount { get; set; } public int PaymentCount { get; set; }
+    public IList<SaftAccountViewModel> Accounts { get; } = new List<SaftAccountViewModel>(); public IList<SaftPartyViewModel> Customers { get; } = new List<SaftPartyViewModel>(); public IList<SaftPartyViewModel> Suppliers { get; } = new List<SaftPartyViewModel>(); public IList<SaftProductViewModel> Products { get; } = new List<SaftProductViewModel>(); public IList<SaftTaxEntryViewModel> TaxEntries { get; } = new List<SaftTaxEntryViewModel>(); public IList<SaftTransactionViewModel> Transactions { get; } = new List<SaftTransactionViewModel>(); public IList<SaftSalesInvoiceViewModel> SalesInvoices { get; } = new List<SaftSalesInvoiceViewModel>(); public IList<SaftStockMovementViewModel> StockMovements { get; } = new List<SaftStockMovementViewModel>(); public IList<SaftWorkingDocumentViewModel> WorkingDocuments { get; } = new List<SaftWorkingDocumentViewModel>();
 }
