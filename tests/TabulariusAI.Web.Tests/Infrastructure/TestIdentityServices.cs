@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using TabulariusAI.Web.Data;
 using TabulariusAI.Web.Data.Identity;
@@ -20,6 +21,7 @@ public sealed class TestIdentityServices : IAsyncDisposable
         this.context = context;
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddMvcCore();
         services.AddSingleton(context);
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
@@ -51,6 +53,9 @@ public sealed class TestIdentityServices : IAsyncDisposable
 
     /// <summary>Gets the configured application sign-in manager.</summary>
     public SignInManager<ApplicationUser> SignInManager => provider.GetRequiredService<SignInManager<ApplicationUser>>();
+
+    /// <summary>Ensures an application role exists in the relational test database.</summary>
+    public Task EnsureRoleExistsAsync(string role) => EnsureRoleAsync(role);
 
     /// <summary>Creates a valid application user with the supplied credentials, including the bootstrap temporary credential used by production initialization.</summary>
     public async Task<ApplicationUser> CreateUserAsync(string userName, string password, string role = ApplicationRoles.User)
