@@ -20,6 +20,11 @@ public sealed class AccountingAnomalyService(TabulariusDbContext dbContext)
             .Where(x => x.SaftTransaction.SaftImportId == importId)
             .Select(x => new LineData(x.SaftTransactionId, x.RecordId, x.AccountId, x.Side, x.Amount))
             .ToListAsync(ct);
+        var accountIds = (await dbContext.SaftAccounts.AsNoTracking()
+            .Where(x => x.SaftImportId == importId)
+            .Select(x => x.AccountId)
+            .ToListAsync(ct))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var findings = new List<AccountingAnomaly>();
         AddUnbalancedTransactions(findings, transactions, lines);
@@ -27,6 +32,7 @@ public sealed class AccountingAnomalyService(TabulariusDbContext dbContext)
         AddInvalidSides(findings, lines);
         AddDuplicateTransactionIds(findings, transactions);
         AddOutOfPeriodDates(findings, transactions, startDate, endDate);
+        AddUnknownAccounts(findings, lines, accountIds);
         return findings.OrderBy(x => SeverityRank(x.Severity)).ThenBy(x => x.RuleId).ThenBy(x => x.Reference).ToList();
     }
 
@@ -62,6 +68,13 @@ public sealed class AccountingAnomalyService(TabulariusDbContext dbContext)
     {
         if (!startDate.HasValue || !endDate.HasValue) return;
         findings.AddRange(transactions.Where(x => x.Date < startDate.Value || x.Date > endDate.Value).Select(x => new AccountingAnomaly("ACC-005", "Alta", "Data fora do período", x.TransactionId, $"O lançamento tem data {x.Date:dd/MM/yyyy}, fora do período SAF-T (PT) {startDate:dd/MM/yyyy} — {endDate:dd/MM/yyyy}.", null, x.Id)));
+    }
+
+    private static void AddUnknownAccounts(List<AccountingAnomaly> findings, IEnumerable<LineData> lines, IReadOnlySet<string> accountIds)
+    {
+        findings.AddRange(lines
+            .Where(x => !string.IsNullOrWhiteSpace(x.AccountId) && !accountIds.Contains(x.AccountId))
+            .Select(x => new AccountingAnomaly("ACC-006", "Alta", "Conta inexistente no plano", x.RecordId, $"A linha referencia a conta {x.AccountId}, que não existe no plano de contas desta fonte SAF-T (PT).", null, x.TransactionLocalId)));
     }
 
     private static int SeverityRank(string severity) => severity == "Alta" ? 0 : severity == "Média" ? 1 : 2;
