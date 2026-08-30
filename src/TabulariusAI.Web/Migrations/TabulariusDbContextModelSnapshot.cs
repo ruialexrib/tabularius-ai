@@ -260,6 +260,10 @@ namespace TabulariusAI.Web.Migrations
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("VatAnalysisPrompt")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("AiSettings");
