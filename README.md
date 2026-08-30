@@ -67,20 +67,6 @@ dotnet run --project src/TabulariusAI.Web
 
 The application stores local data in the SQLite database at `data/tabularius.db`.
 
-A self-contained Windows build can also be created with:
-
-```bat
-publish-local.bat
-```
-
-The published application is created in:
-
-```text
-artifacts\publish\win-x64\
-```
-
-Run `TabulariusAI.Web.exe`. The application starts the local web server and opens the default browser automatically.
-
 ### Server mode — multi-user with Docker
 
 For shared use, Tabularius AI can run with **Docker Compose**. This deployment uses the ASP.NET Core application and SQL Server 2022 Express as separate containers.
@@ -124,12 +110,6 @@ Open:
 http://localhost:8080
 ```
 
-On Windows, the stack can also be started with:
-
-```bat
-start-docker.bat
-```
-
 SQL Server data and application logs are stored in persistent Docker volumes.
 
 ### Default credentials
@@ -148,6 +128,8 @@ The initial password is temporary. The application requires it to be changed bef
 ## Artificial Intelligence
 
 AI functionality is optional. When configured, it can be used to interact with dossier data and generate contextual interpretations of indicators presented throughout the analytical areas.
+
+Tabularius AI can use **local language models through Ollama**, keeping model execution on infrastructure controlled by the user, or connect to **remote AI providers and models** when cloud-based inference is preferred. This allows the AI layer to be adapted to different privacy, infrastructure, performance, and cost requirements.
 
 The architecture keeps a clear separation between deterministic accounting calculations and generative AI:
 
