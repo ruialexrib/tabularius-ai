@@ -12,5 +12,6 @@ public sealed class AiSettingsViewModel
     [Range(0,2)] public decimal Temperature { get; set; } = 0.1m;
     [Range(10,600)] public int TimeoutSeconds { get; set; } = 120;
     [Required] public string SystemPrompt { get; set; } = string.Empty;
+    [Required, StringLength(500)] public string HomePrompt { get; set; } = string.Empty;
     public bool HasApiKey { get; set; }
 }
