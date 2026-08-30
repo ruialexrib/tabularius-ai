@@ -18,7 +18,7 @@ public sealed class AiAssistantService(TabulariusDbContext dbContext,IEnumerable
         {
             var result=await provider.CompleteAsync(settings.Endpoint,settings.Model,settings.ApiKey,settings.Temperature,settings.SystemPrompt,messages,toolList.Select(item=>item.Definition).ToArray(),cancellationToken);
             if(result.ToolCalls.Count==0) return string.IsNullOrWhiteSpace(result.Content)?"O modelo não devolveu uma resposta.":result.Content;
-            if(!string.IsNullOrWhiteSpace(result.Content)) messages.Add(new("assistant",result.Content));
+            messages.Add(new("assistant",result.Content??string.Empty,ToolCalls:result.ToolCalls));
             foreach(var call in result.ToolCalls)
             {
                 var tool=toolList.SingleOrDefault(item=>item.Definition.Name==call.Name) ?? throw new InvalidOperationException($"O modelo tentou utilizar uma tool não autorizada: {call.Name}.");
