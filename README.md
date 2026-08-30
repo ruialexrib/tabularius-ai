@@ -25,7 +25,7 @@ Accounting calculations are deterministic. Artificial Intelligence is optional a
 
 For normal desktop use, download the latest Windows installer. No .NET SDK, SQL Server, or Docker setup is required.
 
-[**Download Windows Installer (.exe)**](https://github.com/ruialexrib/tabularius-ai/releases/latest/download/TabulariusAI-Setup-0.2.2.exe) · [View all releases](https://github.com/ruialexrib/tabularius-ai/releases)
+[**Download Windows Installer (.exe)**](https://github.com/ruialexrib/tabularius-ai/releases/latest/download/TabulariusAI-Setup-0.3.0.exe) · [View all releases](https://github.com/ruialexrib/tabularius-ai/releases)
 
 </div>
 
