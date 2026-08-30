@@ -1,0 +1,5 @@
+@model TabulariusAI.Web.Models.AiChatViewModel
+@{ViewData["Title"]="Assistente AI";}
+<div class="page-title"><div><span class="eyebrow">@Model.DossierName</span><h1>Assistente AI</h1><p>Faça perguntas sobre os dados persistidos do dossier. O modelo utiliza tools controladas pelo Tabularius AI para consultar informação.</p></div></div>
+<div class="form-card"><form asp-action="Ask" method="post"><input asp-for="DossierId" type="hidden"/><div asp-validation-summary="ModelOnly" class="text-danger"></div><label asp-for="Question">Pergunta</label><textarea asp-for="Question" rows="4" placeholder="Ex.: Resume os dados disponíveis neste dossier."></textarea><span asp-validation-for="Question" class="text-danger"></span><div class="form-actions"><button class="btn btn-primary" type="submit">Perguntar ao assistente</button></div></form></div>
+@if(!string.IsNullOrWhiteSpace(Model.Answer)){<section class="form-card"><span class="eyebrow">Resposta</span><div style="white-space:pre-wrap">@Model.Answer</div></section>}
