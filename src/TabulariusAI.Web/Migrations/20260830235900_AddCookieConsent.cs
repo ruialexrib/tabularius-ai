@@ -11,17 +11,11 @@ namespace TabulariusAI.Web.Migrations;
 [Migration("20260830235900_AddCookieConsent")]
 public partial class AddCookieConsent : Migration
 {
-    /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.AddColumn<DateTimeOffset>(
-            name: "CookieConsentAcceptedAt",
-            table: "AspNetUsers",
-            type: "datetimeoffset",
-            nullable: true);
+        migrationBuilder.AddColumn<DateTimeOffset>(name: "CookieConsentAcceptedAt", table: "AspNetUsers", nullable: true);
     }
 
-    /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropColumn(name: "CookieConsentAcceptedAt", table: "AspNetUsers");
