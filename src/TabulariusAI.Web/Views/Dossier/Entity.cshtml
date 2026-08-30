@@ -5,7 +5,6 @@
     var hasFilters = !string.IsNullOrWhiteSpace(list.Search);
 }
 <section class="page-header"><div><p class="eyebrow">Entidade</p><h1>@Model.Entity.Name</h1><p class="lead">NIF @Model.Entity.TaxRegistrationNumber · Selecione o exercício contabilístico que pretende analisar.</p></div><a class="btn btn-secondary" asp-action="Entities">Voltar às entidades</a></section>
-@if (TempData["SuccessMessage"] is string successMessage) { <div class="status-message status-success">@successMessage</div> }
 <section class="list-workspace">
     <div class="list-toolbar">
         <form method="get" class="list-filter-form">
