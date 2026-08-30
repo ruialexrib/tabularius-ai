@@ -15,6 +15,7 @@ public sealed class SaftHeaderViewModel
     public int CustomerCount { get; set; }
     public int SupplierCount { get; set; }
     public int ProductCount { get; set; }
+    public int TaxEntryCount { get; set; }
     public int TransactionCount { get; set; }
     public int SalesInvoiceCount { get; set; }
     public int MovementOfGoodsCount { get; set; }
@@ -24,6 +25,7 @@ public sealed class SaftHeaderViewModel
     public IList<SaftPartyViewModel> Customers { get; } = new List<SaftPartyViewModel>();
     public IList<SaftPartyViewModel> Suppliers { get; } = new List<SaftPartyViewModel>();
     public IList<SaftProductViewModel> Products { get; } = new List<SaftProductViewModel>();
+    public IList<SaftTaxEntryViewModel> TaxEntries { get; } = new List<SaftTaxEntryViewModel>();
     public IList<SaftTransactionViewModel> Transactions { get; } = new List<SaftTransactionViewModel>();
     public IList<SaftSalesInvoiceViewModel> SalesInvoices { get; } = new List<SaftSalesInvoiceViewModel>();
     public IList<SaftStockMovementViewModel> StockMovements { get; } = new List<SaftStockMovementViewModel>();
