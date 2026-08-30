@@ -184,6 +184,63 @@ namespace TabulariusAI.Web.Migrations
                     b.ToTable("AccountingEntities");
                 });
 
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.AiSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApiKey")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("HomeCacheMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("HomePrompt")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("SystemPrompt")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Temperature")
+                        .HasPrecision(3, 2)
+                        .HasColumnType("decimal(3,2)");
+
+                    b.Property<int>("TimeoutSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AiSettings");
+                });
+
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.AnalysisDossier", b =>
                 {
                     b.Property<int>("Id")
@@ -348,6 +405,116 @@ namespace TabulariusAI.Web.Migrations
                     b.ToTable("SaftImports");
                 });
 
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CustomerId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("GrossTotal")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<decimal>("NetTotal")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<string>("PaymentRefNo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("PaymentType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("SaftImportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("SystemEntryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TaxPayable")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<DateOnly>("TransactionDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaftImportId", "PaymentRefNo")
+                        .IsUnique();
+
+                    b.HasIndex("SaftImportId", "TransactionDate");
+
+                    b.ToTable("SaftPayments");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftPaymentLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CreditAmount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<decimal>("DebitAmount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateOnly?>("InvoiceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("LineNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OriginatingOn")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SaftPaymentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaftPaymentId", "LineNumber")
+                        .IsUnique();
+
+                    b.ToTable("SaftPaymentLines");
+                });
+
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftProduct", b =>
                 {
                     b.Property<int>("Id")
@@ -445,8 +612,6 @@ namespace TabulariusAI.Web.Migrations
                         .HasColumnType("decimal(19,4)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SaftImportId", "InvoiceDate");
 
                     b.HasIndex("SaftImportId", "InvoiceNo")
                         .IsUnique();
@@ -574,8 +739,6 @@ namespace TabulariusAI.Web.Migrations
                     b.HasIndex("SaftImportId", "DocumentNumber")
                         .IsUnique();
 
-                    b.HasIndex("SaftImportId", "MovementDate");
-
                     b.ToTable("SaftStockMovements");
                 });
 
@@ -665,6 +828,55 @@ namespace TabulariusAI.Web.Migrations
                     b.ToTable("SaftSuppliers");
                 });
 
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftTaxEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("SaftImportId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("TaxAmount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<string>("TaxCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TaxCountryRegion")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateOnly?>("TaxExpirationDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("TaxPercentage")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<string>("TaxType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaftImportId");
+
+                    b.ToTable("SaftTaxEntries");
+                });
+
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftTransaction", b =>
                 {
                     b.Property<int>("Id")
@@ -729,10 +941,6 @@ namespace TabulariusAI.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SaftImportId", "JournalId");
-
-                    b.HasIndex("SaftImportId", "TransactionDate");
-
                     b.HasIndex("SaftImportId", "TransactionId")
                         .IsUnique();
 
@@ -784,12 +992,143 @@ namespace TabulariusAI.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
                     b.HasIndex("SaftTransactionId", "RecordId")
                         .IsUnique();
 
                     b.ToTable("SaftTransactionLines");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftWorkingDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CustomerId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DocumentNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("DocumentStatus")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<decimal>("GrossTotal")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<decimal>("NetTotal")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<int>("SaftImportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("SystemEntryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TaxPayable")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("WorkType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaftImportId", "DocumentNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SaftImportId", "WorkDate");
+
+                    b.ToTable("SaftWorkingDocuments");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftWorkingDocumentLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CreditAmount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<decimal>("DebitAmount")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<string>("LineNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ProductCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ProductDescription")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.Property<int>("SaftWorkingDocumentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TaxCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("TaxPercentage")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<DateOnly?>("TaxPointDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TaxType")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(19, 4)
+                        .HasColumnType("decimal(19,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaftWorkingDocumentId", "LineNumber")
+                        .IsUnique();
+
+                    b.ToTable("SaftWorkingDocumentLines");
                 });
 
             modelBuilder.Entity("TabulariusAI.Web.Data.Identity.ApplicationUser", b =>
@@ -963,6 +1302,28 @@ namespace TabulariusAI.Web.Migrations
                     b.Navigation("Dossier");
                 });
 
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftPayment", b =>
+                {
+                    b.HasOne("TabulariusAI.Web.Data.Entities.SaftImport", "SaftImport")
+                        .WithMany("Payments")
+                        .HasForeignKey("SaftImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SaftImport");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftPaymentLine", b =>
+                {
+                    b.HasOne("TabulariusAI.Web.Data.Entities.SaftPayment", "SaftPayment")
+                        .WithMany("Lines")
+                        .HasForeignKey("SaftPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SaftPayment");
+                });
+
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftProduct", b =>
                 {
                     b.HasOne("TabulariusAI.Web.Data.Entities.SaftImport", "SaftImport")
@@ -1029,6 +1390,17 @@ namespace TabulariusAI.Web.Migrations
                     b.Navigation("SaftImport");
                 });
 
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftTaxEntry", b =>
+                {
+                    b.HasOne("TabulariusAI.Web.Data.Entities.SaftImport", "SaftImport")
+                        .WithMany("TaxEntries")
+                        .HasForeignKey("SaftImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SaftImport");
+                });
+
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftTransaction", b =>
                 {
                     b.HasOne("TabulariusAI.Web.Data.Entities.SaftImport", "SaftImport")
@@ -1051,6 +1423,28 @@ namespace TabulariusAI.Web.Migrations
                     b.Navigation("SaftTransaction");
                 });
 
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftWorkingDocument", b =>
+                {
+                    b.HasOne("TabulariusAI.Web.Data.Entities.SaftImport", "SaftImport")
+                        .WithMany("WorkingDocuments")
+                        .HasForeignKey("SaftImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SaftImport");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftWorkingDocumentLine", b =>
+                {
+                    b.HasOne("TabulariusAI.Web.Data.Entities.SaftWorkingDocument", "SaftWorkingDocument")
+                        .WithMany("Lines")
+                        .HasForeignKey("SaftWorkingDocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SaftWorkingDocument");
+                });
+
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.AccountingEntity", b =>
                 {
                     b.Navigation("Dossiers");
@@ -1067,6 +1461,8 @@ namespace TabulariusAI.Web.Migrations
 
                     b.Navigation("Customers");
 
+                    b.Navigation("Payments");
+
                     b.Navigation("Products");
 
                     b.Navigation("SalesInvoices");
@@ -1075,7 +1471,16 @@ namespace TabulariusAI.Web.Migrations
 
                     b.Navigation("Suppliers");
 
+                    b.Navigation("TaxEntries");
+
                     b.Navigation("Transactions");
+
+                    b.Navigation("WorkingDocuments");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftPayment", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftSalesInvoice", b =>
@@ -1089,6 +1494,11 @@ namespace TabulariusAI.Web.Migrations
                 });
 
             modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftTransaction", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("TabulariusAI.Web.Data.Entities.SaftWorkingDocument", b =>
                 {
                     b.Navigation("Lines");
                 });
