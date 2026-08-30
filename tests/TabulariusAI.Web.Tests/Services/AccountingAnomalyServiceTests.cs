@@ -24,7 +24,7 @@ public sealed class AccountingAnomalyServiceTests
     }
 
     [Fact]
-    public async Task EvaluateAsync_DetectsAllFiveAccountingRules()
+    public async Task EvaluateAsync_DetectsAllSixAccountingRules()
     {
         await using var fixture = await TestFixture.CreateAsync();
         var unbalanced = fixture.AddTransaction("TX-DUP", new DateOnly(2026, 5, 10));
@@ -38,6 +38,9 @@ public sealed class AccountingAnomalyServiceTests
         var outside = fixture.AddTransaction("TX-OUTSIDE", new DateOnly(2027, 1, 1));
         fixture.AddLine(outside, "6", "1111", "D", 20m);
         fixture.AddLine(outside, "7", "1211", "C", 20m);
+        var unknownAccount = fixture.AddTransaction("TX-UNKNOWN", new DateOnly(2026, 8, 1));
+        fixture.AddLine(unknownAccount, "8", "9999", "D", 30m);
+        fixture.AddLine(unknownAccount, "9", "1211", "C", 30m);
         await fixture.Db.SaveChangesAsync();
 
         var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
@@ -48,6 +51,8 @@ public sealed class AccountingAnomalyServiceTests
         Assert.Contains("ACC-003", rules);
         Assert.Contains("ACC-004", rules);
         Assert.Contains("ACC-005", rules);
+        Assert.Contains("ACC-006", rules);
+        Assert.Contains(findings, x => x.RuleId == "ACC-006" && x.Reference == "8" && x.TransactionId == unknownAccount.Id);
         Assert.All(findings, finding => Assert.False(string.IsNullOrWhiteSpace(finding.Reference)));
     }
 
@@ -64,7 +69,7 @@ public sealed class AccountingAnomalyServiceTests
         var invalidOther = new SaftTransaction { SaftImportId = otherImport.Id, JournalId = "G", TransactionId = "OTHER", Period = 1, TransactionDate = new DateOnly(2026, 4, 1), SourceId = "test", Description = "Other import", TransactionType = "N", GlPostingDate = new DateOnly(2026, 4, 1) };
         fixture.Db.SaftTransactions.Add(invalidOther);
         await fixture.Db.SaveChangesAsync();
-        fixture.Db.SaftTransactionLines.Add(new SaftTransactionLine { SaftTransactionId = invalidOther.Id, RecordId = "O1", AccountId = "1111", Description = "Invalid", Side = "X", Amount = -99m });
+        fixture.Db.SaftTransactionLines.Add(new SaftTransactionLine { SaftTransactionId = invalidOther.Id, RecordId = "O1", AccountId = "9999", Description = "Invalid", Side = "X", Amount = -99m });
         await fixture.Db.SaveChangesAsync();
 
         var findings = await new AccountingAnomalyService(fixture.Db).EvaluateAsync(fixture.Import.Id, fixture.Import.StartDate, fixture.Import.EndDate);
@@ -106,6 +111,10 @@ public sealed class AccountingAnomalyServiceTests
             db.AnalysisDossiers.Add(dossier); await db.SaveChangesAsync();
             var import = new SaftImport { DossierId = dossier.Id, OriginalFileName = "synthetic.xml", SaftVersion = "1.04_01", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31), ImportedAtUtc = DateTime.UtcNow };
             db.SaftImports.Add(import); await db.SaveChangesAsync();
+            db.SaftAccounts.AddRange(
+                new SaftAccount { SaftImportId = import.Id, AccountId = "1111", Description = "Cash" },
+                new SaftAccount { SaftImportId = import.Id, AccountId = "1211", Description = "Bank" });
+            await db.SaveChangesAsync();
             return new TestFixture(connection, db, import);
         }
 
