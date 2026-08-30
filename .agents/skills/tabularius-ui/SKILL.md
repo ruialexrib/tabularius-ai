@@ -1,26 +1,29 @@
 ---
 name: tabularius-ui
-description: Implement Tabularius AI Razor and CSS interfaces using the established Denarius-inspired visual direction and consistent analytical UI patterns.
+description: Implement Tabularius AI Razor and CSS interfaces using the established professional visual direction and consistent analytical UI patterns.
 ---
 
 # Tabularius AI UI
 
 Use this skill for Razor views, layouts, navigation, dashboards, tables, filters, forms and responsive behavior.
 
-## Denarius visual reference
+## Visual identity
 
-Tabularius AI must remain visually consistent with Denarius AI while keeping its own SAF-T (PT) accounting-analysis identity. When visual details are uncertain, inspect the current Denarius AI UI and shared CSS before inventing a new pattern.
+Tabularius AI may reuse proven interaction patterns from Denarius AI, but has its own visual identity. The primary application accent is purple/violet, not green.
 
-Preserve these established Denarius characteristics:
-- Application shell with dark navy top bar/sidebar and light content workspace.
-- Core palette: navy `#111b2e`, secondary navy `#19263e`, emerald `#34d399`, primary green `#159a70`, green text `#087f5b`, ink `#172033`, muted `#687386`, borders `#e5e9f0`, background `#f5f7fb`.
-- White panels with subtle borders, 14-16 px radii and restrained shadows.
-- Compact analytical headers, controls with emerald focus rings, compact tables and semantic status states.
+Preserve these established characteristics:
+- Application shell with dark purple top bar/sidebar and light content workspace.
+- Primary palette: dark purple `#241a35`, violet `#6d28d9`, focus violet `#7c3aed`, light violet `#a78bfa` / `#c4b5fd`, ink `#172033`, muted `#687386`, light borders and neutral backgrounds.
+- Green is reserved for semantic positive/success states. Never use green as a generic interaction, navigation, focus, action, form or identity color.
+- White panels with subtle borders, 14-18 px radii and restrained shadows.
+- Compact analytical headers, controls with violet focus rings, compact tables and semantic status states.
 - Keep the interface visually quiet and appropriate to professional accounting software.
+- The login page uses a purple gradient only on the left brand panel; the right form area remains neutral/light.
+- Sidebar navigation options include compact icons aligned consistently with their labels.
 
 ## Standard list workspace
 
-All current and future list pages must use the shared Denarius-inspired list language implemented by `lists.css` and the paginated list view models.
+All current and future list pages must use the shared list language implemented by `lists.css`, `table-actions.css` and the paginated list view models.
 
 - Lists occupy the full useful width between the sidebar and the content margin. Never constrain operational lists with an arbitrary `max-width`.
 - Place a filter toolbar at the top of the list surface. Free-text search is the baseline; add domain-specific filters when useful.
@@ -33,7 +36,16 @@ All current and future list pages must use the shared Denarius-inspired list lan
 - Empty filtered results must say that no records match the selected filters; a genuinely empty dataset may use a richer onboarding empty state.
 - SAF-T source-dependent lists place the shared source selector above the list filter toolbar and preserve `importId` across filtering and pagination.
 - Table headers remain compact and muted; rows use subtle separators and hover states. Horizontal scrolling is allowed only when real column requirements exceed available width.
-- New list areas such as Products, Movements, Documents and Taxes must adopt this standard rather than inventing page-specific list structures.
+- Row actions must share the same visual pattern across all lists. Destructive actions remain semantically red, but use the same sizing, spacing and action structure as other row actions.
+- `Ver linhas`, pagination, totals, user-menu interactions and generic list actions use the violet accent rather than green.
+
+## Forms and detail pages
+
+- All forms and detail/edit surfaces use the purple/violet accent for icons, focus states, helper panels, badges and interactive borders.
+- Before completing a form-related change, check for page-specific CSS containing legacy hardcoded green values and replace identity greens with violet equivalents.
+- Green may remain only where the UI explicitly communicates success, positive state or positive accounting meaning.
+- Forms use the full useful content width unless the task genuinely benefits from a constrained reading width.
+- Avoid large unused blank areas beside forms on desktop displays.
 
 ## SAF-T source selection
 
@@ -41,13 +53,6 @@ All current and future list pages must use the shared Denarius-inspired list lan
 - Reuse the shared selector partial/component; always show filename, accounting period and SAF-T version.
 - Default to the latest accounting period ordered by `EndDate`, `StartDate`, import timestamp and identifier.
 - Preserve selected `importId` between source-dependent pages and never silently combine multiple SAF-T sources.
-
-## Workspace and available width
-
-- Forms, editing screens, lists, tables, filters and analytical grids use the full useful content width by default.
-- Do not impose arbitrary `max-width` constraints on operational screens.
-- Narrow panels are reserved for tasks that genuinely benefit from constrained reading width.
-- Avoid large unused blank areas beside forms or lists on desktop displays.
 
 ## Interaction
 
@@ -61,5 +66,6 @@ All current and future list pages must use the shared Denarius-inspired list lan
 
 - Render and inspect affected pages when a rendering environment is available.
 - Verify empty, populated, filtering, pagination, focus and responsive states where applicable.
+- For visual changes, search all component-specific CSS for legacy green values instead of assuming theme variables cover every component.
 - Verify desktop lists use available width and preserve query state across pagination.
 - Run relevant automated tests and confirm repository CI for the completed change set. Do not block every non-critical intermediate UI commit waiting for CI; stop immediately when a critical change or an already-failing CI requires investigation.
