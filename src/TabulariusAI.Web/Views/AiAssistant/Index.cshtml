@@ -1,17 +1,11 @@
 @model TabulariusAI.Web.Models.AiChatViewModel
 @{ViewData["Title"]="Assistente AI";}
-<div class="ai-chat-page">
-  <header class="ai-chat-header"><div><span class="eyebrow">@Model.DossierName</span><h1>Falar com os dados</h1><p>Faça perguntas sobre o dossier. O modelo consulta exclusivamente os dados disponibilizados pelas tools do Tabularius AI.</p></div><a class="btn btn-secondary" asp-controller="Dossier" asp-action="Details" asp-route-id="@Model.DossierId">Voltar ao dossier</a></header>
-  <div class="ai-chat-shell">
-    <section class="ai-chat-conversation">
-      @if(string.IsNullOrWhiteSpace(Model.Answer)){
-        <div class="ai-chat-empty"><span class="ai-chat-mark">AI</span><h2>O que pretende saber?</h2><p>O assistente pode consultar os dados persistidos deste dossier através das tools disponíveis.</p><div class="ai-chat-suggestions"><button type="button" data-ai-question="Resume os dados disponíveis neste dossier.">Resumir o dossier</button><button type="button" data-ai-question="Que informação contabilística está disponível neste dossier?">Dados disponíveis</button><button type="button" data-ai-question="Apresenta uma visão geral deste exercício sem inventar valores.">Visão geral</button></div></div>
-      } else {
-        <div class="ai-message ai-message-user"><span>Eu</span><div>@Model.Question</div></div>
-        <div class="ai-message ai-message-assistant"><span>AI</span><div style="white-space:pre-wrap">@Model.Answer</div></div>
-      }
-    </section>
-    <form asp-action="Ask" method="post" class="ai-chat-composer"><input asp-for="DossierId" type="hidden"/><div asp-validation-summary="ModelOnly" class="ai-chat-error"></div><div class="ai-chat-input"><textarea asp-for="Question" rows="3" placeholder="Pergunte sobre os dados deste dossier..." autofocus></textarea><button class="btn btn-primary" type="submit">Enviar</button></div><div class="ai-chat-meta"><span asp-validation-for="Question" class="ai-chat-error"></span><small>As respostas dependem dos dados disponibilizados pelas tools.</small></div></form>
-  </div>
+<div class="assistant-page">
+<header class="assistant-header"><div><p class="eyebrow">Inteligência Artificial · @Model.DossierName</p><h1>Assistente contabilístico</h1><p>Converse com os dados persistidos deste dossier através das tools controladas pelo Tabularius AI.</p></div><div class="assistant-header-actions"><span class="assistant-readonly">Somente leitura</span><a class="btn btn-secondary" asp-controller="Dossier" asp-action="Details" asp-route-id="@Model.DossierId">Voltar ao dossier</a></div></header>
+<section class="assistant-shell">
+<div id="assistantMessages" class="assistant-messages" aria-live="polite">
+<div class="assistant-welcome"><div class="assistant-intro"><span class="assistant-orb">✦</span><p class="eyebrow">Assistente do dossier</p><h2>O que pretende analisar?</h2><p>As respostas sobre o exercício são fundamentadas nos dados disponibilizados pelas tools do Tabularius AI.</p><div class="assistant-trust"><span>✓ Somente leitura</span><span>✓ Dossier selecionado</span><span>✓ Dados via tools</span></div></div><div class="assistant-suggestions"><button type="button" data-question="Resume os dados disponíveis neste dossier."><span>✦</span><strong>Resumo do dossier</strong><small>Visão geral dos dados disponíveis</small></button><button type="button" data-question="Que informação contabilística está disponível neste dossier?"><span>▦</span><strong>Dados disponíveis</strong><small>Conhecer a informação importada</small></button><button type="button" data-question="Apresenta uma visão geral deste exercício sem inventar valores."><span>◇</span><strong>Visão do exercício</strong><small>Análise baseada apenas nos dados</small></button></div></div>
 </div>
-@section Scripts{<script>document.querySelectorAll('[data-ai-question]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('Question');if(input){input.value=button.dataset.aiQuestion;input.focus();}}));</script>}
+<div class="assistant-composer"><form id="assistantForm"><input id="assistantDossierId" type="hidden" value="@Model.DossierId"/><div class="assistant-input-wrap"><span class="composer-spark" aria-hidden="true">✦</span><textarea id="assistantQuestion" maxlength="2000" rows="1" placeholder="Pergunte sobre os dados deste dossier…"></textarea><button type="submit" aria-label="Enviar pergunta">↑</button></div><div class="assistant-caption"><span>Enter para enviar · Shift + Enter para nova linha</span><span id="assistantCounter">0 / 2000</span></div>@Html.AntiForgeryToken()</form></div>
+</section></div>
+@section Scripts { <script src="~/js/ai-assistant.js" asp-append-version="true"></script> }
