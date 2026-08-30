@@ -33,6 +33,13 @@ public sealed class VatAnalysisViewModel
     public decimal TotalTaxableBase{get;set;}
     public decimal TotalVat{get;set;}
     public decimal TotalGross{get;set;}
+    public string? Search{get;set;}
+    public string? InvoiceType{get;set;}
+    public decimal? TaxPercentage{get;set;}
+    public DateOnly? DateFrom{get;set;}
+    public DateOnly? DateTo{get;set;}
+    public IReadOnlyList<string> InvoiceTypes{get;set;}=[];
+    public IReadOnlyList<decimal?> TaxPercentages{get;set;}=[];
     public IReadOnlyList<VatRateSummaryRow> Rates{get;set;}=[];
     public IReadOnlyList<VatDocumentRow> Documents{get;set;}=[];
 }
