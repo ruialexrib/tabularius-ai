@@ -51,7 +51,12 @@ public sealed partial class DossierController
     {
         var source = await LoadSourceAsync(id, importId, ct); if (source is null) return NotFound(); var selectedId = source.SelectedImport.Id;
         var account = await dbContext.SaftAccounts.AsNoTracking().FirstOrDefaultAsync(x => x.SaftImportId == selectedId && x.AccountId == accountId, ct);
-        var movements = await dbContext.SaftTransactionLines.AsNoTracking().Where(x => x.SaftTransaction.SaftImportId == selectedId && x.AccountId == accountId).Select(x => new AccountMovementRow(x.SaftTransactionId, x.SaftTransaction.TransactionId, x.SaftTransaction.TransactionDate, x.SaftTransaction.JournalId, x.Description, x.Side, x.Amount, x.SourceDocumentId)).OrderByDescending(x => x.Date).ThenByDescending(x => x.TransactionLocalId).ToListAsync(ct);
+        var movements = await dbContext.SaftTransactionLines.AsNoTracking()
+            .Where(x => x.SaftTransaction.SaftImportId == selectedId && x.AccountId == accountId)
+            .OrderByDescending(x => x.SaftTransaction.TransactionDate)
+            .ThenByDescending(x => x.SaftTransactionId)
+            .Select(x => new AccountMovementRow(x.SaftTransactionId, x.SaftTransaction.TransactionId, x.SaftTransaction.TransactionDate, x.SaftTransaction.JournalId, x.Description, x.Side, x.Amount, x.SourceDocumentId))
+            .ToListAsync(ct);
         if (account is null && movements.Count == 0) return NotFound();
         var transactionIds = movements.Select(x => x.TransactionLocalId).Distinct().ToList();
         var counterpartLines = await dbContext.SaftTransactionLines.AsNoTracking().Where(x => transactionIds.Contains(x.SaftTransactionId) && x.AccountId != accountId).Select(x => new { x.SaftTransactionId, x.AccountId, x.Amount }).ToListAsync(ct);
